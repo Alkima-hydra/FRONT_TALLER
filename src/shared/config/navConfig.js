@@ -7,4 +7,5 @@ export const navItems = [
   { to: '/auditoria', label: 'Auditoría', icon: 'history', disabled: true },
   { to: '/usuarios', label: 'Usuarios', icon: 'manage_accounts' },
   { to: '/reportes', label: 'Reportes', icon: 'bar_chart' },
+  { to: '/parroquias', label: 'Parroquias', icon: 'bar_chart' },
 ];
