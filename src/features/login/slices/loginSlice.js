@@ -4,9 +4,8 @@ const initialState = {
   user: {
     name: 'Admin',
     role: 'Administrador',
-    avatar: 'https://lh3.googleusercontent.com/...', // Reemplazar con api lol
+    token: null,
   },
-  notifications: 1, // Borrar si matamos lo de notis
   isLoading: false,
 };
 
@@ -19,15 +18,20 @@ const loginSlice = createSlice({
     },
     setUser(state, action) {
       state.user = action.payload;
+      state.isLoading = false;
     },
-    setNotifications(state, action) {
-      state.notifications = action.payload; // Borrar si matamos lo de notis
+    logout(state) {
+      state.user = { name: '', role: '', token: null };
+      state.isLoading = false;
     },
   },
 });
 
-export const { setUser, setNotifications } = loginSlice.actions;
+export const { setUser, logout, setLoading } = loginSlice.actions;
+
 export const selectUser = (state) => state.login.user;
-export const selectNotifications = (state) => state.login.notifications;
+export const selectIsLoading = (state) => state.login.isLoading;
+
 export const loginReducer = loginSlice.reducer;
+
 export default loginSlice.reducer;
