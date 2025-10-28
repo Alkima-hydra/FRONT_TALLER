@@ -119,6 +119,49 @@ export default function Sacramentos() {
                 <label htmlFor="activo" className="text-sm font-medium text-gray-700 dark:text-gray-300">Activo</label>
               </div>
             </div>
+            {/* Campos específicos para Bautizo y Confirmación (sin foja) */}
+            {(tipoSacramento === 'bautizo' || tipoSacramento === 'comunion') && (
+              <div className="mt-6">
+                <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3">Detalles de {tipoSacramento === 'comunion' ? 'Primera Comunión' : 'Bautizo'}</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Padrino</label>
+                    <div className="relative">
+                      <input
+                        type="search"
+                        placeholder="Buscar padrino (persona registrada)"
+                        className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3 pr-10"
+                      />
+                      <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">search</span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">Escriba nombre o CI para buscar en Personas.</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ministro</label>
+                    <input
+                      type="text"
+                      placeholder="Nombre del ministro"
+                      className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Número de Acta</label>
+                    <input
+                      type="text"
+                      placeholder="Ej. 123-A"
+                      className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fecha del Sacramento</label>
+                    <input
+                      type="date"
+                      className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
             <div className="mt-6 flex items-center gap-3">
               <button
                 type="submit"
@@ -279,6 +322,37 @@ export default function Sacramentos() {
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nombre de la madre</label>
                     <input type="text" value={selectedPerson.nombre_madre} onChange={() => {}} className="w-full rounded-lg border border-gray-300 dark:border-gray-700 p-3 bg-background-light dark:bg-background-dark" />
                   </div>
+                  {/* Campos específicos para Bautizo y Confirmación (sin foja) en edición */}
+                  {(tipoSacramento === 'bautizo' || tipoSacramento === 'comunion') && (
+                    <div className="md:col-span-2 border-t border-gray-200 dark:border-gray-700 pt-4">
+                      <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3">Detalles de {tipoSacramento === 'comunion' ? 'Primera Comunión' : 'Bautizo'}</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Padrino</label>
+                          <div className="relative">
+                            <input
+                              type="search"
+                              placeholder="Buscar padrino (persona registrada)"
+                              className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3 pr-10"
+                            />
+                            <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">search</span>
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ministro</label>
+                          <input type="text" placeholder="Nombre del ministro" className="w-full rounded-lg border border-gray-300 dark:border-gray-700 p-3 bg-background-light dark:bg-background-dark" />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Número de Acta</label>
+                          <input type="text" placeholder="Ej. 123-A" className="w-full rounded-lg border border-gray-300 dark:border-gray-700 p-3 bg-background-light dark:bg-background-dark" />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fecha del Sacramento</label>
+                          <input type="date" className="w-full rounded-lg border border-gray-300 dark:border-gray-700 p-3 bg-background-light dark:bg-background-dark" />
+                        </div>
+                      </div>
+                    </div>
+                  )}
                   <div className="md:col-span-2 flex items-center gap-3">
                     <input id="e-activo" type="checkbox" checked={!!selectedPerson.activo} onChange={() => {}} className="h-4 w-4 border-gray-300 dark:border-gray-700 rounded" />
                     <label htmlFor="e-activo" className="text-sm font-medium text-gray-700 dark:text-gray-300">Activo</label>
