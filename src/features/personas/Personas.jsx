@@ -42,34 +42,48 @@ export default function Personas() {
           <form className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="nombres">Nombres</label>
-                <input id="nombres" placeholder="Ingrese los nombres" type="text"
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="nombre">Nombre</label>
+                <input id="nombre" placeholder="Ingrese el nombre" type="text"
                   className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="apellidos">Apellidos</label>
-                <input id="apellidos" placeholder="Ingrese los apellidos" type="text"
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="apellido_paterno">Apellido paterno</label>
+                <input id="apellido_paterno" placeholder="Ingrese el apellido paterno" type="text"
                   className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="fecha-nacimiento">Fecha de Nacimiento</label>
-                <input id="fecha-nacimiento" type="date"
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="apellido_materno">Apellido materno</label>
+                <input id="apellido_materno" placeholder="Ingrese el apellido materno" type="text"
                   className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="lugar-nacimiento">Lugar de Nacimiento</label>
-                <input id="lugar-nacimiento" placeholder="Ingrese el lugar" type="text"
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="carnet_identidad">Carnet de identidad</label>
+                <input id="carnet_identidad" placeholder="Ingrese el CI" type="text"
                   className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="padre">Padre</label>
-                <input id="padre" placeholder="Ingrese el nombre del padre" type="text"
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="fecha_nacimiento">Fecha de nacimiento</label>
+                <input id="fecha_nacimiento" type="date"
                   className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="madre">Madre</label>
-                <input id="madre" placeholder="Ingrese el nombre de la madre" type="text"
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="lugar_nacimiento">Lugar de nacimiento</label>
+                <input id="lugar_nacimiento" placeholder="Ingrese el lugar" type="text"
                   className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="nombre_padre">Nombre del padre</label>
+                <input id="nombre_padre" placeholder="Ingrese el nombre del padre" type="text"
+                  className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="nombre_madre">Nombre de la madre</label>
+                <input id="nombre_madre" placeholder="Ingrese el nombre de la madre" type="text"
+                  className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3" />
+              </div>
+              <div className="md:col-span-2 flex items-center gap-3">
+                <input id="activo" type="checkbox" className="h-4 w-4 border-gray-300 dark:border-gray-700 rounded" />
+                <label htmlFor="activo" className="text-sm font-medium text-gray-700 dark:text-gray-300">Activo</label>
               </div>
             </div>
             <div className="mt-6 flex items-center gap-3">
@@ -100,34 +114,44 @@ export default function Personas() {
             <form className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="f-nombres">Nombres</label>
-                  <input id="f-nombres" placeholder="Buscar por nombres" type="text"
-                    className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3" />
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="f-nombre">Nombre</label>
+                  <input id="f-nombre" placeholder="Nombre" type="text" className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="f-apellidos">Apellidos</label>
-                  <input id="f-apellidos" placeholder="Buscar por apellidos" type="text"
-                    className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3" />
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="f-apellido_paterno">Apellido paterno</label>
+                  <input id="f-apellido_paterno" placeholder="Apellido paterno" type="text" className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="f-fecha-nacimiento">Fecha de Nacimiento</label>
-                  <input id="f-fecha-nacimiento" type="date"
-                    className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3" />
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="f-apellido_materno">Apellido materno</label>
+                  <input id="f-apellido_materno" placeholder="Apellido materno" type="text" className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="f-lugar-nacimiento">Lugar de Nacimiento</label>
-                  <input id="f-lugar-nacimiento" placeholder="Buscar por lugar" type="text"
-                    className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3" />
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="f-carnet_identidad">Carnet de identidad</label>
+                  <input id="f-carnet_identidad" placeholder="CI" type="text" className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="f-padre">Padre</label>
-                  <input id="f-padre" placeholder="Buscar por nombre del padre" type="text"
-                    className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3" />
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="f-fecha_nacimiento">Fecha de nacimiento</label>
+                  <input id="f-fecha_nacimiento" type="date" className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="f-madre">Madre</label>
-                  <input id="f-madre" placeholder="Buscar por nombre de la madre" type="text"
-                    className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3" />
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="f-lugar_nacimiento">Lugar de nacimiento</label>
+                  <input id="f-lugar_nacimiento" placeholder="Lugar" type="text" className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="f-nombre_padre">Nombre del padre</label>
+                  <input id="f-nombre_padre" placeholder="Padre" type="text" className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="f-nombre_madre">Nombre de la madre</label>
+                  <input id="f-nombre_madre" placeholder="Madre" type="text" className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="f-activo">Estado</label>
+                  <select id="f-activo" className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3">
+                    <option value="">Todos</option>
+                    <option value="true">Activo</option>
+                    <option value="false">Inactivo</option>
+                  </select>
                 </div>
               </div>
               <div className="mt-6 flex items-center gap-3">
@@ -140,40 +164,45 @@ export default function Personas() {
           <div className="bg-white dark:bg-background-dark/50 rounded-xl shadow-sm">
             <div className="p-6 border-b border-gray-200 dark:border-gray-800">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Resultados</h3>
+               <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Para editar alguno de los resultados, seleccione la fila deseada.</p>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
                 <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700/50 dark:text-gray-400">
                   <tr>
-                    <th className="px-6 py-3" scope="col">Sacramento</th>
-                    <th className="px-6 py-3" scope="col">Fecha</th>
-                    <th className="px-6 py-3" scope="col">Lugar</th>
+                    <th className="px-6 py-3" scope="col">Nombre</th>
+                    <th className="px-6 py-3" scope="col">Apellido paterno</th>
+                    <th className="px-6 py-3" scope="col">Apellido materno</th>
+                    <th className="px-6 py-3" scope="col">CI</th>
+                    <th className="px-6 py-3" scope="col">Fecha nac.</th>
+                    <th className="px-6 py-3" scope="col">Lugar nac.</th>
+                    <th className="px-6 py-3" scope="col">Estado</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr
-                    onClick={() => setSelectedPerson({ nombres: 'Carlos', apellidos: 'Mendoza', fechaNacimiento: '1990-01-10', lugarNacimiento: 'La Paz', padre: 'Juan Mendoza', madre: 'María Pérez' })}
+                    onClick={() => setSelectedPerson({ id: 1, nombre: 'Carlos', apellido_paterno: 'Mendoza', apellido_materno: 'Pérez', carnet_identidad: '6789012 LP', fecha_nacimiento: '1990-01-10', lugar_nacimiento: 'La Paz', nombre_padre: 'Juan Mendoza', nombre_madre: 'María Pérez', activo: true })}
                     className="cursor-pointer bg-white dark:bg-background-dark/50 border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
                   >
-                    <th className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white" scope="row">Bautizo</th>
-                    <td className="px-6 py-4">2000-05-15</td>
-                    <td className="px-6 py-4">Parroquia San Juan</td>
+                    <td className="px-6 py-4">Carlos</td>
+                    <td className="px-6 py-4">Mendoza</td>
+                    <td className="px-6 py-4">Pérez</td>
+                    <td className="px-6 py-4">6789012 LP</td>
+                    <td className="px-6 py-4">1990-01-10</td>
+                    <td className="px-6 py-4">La Paz</td>
+                    <td className="px-6 py-4"><span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">Activo</span></td>
                   </tr>
                   <tr
-                    onClick={() => setSelectedPerson({ nombres: 'Carlos', apellidos: 'Mendoza', fechaNacimiento: '1990-01-10', lugarNacimiento: 'La Paz', padre: 'Juan Mendoza', madre: 'María Pérez' })}
-                    className="cursor-pointer bg-white dark:bg-background-dark/50 border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
-                  >
-                    <th className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white" scope="row">Confirmación</th>
-                    <td className="px-6 py-4">2015-08-20</td>
-                    <td className="px-6 py-4">Catedral Metropolitana</td>
-                  </tr>
-                  <tr
-                    onClick={() => setSelectedPerson({ nombres: 'Carlos', apellidos: 'Mendoza', fechaNacimiento: '1990-01-10', lugarNacimiento: 'La Paz', padre: 'Juan Mendoza', madre: 'María Pérez' })}
+                    onClick={() => setSelectedPerson({ id: 2, nombre: 'Ana', apellido_paterno: 'Rodríguez', apellido_materno: 'Guzmán', carnet_identidad: '3456789 CB', fecha_nacimiento: '1995-04-18', lugar_nacimiento: 'Cochabamba', nombre_padre: 'Pedro Rodríguez', nombre_madre: 'Elena Guzmán', activo: false })}
                     className="cursor-pointer bg-white dark:bg-background-dark/50 hover:bg-gray-50 dark:hover:bg-gray-800"
                   >
-                    <th className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white" scope="row">Matrimonio</th>
-                    <td className="px-6 py-4">2025-03-10</td>
-                    <td className="px-6 py-4">Iglesia del Carmen</td>
+                    <td className="px-6 py-4">Ana</td>
+                    <td className="px-6 py-4">Rodríguez</td>
+                    <td className="px-6 py-4">Guzmán</td>
+                    <td className="px-6 py-4">3456789 CB</td>
+                    <td className="px-6 py-4">1995-04-18</td>
+                    <td className="px-6 py-4">Cochabamba</td>
+                    <td className="px-6 py-4"><span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">Inactivo</span></td>
                   </tr>
                 </tbody>
               </table>
@@ -181,30 +210,42 @@ export default function Personas() {
             {selectedPerson && (
               <div className="mt-8 bg-white dark:bg-background-dark/50 rounded-xl shadow-sm p-6">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Editar Persona</h3>
-                <form className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <form className="grid grid-cols-1 md-grid-cols-2 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nombres</label>
-                    <input type="text" value={selectedPerson.nombres} onChange={() => {}} className="w-full rounded-lg border border-gray-300 dark:border-gray-700 p-3 bg-background-light dark:bg-background-dark" />
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nombre</label>
+                    <input type="text" value={selectedPerson.nombre} onChange={() => {}} className="w-full rounded-lg border border-gray-300 dark:border-gray-700 p-3 bg-background-light dark:bg-background-dark" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Apellidos</label>
-                    <input type="text" value={selectedPerson.apellidos} onChange={() => {}} className="w-full rounded-lg border border-gray-300 dark:border-gray-700 p-3 bg-background-light dark:bg-background-dark" />
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Apellido paterno</label>
+                    <input type="text" value={selectedPerson.apellido_paterno} onChange={() => {}} className="w-full rounded-lg border border-gray-300 dark:border-gray-700 p-3 bg-background-light dark:bg-background-dark" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fecha de Nacimiento</label>
-                    <input type="date" value={selectedPerson.fechaNacimiento} onChange={() => {}} className="w-full rounded-lg border border-gray-300 dark:border-gray-700 p-3 bg-background-light dark:bg-background-dark" />
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Apellido materno</label>
+                    <input type="text" value={selectedPerson.apellido_materno} onChange={() => {}} className="w-full rounded-lg border border-gray-300 dark:border-gray-700 p-3 bg-background-light dark:bg-background-dark" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Lugar de Nacimiento</label>
-                    <input type="text" value={selectedPerson.lugarNacimiento} onChange={() => {}} className="w-full rounded-lg border border-gray-300 dark:border-gray-700 p-3 bg-background-light dark:bg-background-dark" />
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Carnet de identidad</label>
+                    <input type="text" value={selectedPerson.carnet_identidad} onChange={() => {}} className="w-full rounded-lg border border-gray-300 dark:border-gray-700 p-3 bg-background-light dark:bg-background-dark" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Padre</label>
-                    <input type="text" value={selectedPerson.padre} onChange={() => {}} className="w-full rounded-lg border border-gray-300 dark:border-gray-700 p-3 bg-background-light dark:bg-background-dark" />
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fecha de nacimiento</label>
+                    <input type="date" value={selectedPerson.fecha_nacimiento} onChange={() => {}} className="w-full rounded-lg border border-gray-300 dark:border-gray-700 p-3 bg-background-light dark:bg-background-dark" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Madre</label>
-                    <input type="text" value={selectedPerson.madre} onChange={() => {}} className="w-full rounded-lg border border-gray-300 dark:border-gray-700 p-3 bg-background-light dark:bg-background-dark" />
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Lugar de nacimiento</label>
+                    <input type="text" value={selectedPerson.lugar_nacimiento} onChange={() => {}} className="w-full rounded-lg border border-gray-300 dark:border-gray-700 p-3 bg-background-light dark:bg-background-dark" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nombre del padre</label>
+                    <input type="text" value={selectedPerson.nombre_padre} onChange={() => {}} className="w-full rounded-lg border border-gray-300 dark:border-gray-700 p-3 bg-background-light dark:bg-background-dark" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nombre de la madre</label>
+                    <input type="text" value={selectedPerson.nombre_madre} onChange={() => {}} className="w-full rounded-lg border border-gray-300 dark:border-gray-700 p-3 bg-background-light dark:bg-background-dark" />
+                  </div>
+                  <div className="md:col-span-2 flex items-center gap-3">
+                    <input id="e-activo" type="checkbox" checked={!!selectedPerson.activo} onChange={() => {}} className="h-4 w-4 border-gray-300 dark:border-gray-700 rounded" />
+                    <label htmlFor="e-activo" className="text-sm font-medium text-gray-700 dark:text-gray-300">Activo</label>
                   </div>
                   <div className="mt-4 col-span-2 flex justify-end gap-3">
                     <button type="button" onClick={() => setSelectedPerson(null)} className="px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/40">Cancelar</button>
@@ -213,30 +254,6 @@ export default function Personas() {
                 </form>
               </div>
             )}
-          </div>
-
-          <div className="mt-8 bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400 dark:border-yellow-500 p-4 rounded-r-lg">
-            <div className="flex">
-              <span className="material-symbols-outlined text-yellow-400 dark:text-yellow-500">warning</span>
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">Posibles Duplicados Encontrados</h3>
-                <div className="mt-2 text-sm text-yellow-700 dark:text-yellow-300">
-                  <div className="flex items-center gap-4 mt-4">
-                    <div className="w-12 h-12 rounded-full bg-cover bg-center" style={{ backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuDYcBTrXWIsdp2l4-8KgVeJrDD4QEZ7LPp0U7mjXdAwrHKy_-V2iA4bzeWeTeGeJku_p9REbThgyunAwGsRm7FEtyeCNBmm_t9lFI3HwsBuleTrxnAitLPCQ1dMSyUwlmDRMZlql2CNwWKWLYn1qh_x5p5tiR7SmRttj7HjE6B1CIJxLmJWClIK2oVyjmPNnArv-9ZZ05LRffM3CUVcaFKfoxabNulrEF4HduPEmi06095SIcsfKEXUexAK5YzJtnyzTX3ZZZZBnG0")' }} />
-                    <div>
-                      <p className="font-semibold text-gray-900 dark:text-white">Carlos Mendoza</p>
-                      <p className="text-gray-600 dark:text-gray-400">Fecha de Nacimiento: 1990-01-10</p>
-                    </div>
-                    <button
-                      className="ml-auto px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
-                      onClick={() => setMergeOpen(true)}
-                    >
-                      Fusionar Registros
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </>
       )}
