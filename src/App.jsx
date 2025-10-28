@@ -10,6 +10,7 @@ import Libros from './features/libros/Libros'
 import Usuarios from './features/usuarios/Usuarios'
 import Reportes from './features/reportes/Reportes'
 import Certificados from './features/certificados/Certificados'
+import Parroquias from './features/parroquias/parroquias';
 
 export default function App() {
   return (
@@ -23,6 +24,7 @@ export default function App() {
         <Route path="/usuarios" element={<Usuarios />} />
         <Route path="/reportes" element={<Reportes />} />
         <Route path="/certificados" element={<Certificados />} />
+        <Route path="/parroquias" element={<Parroquias />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Provider>
