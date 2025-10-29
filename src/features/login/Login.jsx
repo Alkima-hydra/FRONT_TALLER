@@ -1,10 +1,12 @@
-import { useState } from 'react';
+// src/features/login/Login.jsx
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import Swal from 'sweetalert2';
 import { loginUser } from './slices/loginThunks';
 import { clearError } from './slices/loginSlice';
-import { selectIsLoading, selectError } from './slices/loginSelectors';
+import { selectIsLoading, selectError, selectUser } from './slices/loginSelectors';
+import { getDefaultRoute } from '../../shared/config/roleConfig';
 import LoginPanel from './components/LoginPanel';
 import LoginForm from './components/LoginForm';
 import HeroPanel from './components/HeroPanel';
@@ -14,12 +16,21 @@ export default function Login() {
   const dispatch = useDispatch();
   const isLoading = useSelector(selectIsLoading);
   const error = useSelector(selectError);
+  const user = useSelector(selectUser);
 
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
   const [showPassword, setShowPassword] = useState(false);
+
+  // Redirige al usuario si ya está autenticado
+  useEffect(() => {
+    if (user && user.token) {
+      const defaultRoute = getDefaultRoute(user.rol);
+      navigate(defaultRoute, { replace: true });
+    }
+  }, [user, navigate]);
 
   const handleSubmit = async (e) => {
     e?.preventDefault();
@@ -44,7 +55,9 @@ export default function Login() {
         timer: 1500,
         showConfirmButton: false,
       });
-      navigate('/dashboard');
+      
+      const defaultRoute = getDefaultRoute(result.payload.rol);
+      navigate(defaultRoute, { replace: true });
     } else {
       const errorData = result.payload || {};
       

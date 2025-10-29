@@ -30,6 +30,9 @@ const parroquiasSlice = createSlice({
     clearError(state) {
       state.error = null;
     },
+    setParroquiaSeleccionada: (state, action) => {
+      state.parroquiaSeleccionada = action.payload;
+    },
     clearParroquiaSeleccionada(state) {
       state.parroquiaSeleccionada = null;
     },
@@ -130,7 +133,7 @@ const parroquiasSlice = createSlice({
 });
 
 // Acciones sincronas
-export const { clearError, clearParroquiaSeleccionada, resetPagination } = parroquiasSlice.actions;
+export const { clearError, clearParroquiaSeleccionada, resetPagination , setParroquiaSeleccionada} = parroquiasSlice.actions;
 
 // Selectores
 export const selectParroquias = (state) => state.parroquias?.parroquias || []
