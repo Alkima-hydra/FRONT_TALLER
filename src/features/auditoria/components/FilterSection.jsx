@@ -94,13 +94,13 @@ export default function FilterSection({ filters, onFilterChange, onApplyFilters,
             {/* Username */}
             <div>
               <label className="block text-sm font-medium text-foreground-light dark:text-foreground-dark">
-                Username
+                Correo
               </label>
               <input
                 type="text"
                 value={filters.username}
                 onChange={(e) => handleInputChange('username', e.target.value)}
-                placeholder="Buscar usuario..."
+                placeholder="Buscar correo..."
                 className="mt-1 block w-full rounded-md border border-border-light bg-card-light px-3 py-2 text-sm text-foreground-light focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-border-dark dark:bg-background-dark dark:text-foreground-dark"
               />
             </div>
