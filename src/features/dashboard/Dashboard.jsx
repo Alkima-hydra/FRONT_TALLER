@@ -1,25 +1,34 @@
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchDashboardStats } from './slices/dashboardThunks';
+import {
+  selectKPIs,
+  selectTimeline,
+  selectCombinaciones,
+  selectIsLoading,
+  selectError
+} from './slices/dashboardSlice';
+
 import KPICards from './components/KPICards';
 import DashboardFilters from './components/DashboardFilters';
 import SacramentosTimeline from './components/SacramentosTimeline';
 import PersonasPorSacramento from './components/PersonasPorSacramento';
 import Layout from '../../shared/components/layout/Layout';
 
-const SACRAMENTO_COLORS = {
-  bautismo: '#0f49bd',
-  confirmacion: '#c99c33',
-  matrimonio: '#10b981',
-  comunion: '#8b5cf6'
-};
-
 export default function Dashboard() {
-  const [filters, setFilters] = useState({
+  const dispatch = useDispatch();
+  const { personas, sacramentos, parroquias } = useSelector(selectKPIs);
+  const timelineData = useSelector(selectTimeline);
+  const personasSacramentoData = useSelector(selectCombinaciones);
+  const isLoading = useSelector(selectIsLoading);
+  const error = useSelector(selectError);
+
+  const [filters, setFilters] = React.useState({
     fechaInicio: '',
     fechaFin: '',
     sacramentos: []
   });
 
-  // Sacramentos   
   const sacramentosList = [
     'Bautismo',
     'Primera Comunión',
@@ -27,31 +36,52 @@ export default function Dashboard() {
     'Matrimonio'
   ];
 
-  // Datos de KPIs
-  const kpiData = {
-    personas: 3450,
-    sacramentos: 5280,
-    parroquias: 8
-  };
+  useEffect(() => {
+    // Construir parámetros según lo que espera la API
+    const params = {};
+    
+    // La API espera: start_date, end_date, tipo (puede ser array o string separado por comas)
+    if (filters.fechaInicio) params.start_date = filters.fechaInicio;
+    if (filters.fechaFin) params.end_date = filters.fechaFin;
+    
+    // Enviar tipos de sacramento si hay seleccionados
+    if (filters.sacramentos.length > 0) {
+      // La API acepta tanto array como string separado por comas
+      // Axios convertirá el array automáticamente en tipo[]=valor1&tipo[]=valor2
+      params.tipo = filters.sacramentos;
+    }
 
-  // Datos por año
-  const timelineData = [
-    { periodo: '2020', bautismo: 445, confirmacion: 112, matrimonio: 78, comunion: 332 },
-    { periodo: '2021', bautismo: 512, confirmacion: 145, matrimonio: 95, comunion: 378 },
-    { periodo: '2022', bautismo: 598, confirmacion: 178, matrimonio: 112, comunion: 421 },
-    { periodo: '2023', bautismo: 645, confirmacion: 198, matrimonio: 128, comunion: 465 },
-    { periodo: '2024', bautismo: 689, confirmacion: 215, matrimonio: 142, comunion: 502 },
-  ];
+    dispatch(fetchDashboardStats(params));
+  }, [filters, dispatch]);
 
-  // Datos de personas por sacramento
-  const personasSacramentoData = [
-    { combinacion: 'Solo Bautismo', cantidad: 852, color: SACRAMENTO_COLORS.bautismo, sacramentos: ['bautismo'] },
-    { combinacion: 'Bautismo + Comunión', cantidad: 645, color: SACRAMENTO_COLORS.comunion, sacramentos: ['bautismo', 'comunion'] },
-    { combinacion: 'Bautismo + Comunión + Confirmación', cantidad: 412, color: SACRAMENTO_COLORS.confirmacion, sacramentos: ['bautismo', 'comunion', 'confirmacion'] },
-    { combinacion: 'Todos los Sacramentos', cantidad: 287, color: SACRAMENTO_COLORS.matrimonio, sacramentos: ['bautismo', 'comunion', 'confirmacion', 'matrimonio'] },
-    { combinacion: 'Bautismo + Confirmación', cantidad: 198, color: SACRAMENTO_COLORS.bautismo, sacramentos: ['bautismo', 'confirmacion'] },
-    { combinacion: 'Solo Matrimonio', cantidad: 156, color: SACRAMENTO_COLORS.matrimonio, sacramentos: ['matrimonio'] },
-  ];
+  if (isLoading) {
+    return (
+      <Layout title="Dashboard">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Cargando estadísticas...</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error) {
+    return (
+      <Layout title="Dashboard">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-red-800">Error: {error}</p>
+          <button 
+            onClick={() => dispatch(fetchDashboardStats({}))}
+            className="mt-2 text-sm text-red-600 hover:text-red-800 underline"
+          >
+            Intentar nuevamente
+          </button>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout title="Dashboard">
@@ -64,9 +94,9 @@ export default function Dashboard() {
         />
 
         <KPICards 
-          personas={kpiData.personas}
-          sacramentos={kpiData.sacramentos}
-          parroquias={kpiData.parroquias}
+          personas={personas}
+          sacramentos={sacramentos}
+          parroquias={parroquias}
         />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

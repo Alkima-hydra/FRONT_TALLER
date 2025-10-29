@@ -95,18 +95,25 @@ export default function Personas() {
     }
   };
 
-  // ¿Hay filtros?
-  const hasFilters = Object.values(filters).some(
-    (value) => value !== '' && value !== null && value !== undefined
-  );
+  // ¿Hay filtros? (ignora espacios en blanco)
+  const isNonEmpty = (v) => v !== null && v !== undefined && (typeof v !== 'string' || v.trim() !== '');
+  const hasFilters = Object.values(filters).some(isNonEmpty);
 
   const people = hasFilters ? personas : allPersonas;
   const loading = isLoading;
 
   const handleSearch = (e) => {
     if (e) e.preventDefault();
-    if (hasFilters) {
-      dispatch(fetchPersonas(filters));
+
+    // Limpiar y enviar solo filtros con valor
+    const cleaned = Object.fromEntries(
+      Object.entries(filters)
+        .map(([k, v]) => [k, typeof v === 'string' ? v.trim() : v])
+        .filter(([_, v]) => isNonEmpty(v))
+    );
+
+    if (Object.keys(cleaned).length > 0) {
+      dispatch(fetchPersonas(cleaned));
     } else {
       dispatch(fetchAllPersonas());
     }
@@ -465,8 +472,8 @@ export default function Personas() {
                     className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3"
                   >
                     <option value="">Todos</option>
-                    <option value="estado">Verificado</option>
-                    <option value="No estado">No verificado</option>
+                    <option value="Verificado">Verificado</option>
+                    <option value="No verificado">No verificado</option>
                   </select>
                 </div>
               </div>
@@ -505,8 +512,8 @@ export default function Personas() {
                   )}
                   {!loading && people.map((p) => (
                     <tr
-                      key={p.id}
-                      onClick={() => setSelectedPerson({ ...p })}
+                      key={p.id || p.id_persona}
+                      onClick={() => handleRowClick(p.id || p.id_persona)}
                       className="cursor-pointer bg-white dark:bg-background-dark/50 border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
                     >
                       <td className="px-6 py-4">{p.nombre}</td>

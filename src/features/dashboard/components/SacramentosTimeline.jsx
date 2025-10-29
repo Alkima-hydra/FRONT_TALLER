@@ -3,7 +3,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 
 // Colores fijos para sacramentos
 const SACRAMENTO_COLORS = {
-  bautismo: '#0f49bd',
+  bautizo: '#0f49bd',
   confirmacion: '#c99c33',
   matrimonio: '#10b981',
   comunion: '#8b5cf6'
@@ -38,10 +38,10 @@ export default function SacramentosTimeline({ data }) {
           />
           <Line 
             type="monotone" 
-            dataKey="bautismo" 
-            stroke={SACRAMENTO_COLORS.bautismo}
+            dataKey="bautizo" 
+            stroke={SACRAMENTO_COLORS.bautizo}
             strokeWidth={2.5}
-            name="Bautismo"
+            name="Bautizo"
             dot={{ r: 4 }}
             activeDot={{ r: 6 }}
           />

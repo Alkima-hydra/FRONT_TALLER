@@ -5,9 +5,14 @@ export const loginUser = createAsyncThunk(
   'login/loginUser',
   async (credentials, { rejectWithValue }) => {
     try {
-      console.log('[loginThunk] Enviando credenciales:', credentials);
       const response = await loginApi.login(credentials);
-      console.log('[loginThunk] Respuesta del servidor:', response);
+
+      if (!response.ok) {
+        return rejectWithValue({
+          message: response.msg || 'Error al iniciar sesión',
+          type: 'error'
+        });
+      }
 
       return {
         uid: response.uid || response.usuario?.uid || '',
@@ -17,9 +22,28 @@ export const loginUser = createAsyncThunk(
         token: response.token,
       };
     } catch (error) {
-      const errorMsg = error.message || 'Error al iniciar sesión';
-      console.error('[loginThunk] Error:', errorMsg, error);
-      return rejectWithValue(errorMsg);
+      if (error.response) {
+        const { status, data } = error.response;
+        
+        if (status === 400) {
+          return rejectWithValue({
+            message: data.msg || 'Credenciales inválidas',
+            type: 'warning'
+          });
+        }
+        
+        if (status === 500) {
+          return rejectWithValue({
+            message: 'Error en el servidor. Intente más tarde',
+            type: 'error'
+          });
+        }
+      }
+      
+      return rejectWithValue({
+        message: error.message || 'No se pudo conectar con el servidor',
+        type: 'error'
+      });
     }
   }
 );

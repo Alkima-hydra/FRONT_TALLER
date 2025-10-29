@@ -1,6 +1,5 @@
 export const navItems = [
   { to: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
-  { to: '/registros', label: 'Registros', icon: 'menu_book' },
   { to: '/personas', label: 'Personas', icon: 'group' },
   { to: '/sacramentos', label: 'Sacramentos', icon: 'import_contacts' },
   { to: '/certificados', label: 'Certificados', icon: 'workspace_premium' },

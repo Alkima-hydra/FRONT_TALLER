@@ -5,6 +5,34 @@ const api = axios.create({
   baseURL: 'http://localhost:3000/api/',
 });
 
+// Interceptor para manejar respuestas y errores
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response) {
+      // El servidor respondió con un código de error
+      const errorData = {
+        message: error.response.data?.msg || error.response.data?.message || 'Error en la petición',
+        status: error.response.status,
+        data: error.response.data,
+      };
+      return Promise.reject(errorData);
+    } else if (error.request) {
+      // La petición se hizo pero no hubo respuesta
+      return Promise.reject({
+        message: 'No se pudo conectar con el servidor',
+        status: 0,
+      });
+    } else {
+      // Error al configurar la petición
+      return Promise.reject({
+        message: error.message || 'Error desconocido',
+        status: 0,
+      });
+    }
+  }
+);
+
 // manejo de errores
 const handleError = (error) => {
   throw error.response?.data || { message: error.message };
@@ -25,6 +53,9 @@ api.interceptors.request.use((config) => {
 }, (error) => {
   return Promise.reject(error);
 });
+
+//para errores
+
 
 // ejemplo de como orgnizar
 export const userApi = {
@@ -106,4 +137,9 @@ export const passwordApi = {
 export const auditoriaApi = {
   fetchAuditorias: (params = {}) =>
     api.get('/auditoria/', { params }).then((res) => res.data).catch(handleError),
+};
+
+export const dashboardApi = {
+  fetchStats: (filters = {}) =>
+    api.get('/dashboard/summary/', { params: filters }).then(res => res.data).catch(handleError),
 };

@@ -2,13 +2,29 @@ import React, { useState } from 'react';
 
 export default function DashboardFilters({ filters, onFilterChange, sacramentosList }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [tempFilters, setTempFilters] = useState(filters);
 
   const toggleSacramento = (sacramento) => {
-    const current = filters.sacramentos || [];
+    const current = tempFilters.sacramentos || [];
     const updated = current.includes(sacramento)
       ? current.filter(s => s !== sacramento)
       : [...current, sacramento];
-    onFilterChange({ ...filters, sacramentos: updated });
+    setTempFilters({ ...tempFilters, sacramentos: updated });
+  };
+
+  const handleApplyFilters = () => {
+    onFilterChange(tempFilters);
+    setIsOpen(false);
+  };
+
+  const handleClearFilters = () => {
+    const clearedFilters = {
+      fechaInicio: '',
+      fechaFin: '',
+      sacramentos: []
+    };
+    setTempFilters(clearedFilters);
+    onFilterChange(clearedFilters);
   };
 
   return (
@@ -37,8 +53,8 @@ export default function DashboardFilters({ filters, onFilterChange, sacramentosL
                 <label className="block text-sm font-medium mb-2">Fecha de Inicio</label>
                 <input
                   type="date"
-                  value={filters.fechaInicio}
-                  onChange={(e) => onFilterChange({ ...filters, fechaInicio: e.target.value })}
+                  value={tempFilters.fechaInicio}
+                  onChange={(e) => setTempFilters({ ...tempFilters, fechaInicio: e.target.value })}
                   className="w-full px-3 py-2 rounded-lg border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark text-foreground-light dark:text-foreground-dark"
                 />
               </div>
@@ -47,8 +63,8 @@ export default function DashboardFilters({ filters, onFilterChange, sacramentosL
                 <label className="block text-sm font-medium mb-2">Fecha de Fin</label>
                 <input
                   type="date"
-                  value={filters.fechaFin}
-                  onChange={(e) => onFilterChange({ ...filters, fechaFin: e.target.value })}
+                  value={tempFilters.fechaFin}
+                  onChange={(e) => setTempFilters({ ...tempFilters, fechaFin: e.target.value })}
                   className="w-full px-3 py-2 rounded-lg border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark text-foreground-light dark:text-foreground-dark"
                 />
               </div>
@@ -57,14 +73,14 @@ export default function DashboardFilters({ filters, onFilterChange, sacramentosL
             {/* Sacramentos  */}
             <div>
               <label className="block text-sm font-medium mb-2">
-                Sacramentos ({filters.sacramentos?.length || 0} seleccionados)
+                Sacramentos ({tempFilters.sacramentos?.length || 0} seleccionados)
               </label>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {sacramentosList.map(s => (
                   <label key={s} className="flex items-center gap-2 cursor-pointer hover:bg-card-light dark:hover:bg-card-dark p-3 rounded-lg border border-border-light dark:border-border-dark transition-colors">
                     <input
                       type="checkbox"
-                      checked={filters.sacramentos?.includes(s) || false}
+                      checked={tempFilters.sacramentos?.includes(s) || false}
                       onChange={() => toggleSacramento(s)}
                       className="w-4 h-4 text-primary rounded focus:ring-primary"
                     />
@@ -77,17 +93,13 @@ export default function DashboardFilters({ filters, onFilterChange, sacramentosL
 
           <div className="mt-6 flex gap-3">
             <button
-              onClick={() => onFilterChange({
-                fechaInicio: '',
-                fechaFin: '',
-                sacramentos: []
-              })}
+              onClick={handleClearFilters}
               className="px-4 py-2 rounded-lg border border-border-light dark:border-border-dark text-sm font-medium hover:bg-background-light dark:hover:bg-background-dark transition-colors"
             >
               Limpiar Filtros
             </button>
             <button
-              onClick={() => setIsOpen(false)}
+              onClick={handleApplyFilters}
               className="px-4 py-2 rounded-lg bg-[#0f49bd] text-white text-sm font-medium hover:bg-[#0f49bd]/90 transition-colors"
             >
               Aplicar Filtros

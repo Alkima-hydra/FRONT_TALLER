@@ -46,7 +46,7 @@ export const fetchParroquiaById = createAsyncThunk(
       const response = await parroquiasApi.fetchParroquiaById(id);
       return response.parroquia || response;
     } catch (error) {
-      return rejectWithValue(error);
+      return rejectWithValue(error?.response?.data || error.message || error);
     }
   }
 );
