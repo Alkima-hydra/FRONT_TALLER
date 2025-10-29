@@ -27,14 +27,14 @@ const initialState = {
   error: null,
 };
 
-const UsuariosSlice = createSlice({
-  name: 'Usuarios',
+const usuariosSlice = createSlice({
+  name: 'usuarios',
   initialState,
   reducers: {
     clearError(state) {
       state.error = null;
     },
-    clearUsuarioSeleccionada(state) {
+    clearUsuarioSeleccionado(state) {
       state.usuarioSeleccionado = null;
     },
     resetPagination(state) {
@@ -53,7 +53,7 @@ const UsuariosSlice = createSlice({
       })
       .addCase(fetchUsuarios.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.Usuarios = action.payload.Usuarios;
+        state.usuarios = action.payload.usuarios;
         state.totalItems = action.payload.totalItems;
         state.totalPages = action.payload.totalPages;
         state.currentPage = action.payload.currentPage;
@@ -119,9 +119,9 @@ const UsuariosSlice = createSlice({
       .addCase(updateUsuario.fulfilled, (state, action) => {
         state.isUpdating = false;
         const updated = action.payload;
-        state.Usuarios = state.Usuarios.map(p => p.id === updated.id ? updated : p);
-        if (state.UsuarioSeleccionada?.id === updated.id) {
-          state.UsuarioSeleccionada = updated;
+        state.usuarios = state.usuarios.map(p => p.id === updated.id ? updated : p);
+        if (state.usuarioSeleccionado?.id === updated.id) {
+          state.usuarioSeleccionado = updated;
         }
       })
       .addCase(updateUsuario.rejected, (state, action) => {
@@ -151,25 +151,25 @@ const UsuariosSlice = createSlice({
 });
 
 // Acciones síncronas
-export const { clearError, clearUsuarioSeleccionada, resetPagination } = UsuariosSlice.actions;
+export const { clearError, clearUsuarioSeleccionado, resetPagination } = usuariosSlice.actions;
 
 // Selectores
-export const selectUsuarios = (state) => state.Usuarios.usuarios;
-export const selectTotalItems = (state) => state.Usuarios.totalItems;
-export const selectTotalPages = (state) => state.Usuarios.totalPages;
-export const selectCurrentPage = (state) => state.Usuarios.currentPage;
-export const selectAllUsuarios = (state) => state.Usuarios.allUsuarios;
-export const selectUsuarioSeleccionado = (state) => state.Usuarios.usuarioSeleccionado;
+export const selectUsuarios = (state) => state.usuarios.usuarios;
+export const selectTotalItems = (state) => state.usuarios.totalItems;
+export const selectTotalPages = (state) => state.usuarios.totalPages;
+export const selectCurrentPage = (state) => state.usuarios.currentPage;
+export const selectAllUsuarios = (state) => state.usuarios.allUsuarios;
+export const selectUsuarioSeleccionado = (state) => state.usuarios.usuarioSeleccionado;
 
 // Para loading maybe borrar si no tiene la wea esa que gira al cargar
-export const selectIsLoading = (state) => state.Usuarios.isLoading;
-export const selectIsLoadingAll = (state) => state.Usuarios.isLoadingAll;
-export const selectIsLoadingById = (state) => state.Usuarios.isLoadingById;
-export const selectError = (state) => state.Usuarios.error;
-export const selectIsCreating = (state) => state.Usuarios.isCreating;
-export const selectIsUpdating = (state) => state.Usuarios.isUpdating;
-export const selectIsDeleting = (state) => state.Usuarios.isDeleting;
+export const selectIsLoading = (state) => state.usuarios.isLoading;
+export const selectIsLoadingAll = (state) => state.usuarios.isLoadingAll;
+export const selectIsLoadingById = (state) => state.usuarios.isLoadingById;
+export const selectError = (state) => state.usuarios.error;
+export const selectIsCreating = (state) => state.usuarios.isCreating;
+export const selectIsUpdating = (state) => state.usuarios.isUpdating;
+export const selectIsDeleting = (state) => state.usuarios.isDeleting;
 
 // Exportar reducer
-export const UsuariosReducer = UsuariosSlice.reducer;
-export default UsuariosSlice.reducer;
+export const usuariosReducer = usuariosSlice.reducer;
+export default usuariosSlice.reducer;

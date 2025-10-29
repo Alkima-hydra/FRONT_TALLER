@@ -4,6 +4,7 @@ import Layout from '../../shared/components/layout/Layout';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   fetchUsuarios,
+  fetchAllUsuarios,
   fetchUsuarioById,
   createUsuario,
   updateUsuario,
@@ -15,33 +16,39 @@ import {
   selectUsuarioSeleccionado,
   selectIsCreating,
   selectIsUpdating,
-  selectIsDeleting
 } from './slices/usuariosSlice';
 
 
 export default function Usuarios() {
   const dispatch = useDispatch();
   const usuarios = useSelector(selectUsuarios);
+  const allUsuarios = useSelector(selectAllUsuarios);
   const isLoading = useSelector(selectIsLoading);
   const isCreating = useSelector(selectIsCreating);
   const isUpdating = useSelector(selectIsUpdating);
-  const isDeleting = useSelector(selectIsDeleting);
   const usuarioSeleccionado = useSelector(selectUsuarioSeleccionado);
-  const usuariosError = useSelector(selectUsuariosError);
   const [activeTab, setActiveTab] = useState('agregar')
   const [selectedUser, setSelectedUser] = useState(null)
 
   // ===== activos par a preparar consumo de API (sin endpoints aún) =====
   const [formAdd, setFormAdd] = useState({
     nombre: '',
+    apellido_paterno: '',
+    apellido_materno: '',
     email: '',
+    password: '',
+    fecha_nacimiento: '',
     rol: '',
     activo: '',
   })
 
   const [filters, setFilters] = useState({
     nombre: '',
+    apellido_paterno: '',
+    apellido_materno: '',
     email: '',
+    password: '',
+    fecha_nacimiento: '',
     rol: '',
     activo: '',
   })
@@ -86,22 +93,48 @@ export default function Usuarios() {
     }
   };
 
+  // ¿Hay filtros?
+  const hasFilters = Object.values(filters).some(
+    (value) => value !== '' && value !== null && value !== undefined
+  );
+
+  // Fuente de datos según filtros (como Personas)
+  const users = hasFilters ? usuarios : allUsuarios;
+
+  useEffect(() => {
+    dispatch(fetchAllUsuarios());
+  }, [dispatch]);
+
   useEffect(() => {
     if (usuarioSeleccionado) setSelectedUser(usuarioSeleccionado);
   }, [usuarioSeleccionado]);
 
   useEffect(() => {
     if (activeTab === 'buscar') {
-      dispatch(fetchUsuarios({}));
+      if (hasFilters) {
+        const query = {
+          nombre: filters.nombre?.trim() || undefined,
+          email: filters.email?.trim() || undefined,
+          rol: filters.rol || undefined,
+          activo: filters.activo === '' ? undefined : (filters.activo ? 'Activo' : 'Inactivo'),
+        };
+        dispatch(fetchUsuarios(query));
+      } else {
+        dispatch(fetchAllUsuarios());
+      }
     }
-  }, [activeTab, dispatch]);
+  }, [activeTab, hasFilters, filters, dispatch]);
 
   const handleCreate = async (e) => {
     e.preventDefault();
     // Normalizar activo: '' | 'true' | 'false'  => 'Activo' | 'Inactivo' | undefined
     const payload = {
       nombre: formAdd.nombre?.trim(),
+      apellido_paterno: formAdd.apellido_paterno?.trim() || undefined,
+      apellido_materno: formAdd.apellido_materno?.trim() || undefined,
       email: formAdd.email?.trim(),
+      password: formAdd.password || undefined,                 // requerido u opcional según tu backend
+      fecha_nacimiento: formAdd.fecha_nacimiento || undefined, // yyyy-mm-dd
       rol: formAdd.rol || '',
       activo: formAdd.activo === '' ? undefined : (formAdd.activo ? 'Activo' : 'Inactivo'),
     };
@@ -127,13 +160,21 @@ export default function Usuarios() {
     const query = {
       nombre: filters.nombre?.trim() || undefined,
       email: filters.email?.trim() || undefined,
+      apellido_paterno: filters.apellido_paterno?.trim() || undefined,
+      apellido_materno: filters.apellido_materno?.trim() || undefined,
+      fecha_nacimiento: filters.fecha_nacimiento || undefined,
       rol: filters.rol || undefined,
-      activo: filters.activo === '' ? undefined : (filters.activo ? 'Activo' : 'Inactivo'),
+      activo: formAdd.activo === '' ? undefined : Boolean(formAdd.activo),
     };
     try {
-      const action = await dispatch(fetchUsuarios(query));
-      console.debug('fetchUsuarios result:', action);
-      if (action.meta.requestStatus !== 'fulfilled') {
+      let action;
+      if (hasFilters) {
+        action = await dispatch(fetchUsuarios(query));
+      } else {
+        action = await dispatch(fetchAllUsuarios());
+      }
+      console.debug('search usuarios result:', action);
+      if (action.meta && action.meta.requestStatus !== 'fulfilled') {
         setToast({ type: 'error', message: extractError(action) });
       } else {
         setSelectedUser(null);
@@ -145,12 +186,12 @@ export default function Usuarios() {
   }
 
   const handleResetAdd = () => {
-    setFormAdd({ nombre: '', email: '', rol: '', activo: '' })
+    setFormAdd({ nombre: '', email: '', rol: '', activo: '', apellido_paterno: '', apellido_materno: '', password: '', fecha_nacimiento: '' });
   }
 
   const handleResetSearch = () => {
-    setFilters({ nombre: '', email: '', rol: '', activo: '' });
-    dispatch(fetchUsuarios({}));
+    setFilters({ nombre: '', email: '', rol: '', activo: '', apellido_paterno: '', apellido_materno: '', fecha_nacimiento: '' });
+    dispatch(fetchAllUsuarios());
     setSelectedUser(null);
   }
 
@@ -164,8 +205,14 @@ export default function Usuarios() {
     }
     const { id_usuario, id: _omit, ...data } = selectedUser;
     // Normalizar estado a 'Activo'|'Inactivo'
-    if (data.activo === true) data.activo = 'Activo';
-    if (data.activo === false) data.activo = 'Inactivo';
+   // Normalizar estado a boolean para backend
+    if (data.activo === 'Activo') data.activo = true;
+    if (data.activo === 'Inactivo') data.activo = false;
+    if (data.activo === 'true') data.activo = true;
+    if (data.activo === 'false') data.activo = false;
+    if (typeof data.activo !== 'boolean' && data.activo !== undefined && data.activo !== '') {
+      data.activo = Boolean(data.activo);
+    }
     try {
       const action = await dispatch(updateUsuario({ id, data }));
       console.debug('updateUsuario result:', action);
@@ -176,7 +223,7 @@ export default function Usuarios() {
           nombre: filters.nombre?.trim() || undefined,
           email: filters.email?.trim() || undefined,
           rol: filters.rol || undefined,
-          activo: filters.activo === '' ? undefined : (filters.activo ? 'Activo' : 'Inactivo'),
+           activo: filters.activo === '' ? undefined : Boolean(filters.activo),
         };
         dispatch(fetchUsuarios(query));
       } else {
@@ -220,26 +267,58 @@ export default function Usuarios() {
               <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Agregar Usuario</h3>
               <form className="grid grid-cols-1 md:grid-cols-2 gap-6" onSubmit={handleCreate}>
                 <div>
-            <label htmlFor="a-name" className="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">Nombre</label>
-            <input
-              id="a-name"
-              type="text"
-              placeholder="Nombre completo"
-              className="bg-background-light dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary focus:border-primary block w-full p-2.5"
-              value={formAdd.nombre}
-              onChange={(e)=>setFormAdd({ ...formAdd, nombre: e.target.value })}
-            />
+                  <label htmlFor="a-name" className="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">Nombre</label>
+                  <input
+                    id="a-name"
+                    type="text"
+                    placeholder="Nombre completo"
+                    className="bg-background-light dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary focus:border-primary block w-full p-2.5"
+                    value={formAdd.nombre}
+                    onChange={(e)=>setFormAdd({ ...formAdd, nombre: e.target.value })}
+                  />
                 </div>
                 <div>
-            <label htmlFor="a-email" className="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">Email</label>
-            <input
-              id="a-email"
-              type="email"
-              placeholder="correo@dominio.com"
-              className="bg-background-light dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary focus:border-primary block w-full p-2.5"
-              value={formAdd.email}
-              onChange={(e)=>setFormAdd({ ...formAdd, email: e.target.value })}
-            />
+                  <label htmlFor="a-lastp" className="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">Apellido paterno</label>
+                  <input
+                    id="a-lastp"
+                    type="text"
+                    placeholder="Apellido paterno"
+                    className="bg-background-light dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary focus:border-primary block w-full p-2.5"
+                    value={formAdd.apellido_paterno}
+                    onChange={(e)=>setFormAdd({ ...formAdd, apellido_paterno: e.target.value })}
+                  />
+                </div>
+                <div>
+                    <label htmlFor="a-lastm" className="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">Apellido materno</label>
+                    <input
+                      id="a-lastm"
+                      type="text"
+                      placeholder="Apellido materno"
+                      className="bg-background-light dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary focus:border-primary block w-full p-2.5"
+                      value={formAdd.apellido_materno}
+                      onChange={(e)=>setFormAdd({ ...formAdd, apellido_materno: e.target.value })}
+                    />
+                </div>
+                <div>
+                  <label htmlFor="a-birth" className="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">Fecha de nacimiento</label>
+                  <input
+                    id="a-birth"
+                    type="date"
+                    className="bg-background-light dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary focus:border-primary block w-full p-2.5"
+                    value={formAdd.fecha_nacimiento}
+                    onChange={(e)=>setFormAdd({ ...formAdd, fecha_nacimiento: e.target.value })}
+                  />
+                </div>
+                  <div>
+                <label htmlFor="a-email" className="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">Email</label>
+                  <input
+                    id="a-email"
+                    type="email"
+                    placeholder="correo@dominio.com"
+                    className="bg-background-light dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary focus:border-primary block w-full p-2.5"
+                    value={formAdd.email}
+                    onChange={(e)=>setFormAdd({ ...formAdd, email: e.target.value })}
+                  />
                 </div>
                 <div>
             <label htmlFor="a-role" className="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">Rol</label>
@@ -361,15 +440,16 @@ export default function Usuarios() {
                     {isLoading && (
                       <tr><td className="px-6 py-4" colSpan={5}>Cargando...</td></tr>
                     )}
-                    {!isLoading && usuarios.length === 0 && (
+                    {!isLoading && users.length === 0 && (
                       <tr><td className="px-6 py-4" colSpan={5}>Sin resultados</td></tr>
                     )}
-                    {!isLoading && usuarios.map((u) => (
+                    {!isLoading && users.map((u) => (
                       <tr
-                        key={u.id}
+                        key={u.id ?? u.id_usuario}
                         onClick={async () => {
+                          const rowId = u.id ?? u.id_usuario;
                           try {
-                            const action = await dispatch(fetchUsuarioById(u.id));
+                            const action = await dispatch(fetchUsuarioById(rowId));
                             if (action.meta.requestStatus !== 'fulfilled') {
                               setToast({ type: 'error', message: extractError(action) });
                             }
@@ -383,7 +463,7 @@ export default function Usuarios() {
                         <td className="px-6 py-4">{u.email}</td>
                         <td className="px-6 py-4"><span className="bg-primary/10 text-primary text-xs font-medium px-2.5 py-0.5 rounded-full">{u.rol}</span></td>
                         <td className="px-6 py-4">
-                          {u.activo === 'Activo' ? (
+                          {(u.activo === 'Activo' || u.activo === true || u.activo === 'true') ? (
                             <span className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300 text-xs font-medium px-2.5 py-0.5 rounded-full">Activo</span>
                           ) : (
                             <span className="bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-300 text-xs font-medium px-2.5 py-0.5 rounded-full">Inactivo</span>
@@ -438,12 +518,11 @@ export default function Usuarios() {
                       <label htmlFor="e-status" className="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">Estado</label>
                       <select
                         id="e-status"
-                        value={selectedUser.activo || ''}
-                        onChange={(e)=>setSelectedUser({ ...selectedUser, activo: e.target.value })}
+                        value={(selectedUser.activo === true || selectedUser.activo === 'true' || selectedUser.activo === 'Activo') ? 'true': (selectedUser.activo === false || selectedUser.activo === 'false' || selectedUser.activo === 'Inactivo') ? 'false' : ''} onChange={(e)=>setSelectedUser({ ...selectedUser, activo: e.target.value })}
                         className="bg-background-light dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary focus:border-primary block w-full p-2.5"
                       >
-                        <option value="Activo">Activo</option>
-                        <option value="Inactivo">Inactivo</option>
+                        <option value="true">Activo</option>
+                        <option value="false">Inactivo</option>
                       </select>
                     </div>
                     <div className="flex justify-end gap-4 pt-2">
