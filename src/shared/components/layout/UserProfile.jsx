@@ -1,5 +1,5 @@
 import { useSelector } from 'react-redux';
-import { selectUser } from '../../../features/login/slices/loginSlice';
+import { selectUser } from '../../../features/login/slices/loginSelectors';
 
 export default function UserProfile() {
   const user = useSelector(selectUser);

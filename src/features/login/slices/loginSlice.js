@@ -3,6 +3,7 @@ import { loginUser } from './loginThunks';
 
 const initialState = {
   user: {
+    uid: '',
     name: '',
     rol: '',
     email: '',
@@ -17,10 +18,10 @@ const loginSlice = createSlice({
   initialState,
   reducers: {
     logout(state) {
-      state.user = { name: '', email: '', rol: '', token: null };
-      state.isLoading = false;
-      state.error = null;
-    },
+    state.user = { uid: '', name: '', email: '', rol: '', token: null };
+    state.isLoading = false;
+    state.error = null;
+  },
   },
   extraReducers: (builder) => {
     builder
@@ -44,10 +45,6 @@ const loginSlice = createSlice({
 });
 
 export const { logout } = loginSlice.actions;
-
-export const selectUser = (state) => state.login.user;
-export const selectIsLoading = (state) => state.login.isLoading;
-export const selectError = (state) => state.login.error;
 
 export const loginReducer = loginSlice.reducer;
 
