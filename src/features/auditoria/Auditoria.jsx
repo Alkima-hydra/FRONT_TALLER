@@ -1,90 +1,203 @@
+import { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import Layout from '../../shared/components/layout/Layout';
+import FilterSection from './components/FilterSection';
+import AuditTable from './components/AuditTable';
+import DetailModal from './components/DetailModal';
+import Pagination from './components/Pagination';
+import { 
+  fetchAuditorias, 
+  setCurrentPage, 
+  setItemsPerPage 
+} from './slices/auditoriaSlice';
 
 export default function Auditoria() {
+  const dispatch = useDispatch();
+  
+  // Estado de Redux
+  const { 
+    data, 
+    total, 
+    currentPage, 
+    itemsPerPage, 
+    loading, 
+    error,
+    appliedFilters: reduxAppliedFilters 
+  } = useSelector((state) => state.auditoria);
+
+  // Estados locales
+  const [filters, setFilters] = useState({
+    startDate: '',
+    endDate: '',
+    minDuration: '',
+    maxDuration: '',
+    username: '',
+    appName: '',
+    httpMethod: '',
+    httpStatus: '',
+    ipAddress: '',
+    hasException: '',
+    correlationId: '',
+    endpoint: '',
+    userAgent: ''
+  });
+
+  const [appliedFilters, setAppliedFilters] = useState(filters);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Cargar datos iniciales
+  useEffect(() => {
+    dispatch(fetchAuditorias({
+      page: currentPage,
+      limit: itemsPerPage,
+      ...appliedFilters
+    }));
+  }, [dispatch, currentPage, itemsPerPage, appliedFilters]);
+
+  // Validación de filtros
+  const validateFilters = (filters) => {
+    const validated = { ...filters };
+    
+    // Validar fechas
+    if (validated.startDate && validated.endDate) {
+      const start = new Date(validated.startDate);
+      const end = new Date(validated.endDate);
+      if (start > end) {
+        alert('La fecha de inicio no puede ser mayor que la fecha de fin');
+        return null;
+      }
+    }
+    
+    // Validar duraciones
+    if (validated.minDuration && validated.maxDuration) {
+      const min = Number(validated.minDuration);
+      const max = Number(validated.maxDuration);
+      if (min < 0 || max < 0) {
+        alert('Las duraciones no pueden ser negativas');
+        return null;
+      }
+      if (min > max) {
+        alert('La duración mínima no puede ser mayor que la máxima');
+        return null;
+      }
+    }
+    
+    // Validar IP (formato básico)
+    if (validated.ipAddress && validated.ipAddress.trim()) {
+      const ipPattern = /^(\d{1,3}\.){3}\d{1,3}$/;
+      if (!ipPattern.test(validated.ipAddress.trim())) {
+        alert('El formato de la dirección IP no es válido');
+        return null;
+      }
+    }
+    
+    return validated;
+  };
+
+  const handleApplyFilters = () => {
+    const validated = validateFilters(filters);
+    if (validated) {
+      setAppliedFilters(validated);
+      dispatch(setCurrentPage(1));
+      dispatch(fetchAuditorias({
+        page: 1,
+        limit: itemsPerPage,
+        ...validated
+      }));
+    }
+  };
+
+  const handleClearFilters = () => {
+    const emptyFilters = {
+      startDate: '',
+      endDate: '',
+      minDuration: '',
+      maxDuration: '',
+      username: '',
+      appName: '',
+      httpMethod: '',
+      httpStatus: '',
+      ipAddress: '',
+      hasException: '',
+      correlationId: '',
+      endpoint: '',
+      userAgent: ''
+    };
+    setFilters(emptyFilters);
+    setAppliedFilters(emptyFilters);
+    dispatch(setCurrentPage(1));
+    dispatch(fetchAuditorias({
+      page: 1,
+      limit: itemsPerPage
+    }));
+  };
+
+  const handleViewDetails = (item) => {
+    setSelectedItem(item);
+    setIsModalOpen(true);
+  };
+
+  const handlePageChange = (page) => {
+    if (page >= 1 && page <= Math.ceil(total / itemsPerPage)) {
+      dispatch(setCurrentPage(page));
+    }
+  };
+
+  const handleItemsPerPageChange = (items) => {
+    dispatch(setItemsPerPage(items));
+  };
+
+  // Verificar si hay filtros activos
+  const hasActiveFilters = Object.values(appliedFilters).some(value => value !== '');
+
+  const totalPages = Math.ceil(total / itemsPerPage);
+
   return (
     <Layout title="Auditoría">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Auditoría</h1>
-        <button className="flex items-center gap-2 rounded bg-primary px-4 py-2 text-sm font-bold text-white hover:bg-primary/90">
-          <span className="material-symbols-outlined text-base">download</span>
-          <span>Exportar a CSV</span>
-        </button>
-      </div>
+      <div className="space-y-6">
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+            Error: {error}
+          </div>
+        )}
 
-      <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-end">
-        <div className="flex-1">
-          <label htmlFor="start-date" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Fecha de inicio</label>
-          <input id="start-date" type="date" className="mt-1 block w-full rounded border-gray-300 bg-white p-2 shadow-sm focus:border-primary focus:ring-primary dark:border-gray-700 dark:bg-gray-800 dark:text-white" />
-        </div>
-        <div className="flex-1">
-          <label htmlFor="end-date" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Fecha de fin</label>
-          <input id="end-date" type="date" className="mt-1 block w-full rounded border-gray-300 bg-white p-2 shadow-sm focus:border-primary focus:ring-primary dark:border-gray-700 dark:bg-gray-800 dark:text-white" />
-        </div>
-        <button className="h-10 rounded bg-gray-200 px-4 text-sm font-medium text-gray-800 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600">Filtrar</button>
-      </div>
+        <FilterSection
+          filters={filters}
+          onFilterChange={setFilters}
+          onApplyFilters={handleApplyFilters}
+          onClearFilters={handleClearFilters}
+          hasActiveFilters={hasActiveFilters}
+        />
 
-      <div className="mt-6 overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
-        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
-          <thead className="bg-gray-50 dark:bg-gray-800">
-            <tr>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Fecha</th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Usuario</th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Acción</th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Entidad</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-900">
-            <tr>
-              <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">2024-01-15 10:30</td>
-              <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">Usuario1</td>
-              <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">Creación</td>
-              <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">Bautizo</td>
-            </tr>
-            <tr>
-              <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">2024-01-15 11:00</td>
-              <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">Usuario2</td>
-              <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">Modificación</td>
-              <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">Matrimonio</td>
-            </tr>
-            <tr>
-              <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">2024-01-16 09:45</td>
-              <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">Usuario1</td>
-              <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">Eliminación</td>
-              <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">Defunción</td>
-            </tr>
-            <tr>
-              <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">2024-01-16 14:20</td>
-              <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">Usuario3</td>
-              <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">Creación</td>
-              <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">Confirmación</td>
-            </tr>
-            <tr>
-              <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">2024-01-17 16:10</td>
-              <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">Usuario2</td>
-              <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">Modificación</td>
-              <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">Bautizo</td>
-            </tr>
-            <tr>
-              <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">2024-01-18 11:55</td>
-              <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">Usuario1</td>
-              <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">Creación</td>
-              <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">Matrimonio</td>
-            </tr>
-            <tr>
-              <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">2024-01-18 15:30</td>
-              <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">Usuario3</td>
-              <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">Eliminación</td>
-              <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">Defunción</td>
-            </tr>
-            <tr>
-              <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">2024-01-19 10:00</td>
-              <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">Usuario2</td>
-              <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">Modificación</td>
-              <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">Confirmación</td>
-            </tr>
-          </tbody>
-        </table>
+        {loading ? (
+          <div className="flex justify-center items-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          </div>
+        ) : (
+          <AuditTable
+            data={data}
+            onViewDetails={handleViewDetails}
+          />
+        )}
+
+        {total > 0 && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+            itemsPerPage={itemsPerPage}
+            onItemsPerPageChange={handleItemsPerPageChange}
+            totalItems={total}
+          />
+        )}
+
+        <DetailModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          data={selectedItem}
+        />
       </div>
     </Layout>
-  )
+  );
 }
