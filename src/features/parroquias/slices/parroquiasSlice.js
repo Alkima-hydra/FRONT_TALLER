@@ -49,14 +49,15 @@ const parroquiasSlice = createSlice({
       })
       .addCase(fetchParroquias.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.parroquias = action.payload.parroquias;
-        state.totalItems = action.payload.totalItems;
-        state.totalPages = action.payload.totalPages;
-        state.currentPage = action.payload.currentPage;
+        state.parroquias = action.payload.parroquias || [];
+        state.totalItems = action.payload.totalItems || 0;
+        state.totalPages = action.payload.totalPages || 1;
+        state.currentPage = action.payload.currentPage || 1;
       })
       .addCase(fetchParroquias.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload?.message || 'Error al cargar parroquias';
+        state.parroquias = [];
       })
 
       // 🔹 fetchAllParroquias
@@ -87,7 +88,7 @@ const parroquiasSlice = createSlice({
         state.error = action.payload?.message || 'Error al cargar la parroquia';
       })
 
-      // 🔹 createParroquia
+      //  createParroquia
       .addCase(createParroquia.pending, (state) => {
         state.isSaving = true;
         state.error = null;
