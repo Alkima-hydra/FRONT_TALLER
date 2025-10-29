@@ -5,28 +5,13 @@ export const fetchPersonas = createAsyncThunk(
   'personas/fetchPersonas',
   async (filters = {}, { rejectWithValue }) => {
     try {
-      // Normalizar filtros: trim strings y eliminar vacíos
-      const isNonEmpty = (v) => v !== null && v !== undefined && (typeof v !== 'string' || v.trim() !== '');
-      const cleaned = Object.fromEntries(
-        Object.entries(filters || {})
-          .map(([k, v]) => [k, typeof v === 'string' ? v.trim() : v])
-          .filter(([, v]) => isNonEmpty(v))
-      );
-
-      console.log('[personasThunk] Filtros limpiados:', cleaned);
-
-      // Enviar como query params (GET) para que el backend filtre correctamente
-      const resp = await api.get('/personas', { params: cleaned });
-      const data = resp?.data ?? resp; // axios suele devolver .data
-      console.log('[personasThunk] Respuesta del servidor:', data);
-
-      // Unificar forma de retorno
-      const personas = data?.personas || data?.items || data;
-      console.log('[personasThunk] Personas obtenidas:', personas);
-      return { personas, totalItems: data?.totalItems, totalPages: data?.totalPages, currentPage: data?.currentPage };
+      console.log('[personasThunk] Enviando filtros:', filters);
+      const response = await personasApi.fetchPersonas(filters);
+      console.log('[personasThunk] Respuesta del servidor:', response);
+      console.log('[personasThunk] Personas obtenidas:', response.personas || response);
+      return response;
     } catch (error) {
-      console.error('[personasThunk] Error fetchPersonas:', error);
-      return rejectWithValue(error?.response?.data || error.message || error);
+      return rejectWithValue(error);
     }
   }
 );
