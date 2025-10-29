@@ -57,3 +57,8 @@ export const auditoriaApi = {
   fetchAuditorias: (params = {}) =>
     api.get('/auditoria/', { params }).then((res) => res.data).catch(handleError),
 };
+
+export const dashboardApi = {
+  fetchStats: (filters = {}) =>
+    api.get('/dashboard/stats', { params: filters }).then(res => res.data).catch(handleError),
+};

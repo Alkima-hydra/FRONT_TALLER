@@ -1,4 +1,13 @@
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchDashboardStats } from './slices/dashboardThunks';
+import {
+  selectKPIs,
+  selectTimeline,
+  selectCombinaciones,
+  selectIsLoading
+} from './slices/dashboardSlice';
+
 import KPICards from './components/KPICards';
 import DashboardFilters from './components/DashboardFilters';
 import SacramentosTimeline from './components/SacramentosTimeline';
@@ -13,13 +22,18 @@ const SACRAMENTO_COLORS = {
 };
 
 export default function Dashboard() {
-  const [filters, setFilters] = useState({
+  const dispatch = useDispatch();
+  const { personas, sacramentos, parroquias } = useSelector(selectKPIs);
+  const timelineData = useSelector(selectTimeline);
+  const personasSacramentoData = useSelector(selectCombinaciones);
+  const isLoading = useSelector(selectIsLoading);
+
+  const [filters, setFilters] = React.useState({
     fechaInicio: '',
     fechaFin: '',
     sacramentos: []
   });
 
-  // Sacramentos   
   const sacramentosList = [
     'Bautismo',
     'Primera Comunión',
@@ -27,31 +41,20 @@ export default function Dashboard() {
     'Matrimonio'
   ];
 
-  // Datos de KPIs
-  const kpiData = {
-    personas: 3450,
-    sacramentos: 5280,
-    parroquias: 8
-  };
+  useEffect(() => {
+    const params = {};
+    if (filters.fechaInicio) params.fechaInicio = filters.fechaInicio;
+    if (filters.fechaFin) params.fechaFin = filters.fechaFin;
+    if (filters.sacramentos.length > 0) {
+      params.sacramentos = filters.sacramentos; // axios lo convierte en sacramentos[]
+    }
 
-  // Datos por año
-  const timelineData = [
-    { periodo: '2020', bautismo: 445, confirmacion: 112, matrimonio: 78, comunion: 332 },
-    { periodo: '2021', bautismo: 512, confirmacion: 145, matrimonio: 95, comunion: 378 },
-    { periodo: '2022', bautismo: 598, confirmacion: 178, matrimonio: 112, comunion: 421 },
-    { periodo: '2023', bautismo: 645, confirmacion: 198, matrimonio: 128, comunion: 465 },
-    { periodo: '2024', bautismo: 689, confirmacion: 215, matrimonio: 142, comunion: 502 },
-  ];
+    dispatch(fetchDashboardStats(params));
+  }, [filters, dispatch]);
 
-  // Datos de personas por sacramento
-  const personasSacramentoData = [
-    { combinacion: 'Solo Bautismo', cantidad: 852, color: SACRAMENTO_COLORS.bautismo, sacramentos: ['bautismo'] },
-    { combinacion: 'Bautismo + Comunión', cantidad: 645, color: SACRAMENTO_COLORS.comunion, sacramentos: ['bautismo', 'comunion'] },
-    { combinacion: 'Bautismo + Comunión + Confirmación', cantidad: 412, color: SACRAMENTO_COLORS.confirmacion, sacramentos: ['bautismo', 'comunion', 'confirmacion'] },
-    { combinacion: 'Todos los Sacramentos', cantidad: 287, color: SACRAMENTO_COLORS.matrimonio, sacramentos: ['bautismo', 'comunion', 'confirmacion', 'matrimonio'] },
-    { combinacion: 'Bautismo + Confirmación', cantidad: 198, color: SACRAMENTO_COLORS.bautismo, sacramentos: ['bautismo', 'confirmacion'] },
-    { combinacion: 'Solo Matrimonio', cantidad: 156, color: SACRAMENTO_COLORS.matrimonio, sacramentos: ['matrimonio'] },
-  ];
+  if (isLoading) {
+    return <Layout title="Dashboard"><div>Cargando...</div></Layout>;
+  }
 
   return (
     <Layout title="Dashboard">
@@ -64,9 +67,9 @@ export default function Dashboard() {
         />
 
         <KPICards 
-          personas={kpiData.personas}
-          sacramentos={kpiData.sacramentos}
-          parroquias={kpiData.parroquias}
+          personas={personas}
+          sacramentos={sacramentos}
+          parroquias={parroquias}
         />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
