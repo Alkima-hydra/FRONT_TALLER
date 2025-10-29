@@ -7,6 +7,7 @@ import {
   fetchParroquias,
   fetchParroquiaById,
   createParroquia,
+  updateParroquia,
 } from './slices/parroquiasThunk';
 
 import {
@@ -94,6 +95,12 @@ export default function Parroquias() {
       setBoolSelected(true);
     }
   }, [parroquiaSeleccionada]);
+  const handleEditarParroquia = () => {
+    console.log('Editando parroquia:', parroquiaSeleccionada);
+    if (parroquiaSeleccionada && parroquiaSeleccionada.id_parroquia) {
+      dispatch(updateParroquia({ id: parroquiaSeleccionada.id_parroquia, data: parroquiaSeleccionada }));
+    }
+  };
   const handleCancelarEdicion = () => {
     dispatch(clearParroquiaSeleccionada());
     setBoolSelected(false); // 👈 RESETEAMOS LA BANDERA
@@ -279,66 +286,106 @@ export default function Parroquias() {
             {/* Editar Parroquia */}
             
             {boolSelected && (
-              <div className="mt-8 bg-white dark:bg-background-dark/50 rounded-xl shadow-sm p-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                  Editar Parroquia
-                </h3>
-                <form className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nombre</label>
-                    <input
-                      type="text"
-                      value={parroquiaSeleccionada.nombre || ''}
-                      readOnly
-                      className="w-full rounded-lg border border-gray-300 dark:border-gray-700 p-3 bg-background-light dark:bg-background-dark"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Dirección</label>
-                    <input
-                      type="text"
-                      value={parroquiaSeleccionada.direccion || ''}
-                      readOnly
-                      className="w-full rounded-lg border border-gray-300 dark:border-gray-700 p-3 bg-background-light dark:bg-background-dark"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Teléfono</label>
-                    <input
-                      type="text"
-                      value={parroquiaSeleccionada.telefono || ''}
-                      readOnly
-                      className="w-full rounded-lg border border-gray-300 dark:border-gray-700 p-3 bg-background-light dark:bg-background-dark"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
-                    <input
-                      type="text"
-                      value={parroquiaSeleccionada.email || ''}
-                      readOnly
-                      className="w-full rounded-lg border border-gray-300 dark:border-gray-700 p-3 bg-background-light dark:bg-background-dark"
-                    />
-                  </div>
-                  <div className="mt-4 col-span-2 flex justify-end gap-3">
-                  <button
-                      type="button"
-                      onClick={handleEditarParroquia}
-                      className="px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/40"
-                    >
-                      Editar
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleCancelarEdicion}
-                      className="px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/40"
-                    >
-                      Cerrar
-                    </button>
-                  </div>
-                </form>
-              </div>
-            )}
+  <div className="mt-8 bg-white dark:bg-background-dark/50 rounded-xl shadow-sm p-6">
+    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+      Editar Parroquia
+    </h3>
+
+    <form className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Nombre */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Nombre
+        </label>
+        <input
+          type="text"
+          value={parroquiaSeleccionada.nombre || ''}
+          onChange={(e) =>
+            setParroquiaSeleccionada({
+              ...parroquiaSeleccionada,
+              nombre: e.target.value,
+            })
+          }
+          className="w-full rounded-lg border border-gray-300 dark:border-gray-700 p-3 bg-background-light dark:bg-background-dark"
+        />
+      </div>
+
+      {/* Dirección */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Dirección
+        </label>
+        <input
+          type="text"
+          value={parroquiaSeleccionada.direccion || ''}
+          onChange={(e) =>
+            setParroquiaSeleccionada({
+              ...parroquiaSeleccionada,
+              direccion: e.target.value,
+            })
+          }
+          className="w-full rounded-lg border border-gray-300 dark:border-gray-700 p-3 bg-background-light dark:bg-background-dark"
+        />
+      </div>
+
+      {/* Teléfono */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Teléfono
+        </label>
+        <input
+          type="text"
+          value={parroquiaSeleccionada.telefono || ''}
+          onChange={(e) =>
+            setParroquiaSeleccionada({
+              ...parroquiaSeleccionada,
+              telefono: e.target.value,
+            })
+          }
+          className="w-full rounded-lg border border-gray-300 dark:border-gray-700 p-3 bg-background-light dark:bg-background-dark"
+        />
+      </div>
+
+      {/* Email */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Email
+        </label>
+        <input
+          type="text"
+          value={parroquiaSeleccionada.email || ''}
+          onChange={(e) =>
+            setParroquiaSeleccionada({
+              ...parroquiaSeleccionada,
+              email: e.target.value,
+            })
+          }
+          className="w-full rounded-lg border border-gray-300 dark:border-gray-700 p-3 bg-background-light dark:bg-background-dark"
+        />
+      </div>
+
+      {/* Botones */}
+      <div className="mt-4 col-span-2 flex justify-end gap-3">
+        <button
+          type="button"
+          onClick={handleEditarParroquia}
+          className="px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/40"
+        >
+          Editar
+        </button>
+
+        <button
+          type="button"
+          onClick={handleCancelarEdicion}
+          className="px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/40"
+        >
+          Cerrar
+        </button>
+      </div>
+    </form>
+  </div>
+)}
+
           </div>
         </>
       )}
