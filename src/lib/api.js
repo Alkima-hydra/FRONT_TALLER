@@ -45,8 +45,51 @@ export const personasApi = {
 
   fetchPersonaById: (id) =>
     api.get(`/personas/${id}`).then((res) => res.data).catch(handleError),
+
+  createPersona: (data) =>
+    api.post('/personas/new', data).then((res) => res.data).catch(handleError),
+
+  updatePersona: (id, data) =>
+    api.put(`/personas/${id}`, data).then((res) => res.data).catch(handleError),
+
+  deletePersona: (id) =>
+    api.patch(`/personas/${id}`).then((res) => res.data).catch(handleError),
+};
+export const usuariosApi = {
+  fetchUsuarios: (params = {}) =>
+    api.get('/usuarios/', { params }).then((res) => res.data).catch(handleError),
+
+  fetchAllUsuarios: () =>
+    api.get('/usuarios/all').then((res) => res.data).catch(handleError),
+
+  fetchUsuarioById: (id) =>
+    api.get(`/usuarios/${id}`).then((res) => res.data).catch(handleError),
+  createUsuario: (data) =>
+    api.post('/usuarios/new', data).then((res) => res.data).catch(handleError),
+
+  updateUsuario: (id, data) =>
+    api.put(`/usuarios/${id}`, data).then((res) => res.data).catch(handleError),
+
+  deleteUsuario: (id) =>
+    api.patch(`/usuarios/${id}`).then((res) => res.data).catch(handleError),
 };
 
+export const parroquiasApi = {
+  fetchParroquias: (params = {}) =>
+    api.get('/parroquias/', { params }).then((res) => res.data).catch(handleError),
+
+  fetchAllParroquias: () =>
+    api.get('/parroquias/all').then((res) => res.data).catch(handleError),
+
+  fetchParroquiaById: (id) =>
+    api.get(`/parroquias/${id}`).then((res) => res.data).catch(handleError),
+
+  createParroquia: (data) =>
+    api.post('/parroquias/new', data).then((res) => res.data).catch(handleError),
+
+  updateParroquia: (id, data) =>
+    api.put(`/parroquias/${id}`, data).then((res) => res.data).catch(handleError),
+};
 export const passwordApi = {
   solicitar: (email) => api.post('/password/solicitar', { email }),
   validar: (token) => api.get('/password/validar', { params: { token } }),
