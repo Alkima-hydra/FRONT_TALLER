@@ -13,7 +13,7 @@ export default function Certificados() {
     try {
       setLoading(true);
       const response = await fetch(
-        `http://localhost:3002/mostrar-certificado?filename=${plantilla}`,
+        `https://generador-documentos.onrender.com/mostrar-certificado?filename=${plantilla}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -42,7 +42,7 @@ export default function Certificados() {
     try {
       setLoading(true);
       const response = await fetch(
-        `http://localhost:3002/descargar-certificado?filename=${plantilla}`,
+        `https://generador-documentos.onrender.com/descargar-certificado?filename=${plantilla}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
