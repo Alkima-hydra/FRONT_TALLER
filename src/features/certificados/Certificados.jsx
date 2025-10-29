@@ -4,6 +4,7 @@ import Layout from '../../shared/components/layout/Layout';
 export default function Certificados() {
   const [persona, setPersona] = useState('');
   const [tipo, setTipo] = useState('Bautizo');
+  const [fecha, setFecha] = useState('24 de Marzo de 2025');
   const [plantilla, setPlantilla] = useState('bautizo-rellenable');
   const [pdfUrl, setPdfUrl] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -81,7 +82,7 @@ export default function Certificados() {
       return;
     }
 
-    const url = await previsualizarCertificado(persona, tipo.toLowerCase());
+    const url = await previsualizarCertificado(persona, fecha);
     if (url) setPdfUrl(url);
   };
 
@@ -91,7 +92,7 @@ export default function Certificados() {
       return;
     }
 
-    await descargarCertificado(persona, tipo.toLowerCase());
+    await descargarCertificado(persona, fecha);
   };
 
   return (
@@ -191,10 +192,11 @@ export default function Certificados() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium mb-1">Fecha Sacramento</label>
+                    <label htmlFor="fecha" className="block text-sm font-medium mb-1">Fecha Sacramento</label>
                     <input
+                      id="fecha"
                       type="text"
-                      value="2024-03-21"
+                      value={fecha}
                       readOnly
                       className="w-full p-2 rounded-lg bg-gray-100 dark:bg-gray-800 border border-border-light dark:border-border-dark text-gray-500 dark:text-gray-400 cursor-not-allowed"
                     />
