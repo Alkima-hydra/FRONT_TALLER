@@ -1,58 +1,74 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import Layout from '../../shared/components/layout/Layout';
 import DuplicatesMergeModal from './components/DuplicatesMergeModal';
+import {
+  fetchPersonas,
+  fetchAllPersonas,
+  fetchPersonaById,
+} from './slices/personasThunk';
+import {
+  selectIsLoading,
+  selectPersonas,
+  selectAllPersonas,
+  selectPersonaSeleccionada,
+} from './slices/personasSlice';
 
 export default function Personas() {
-  const [mergeOpen, setMergeOpen] = useState(false)
-  const [activeTab, setActiveTab] = useState('agregar') // pestaña activa
-  const [selectedPerson, setSelectedPerson] = useState(null)
+  const dispatch = useDispatch();
+  const isLoading = useSelector(selectIsLoading);
+  const personas = useSelector(selectPersonas);
+  const allPersonas = useSelector(selectAllPersonas);
+  const personaSeleccionada = useSelector(selectPersonaSeleccionada);
 
-  // parametros para consumir
-  const [formAdd, setFormAdd] = useState({
-    nombre: '',
-    apellido_paterno: '',
-    apellido_materno: '',
-    carnet_identidad: '',
-    fecha_nacimiento: '',
-    lugar_nacimiento: '',
-    nombre_padre: '',
-    nombre_madre: '',
-    activo: true,
-    estado: '',
-  })
+  const [mergeOpen, setMergeOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('agregar');
+  const [selectedPerson, setSelectedPerson] = useState(null);
 
-  const [filters, setFilters] = useState({
-    nombre: '',
-    apellido_paterno: '',
-    apellido_materno: '',
-    carnet_identidad: '',
-    fecha_nacimiento: '',
-    lugar_nacimiento: '',
-    nombre_padre: '',
-    nombre_madre: '',
-    activo: '', // '', 'true', 'false'
-    estado: '',
-  })
+  const [formAdd, setFormAdd] = useState({ /* ... */ });
+  const [filters, setFilters] = useState({ /* ... */ });
 
-  const [people, setPeople] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [saving, setSaving] = useState(false)
+  // Cargar todos al inicio
+  useEffect(() => {
+    dispatch(fetchAllPersonas());
+  }, [dispatch]);
+
+  // Sincronizar persona seleccionada
+  useEffect(() => {
+    setSelectedPerson(personaSeleccionada);
+  }, [personaSeleccionada]);
+
+  // ¿Hay filtros?
+  const hasFilters = Object.values(filters).some(
+    (value) => value !== '' && value !== null && value !== undefined
+  );
+
+  const people = hasFilters ? personas : allPersonas;
+  const loading = isLoading;
+
+  const handleSearch = (e) => {
+    if (e) e.preventDefault();
+    if (hasFilters) {
+      dispatch(fetchPersonas(filters));
+    } else {
+      dispatch(fetchAllPersonas());
+    }
+    setSelectedPerson(null);
+  };
+
+  const handleResetSearch = () => {
+    const clean = { /* todos en '' */ };
+    setFilters(clean);
+    dispatch(fetchAllPersonas());
+  };
+
+  const handleRowClick = (id) => {
+    dispatch(fetchPersonaById(id));
+  };
   
   const handleCreate = (e) => {
     e.preventDefault()
     createPerson(formAdd)
-  }
-
-  const handleSearch = (e) => {
-    if (e) e.preventDefault()
-    fetchPeople(filters)
-    setSelectedPerson(null)
-  }
-
-  const handleResetSearch = () => {
-    const clean = { nombre: '', apellido_paterno: '', apellido_materno: '', carnet_identidad: '', fecha_nacimiento: '', lugar_nacimiento: '', nombre_padre: '', nombre_madre: '', activo: '', estado: '' }
-    setFilters(clean)
-    fetchPeople(clean)
   }
 
   const handleUpdate = (e) => {
@@ -61,10 +77,6 @@ export default function Personas() {
     const { id, ...payload } = selectedPerson
     updatePerson(id, payload)
   }
-
-  useEffect(() => {
-    //para cargar datos iniciales
-  }, [])
 
   return (
     <Layout title="Gestión de Personas">

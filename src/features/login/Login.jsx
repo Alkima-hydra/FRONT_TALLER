@@ -1,20 +1,36 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { loginUser } from './slices/loginThunks';
+import { selectIsLoading, selectError } from './slices/loginSlice';
 import LoginPanel from './components/LoginPanel';
 import LoginForm from './components/LoginForm';
 import HeroPanel from './components/HeroPanel';
 
 export default function Login() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const isLoading = useSelector(selectIsLoading);
+  const error = useSelector(selectError);
+
   const [formData, setFormData] = useState({
-    username: '',
-    password: ''
+    email: '',
+    password: '',
   });
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleSubmit = () => {
-    // TODO : Consumir 
-    navigate('/dashboard');
+  const handleSubmit = async (e) => {
+    e?.preventDefault();
+    console.log('[Login] Enviando formulario:', formData);
+
+    const result = await dispatch(loginUser(formData));
+
+    if (loginUser.fulfilled.match(result)) {
+      console.log('[Login] Login exitoso, redirigiendo...');
+      navigate('/dashboard');
+    } else {
+      console.error('[Login] Falló el login:', result.payload);
+    }
   };
 
   return (
@@ -26,9 +42,11 @@ export default function Login() {
           setFormData={setFormData}
           showPassword={showPassword}
           setShowPassword={setShowPassword}
+          isLoading={isLoading}
+          error={error}
         />
       </LoginPanel>
-      
+
       <HeroPanel />
     </div>
   );
