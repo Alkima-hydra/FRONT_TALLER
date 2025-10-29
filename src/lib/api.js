@@ -54,3 +54,21 @@ export const personasApi = {
   deletePersona: (id) =>
     api.patch(`/personas/${id}`).then((res) => res.data).catch(handleError),
 };
+export const usuariosApi = {
+  fetchUsuarios: (params = {}) =>
+    api.get('/usuarios/', { params }).then((res) => res.data).catch(handleError),
+
+  fetchAllUsuarios: () =>
+    api.get('/usuarios/all').then((res) => res.data).catch(handleError),
+
+  fetchUsuarioById: (id) =>
+    api.get(`/usuarios/${id}`).then((res) => res.data).catch(handleError),
+  createUsuario: (data) =>
+    api.post('/usuarios/new', data).then((res) => res.data).catch(handleError),
+
+  updateUsuario: (id, data) =>
+    api.put(`/usuarios/${id}`, data).then((res) => res.data).catch(handleError),
+
+  deleteUsuario: (id) =>
+    api.patch(`/usuarios/${id}`).then((res) => res.data).catch(handleError),
+};
