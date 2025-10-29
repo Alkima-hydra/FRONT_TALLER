@@ -4,7 +4,6 @@ import { PersistGate } from 'redux-persist/integration/react';
 import { store, persistor } from './store/index';
 import Dashboard from './features/dashboard/Dashboard'
 import Login from './features/login/Login'
-import Registros from './features/registros/Registros'
 import Personas from './features/personas/Personas'
 import Auditoria from './features/auditoria/Auditoria'
 import Sacramentos from './features/sacramentos/Sacramentos'
@@ -21,7 +20,6 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Login />} />
           <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/registros" element={<Registros />} />
           <Route path="/personas" element={<Personas />} />
           <Route path="/sacramentos" element={<Sacramentos />} />
           <Route path="/usuarios" element={<Usuarios />} />

@@ -22,30 +22,32 @@ const loginSlice = createSlice({
     state.isLoading = false;
     state.error = null;
   },
+    clearError(state) {
+      state.error = null;
+    },
   },
   extraReducers: (builder) => {
     builder
       .addCase(loginUser.pending, (state) => {
         state.isLoading = true;
         state.error = null;
-        console.log('[loginSlice] Login pendiente...');
       })
       .addCase(loginUser.fulfilled, (state, action) => {
         state.isLoading = false;
         state.user = action.payload;
         state.error = null;
-        console.log('[loginSlice] Login exitoso:', action.payload);
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload || { message: 'Error desconocido' };
-        console.error('[loginSlice] Error en login:', state.error);
+        state.error = action.payload || { 
+          message: 'Error desconocido',
+          type: 'error'
+        };
       });
   },
 });
 
-export const { logout } = loginSlice.actions;
-
+export const { logout, clearError } = loginSlice.actions;
 export const loginReducer = loginSlice.reducer;
 
 export default loginSlice.reducer;
