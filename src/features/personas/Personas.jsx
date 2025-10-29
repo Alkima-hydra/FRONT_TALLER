@@ -54,6 +54,47 @@ export default function Personas() {
     setSelectedPerson(personaSeleccionada);
   }, [personaSeleccionada]);
 
+  // Extrae el mejor mensaje de error posible de un action (createAsyncThunk) o de un Error/axios
+  const extractError = (actionOrError) => {
+    try {
+      // Caso: action de createAsyncThunk (tiene meta y payload)
+      if (actionOrError && actionOrError.meta !== undefined) {
+        const p = actionOrError.payload;
+        if (p !== undefined) {
+          if (typeof p === 'string') return p;
+          if (p && typeof p === 'object') {
+            if (p.message) return p.message;
+            if (p.error) return typeof p.error === 'string' ? p.error : JSON.stringify(p.error);
+            if (p.errors) return Array.isArray(p.errors) ? p.errors.map(e => e?.message || e).join(' | ') : JSON.stringify(p.errors);
+            if (p.detail) return typeof p.detail === 'string' ? p.detail : JSON.stringify(p.detail);
+            return JSON.stringify(p);
+          }
+        }
+        // Si no hay payload, usar action.error
+        if (actionOrError.error) {
+          const ae = actionOrError.error;
+          if (typeof ae === 'string') return ae;
+          if (ae?.message) return ae.message;
+        }
+      }
+      // Caso: Error de axios u otros
+      const e = actionOrError;
+      if (e && e.response && e.response.data) {
+        const d = e.response.data;
+        if (typeof d === 'string') return d;
+        if (d.message) return d.message;
+        if (d.error) return typeof d.error === 'string' ? d.error : JSON.stringify(d.error);
+        if (d.errors) return Array.isArray(d.errors) ? d.errors.map(x => x?.message || x).join(' | ') : JSON.stringify(d.errors);
+        if (d.detail) return typeof d.detail === 'string' ? d.detail : JSON.stringify(d.detail);
+        return JSON.stringify(d);
+      }
+      if (e && e.message) return e.message;
+      return 'Error desconocido';
+    } catch (ex) {
+      return `Error inesperado: ${ex?.message || ex}`;
+    }
+  };
+
   // ¿Hay filtros?
   const hasFilters = Object.values(filters).some(
     (value) => value !== '' && value !== null && value !== undefined
@@ -85,17 +126,17 @@ export default function Personas() {
   const handleCreate = async (e) => {
     e.preventDefault();
     try {
-      dispatch(createPersona(formAdd));
+      const action = await dispatch(createPersona(formAdd));
+      console.debug('createPersona result:', action);
       if (action.meta.requestStatus === 'fulfilled') {
         setToast({ type: 'success', message: 'Persona creada correctamente.' });
-        // Opcional: recargar lista completa
         dispatch(fetchAllPersonas());
       } else {
-        const msg = action.payload?.message || 'No se pudo crear la persona';
-        setToast({ type: 'error', message: msg });
+        setToast({ type: 'error', message: extractError(action) });
       }
     } catch (err) {
-      setToast({ type: 'error', message: err?.message || 'Error inesperado al crear' });
+      console.error('createPersona threw:', err);
+      setToast({ type: 'error', message: extractError(err) });
     }
   }
 
@@ -113,6 +154,7 @@ export default function Personas() {
   const { id_persona, id: _, ...data } = selectedPerson; // excluye ambos del body
   try {
     const action = await dispatch(updatePersona({ id, data }));
+    console.debug('updatePersona result:', action);
     if (action.meta.requestStatus === 'fulfilled') {
       setToast({ type: 'success', message: 'Cambios guardados correctamente.' });
       if (hasFilters) {
@@ -121,11 +163,11 @@ export default function Personas() {
         dispatch(fetchAllPersonas());
       }
     } else {
-      const msg = action.payload?.message || 'No se pudo actualizar la persona';
-      setToast({ type: 'error', message: msg });
+      setToast({ type: 'error', message: extractError(action) });
     }
   } catch (err) {
-    setToast({ type: 'error', message: err?.message || 'Error inesperado al actualizar' });
+    console.error('updatePersona threw:', err);
+    setToast({ type: 'error', message: extractError(err) });
   }
 };
 
@@ -251,15 +293,17 @@ export default function Personas() {
                 />
               </div>
               <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="flex items-center gap-3">
-                  <input
+                <div>
+                  <label htmlFor="activo" className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1">Estado</label>
+                  <select
                     id="activo"
-                    type="checkbox"
-                    checked={formAdd.activo}
-                    onChange={e => setFormAdd({ ...formAdd, activo: e.target.checked })}
-                    className="h-4 w-4 border-gray-300 dark:border-gray-700 rounded"
-                  />
-                  <label htmlFor="activo" className="text-sm font-medium text-gray-700 dark:text-gray-300">Activo</label>
+                    value={String(!!formAdd.activo)}
+                    onChange={e => setFormAdd({ ...formAdd, activo: e.target.value === 'true' })}
+                    className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-2"
+                  >
+                    <option value="true">Activo</option>
+                    <option value="false">Inactivo</option>
+                  </select>
                 </div>
                 <div>
                   <label htmlFor="estado" className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1">Estado de verificación</label>
@@ -270,8 +314,8 @@ export default function Personas() {
                     className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-2"
                   >
                     <option value="">Seleccione</option>
-                    <option value="estado">Verificado</option>
-                    <option value="No estado">No Verificado</option>
+                    <option value="Verificado">Verificado</option>
+                    <option value="No verificado">No Verificado</option>
                   </select>
                 </div>
               </div>
@@ -293,6 +337,7 @@ export default function Personas() {
               </button>
               <button
                 type="reset"
+                onClick={() => setFormAdd({ nombre: '', apellido_paterno: '', apellido_materno: '', carnet_identidad: '', activo: false, estado: '' , fecha_nacimiento: '', lugar_nacimiento: '', nombre_padre: '', nombre_madre: ''})}
                 className="px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/40"
               >
                 Limpiar
@@ -566,15 +611,17 @@ export default function Personas() {
                     />
                   </div>
                   <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="flex items-center gap-3">
-                      <input
+                    <div>
+                      <label htmlFor="e-activo" className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1">Estado</label>
+                      <select
                         id="e-activo"
-                        type="checkbox"
-                        checked={!!selectedPerson.activo}
-                        onChange={e => setSelectedPerson({ ...selectedPerson, activo: e.target.checked })}
-                        className="h-4 w-4 border-gray-300 dark:border-gray-700 rounded"
-                      />
-                      <label htmlFor="e-activo" className="text-sm font-medium text-gray-700 dark:text-gray-300">Activo</label>
+                        value={String(!!selectedPerson.activo)}
+                        onChange={e => setSelectedPerson({ ...selectedPerson, activo: e.target.value === 'true' })}
+                        className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-2"
+                      >
+                        <option value="true">Activo</option>
+                        <option value="false">Inactivo</option>
+                      </select>
                     </div>
                     <div>
                       <label htmlFor="e-estado" className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1">Estado de verificación</label>
