@@ -10,6 +10,7 @@ export const loginUser = createAsyncThunk(
       console.log('[loginThunk] Respuesta del servidor:', response);
 
       return {
+        uid: response.uid || response.usuario?.uid || '',
         name: response.nombre || response.usuario?.nombre || 'Usuario',
         email: response.email || response.usuario?.email || '',
         rol: response.rol || response.usuario?.role || 'Usuario',

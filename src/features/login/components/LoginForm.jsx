@@ -1,4 +1,5 @@
 import InputField from './InputField';
+import { useNavigate } from 'react-router-dom';
 
 export default function LoginForm({ 
   onSubmit, 
@@ -11,6 +12,8 @@ export default function LoginForm({
     e.preventDefault();
     onSubmit();
   };
+
+  const navigate = useNavigate();
 
   return (
     <div className="space-y-6">
@@ -39,7 +42,7 @@ export default function LoginForm({
       <div className="flex items-center justify-between text-sm">
         <button 
           type="button"
-          onClick={() => alert('Funcionalidad de recuperación de contraseña')}
+          onClick={() => navigate('/reset-password')}
           className="font-medium text-primary hover:text-accent-gold transition-colors duration-200"
         >
           ¿Olvidaste tu contraseña?
@@ -53,19 +56,6 @@ export default function LoginForm({
       >
         Iniciar Sesión
       </button>
-
-      <div className="text-center pt-4">
-        <p className="text-sm text-muted-light dark:text-muted-dark">
-          ¿No tienes una cuenta?{' '}
-          <button 
-            type="button"
-            onClick={() => alert('Ir a registro')}
-            className="font-medium text-primary hover:text-accent-gold transition-colors duration-200"
-          >
-            Regístrate aquí
-          </button>
-        </p>
-      </div>
     </div>
   );
 }
