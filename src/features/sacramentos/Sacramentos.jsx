@@ -7,6 +7,112 @@ export default function Sacramentos() {
   const [selectedPerson, setSelectedPerson] = useState(null)
   const [tipoSacramento, setTipoSacramento] = useState('bautizo')
 
+  // --- Estados base para consumo (sin endpoints aún) ---
+  const [form, setForm] = useState({
+    // comunes a todos los sacramentos
+    personaId: null,                // persona que recibe el sacramento
+    padrinoId: null,                // persona seleccionada como padrino (opcional)
+    ministro: '',                   // ministro en texto por ahora
+    parroquiaId: null,              // institucion_parroquia_id
+    foja: '',
+    numero: '',
+    fecha_sacramento: '',           // yyyy-mm-dd
+    activo: true,
+  });
+
+  // Extras sólo para matrimonio (tabla matrimonio_detalle)
+  const [matrimonio, setMatrimonio] = useState({
+    esposoId: null,
+    esposaId: null,
+    lugar_ceremonia: '',
+    reg_civil: '',
+    numero_acta: '',
+  });
+
+  // Filtros para buscar/editar
+  const [filters, setFilters] = useState({
+    nombre: '',
+    apellido_paterno: '',
+    apellido_materno: '',
+    carnet_identidad: '',
+    fecha_nacimiento: '',
+    lugar_nacimiento: '',
+    activo: '',
+  });
+
+  // Resultados de búsqueda (fake por ahora) y selección
+  const [results, setResults] = useState([]);
+
+  // --- Helpers ---
+  const handleChange = (key, value) => setForm(prev => ({ ...prev, [key]: value }));
+  const handleMatChange = (key, value) => setMatrimonio(prev => ({ ...prev, [key]: value }));
+
+  const resetForm = () => {
+    setForm({ personaId: null, padrinoId: null, ministro: '', parroquiaId: null, foja: '', numero: '', fecha_sacramento: '', activo: true });
+    setMatrimonio({ esposoId: null, esposaId: null, lugar_ceremonia: '', reg_civil: '', numero_acta: '' });
+  };
+
+  // Construye el payload listo para enviar según el tipo
+  const buildPayload = () => {
+    const base = {
+      sacramento: {
+        fecha_sacramento: form.fecha_sacramento || null,
+        foja: form.foja || null,
+        numero: form.numero || null,
+        tipo_sacramento_id: tipoSacramento,           // por ahora guardamos la clave tal cual (bautizo/comunion/matrimonio)
+        institucion_parroquia_id: form.parroquiaId || null,
+        activo: !!form.activo,
+      },
+      relaciones: {
+        persona_principal_id: form.personaId,
+        padrino_id: form.padrinoId || null,
+        ministro: form.ministro || null,
+      },
+    };
+    if (tipoSacramento === 'matrimonio') {
+      base.relaciones.persona_principal_id = null; // en matrimonio usamos esposo/esposa
+      base.matrimonio_detalle = {
+        esposo_id: matrimonio.esposoId,
+        esposa_id: matrimonio.esposaId,
+        lugar_ceremonia: matrimonio.lugar_ceremonia || null,
+        reg_civil: matrimonio.reg_civil || null,
+        numero_acta: matrimonio.numero_acta || null,
+      };
+    }
+    return base;
+  };
+
+  // Envío de Agregar (simulado)
+  const handleSubmitAgregar = (e) => {
+    e.preventDefault();
+    const payload = buildPayload();
+    console.log('[SACRAMENTOS] Crear payload →', payload);
+    // TODO: dispatch thunk createSacramento(payload)
+  };
+
+  // Buscar (simulado)
+  const handleBuscar = (e) => {
+    e?.preventDefault?.();
+    console.log('[SACRAMENTOS] Buscar con filtros:', filters, 'tipo:', tipoSacramento);
+    // TODO: dispatch thunk fetchSacramentos({ ...filters, tipo: tipoSacramento })
+    // Simulación de resultados
+    setResults([
+      { id: 1, nombre: 'Carlos', apellido_paterno: 'Mendoza', apellido_materno: 'Pérez', carnet_identidad: '6789012 LP', fecha_nacimiento: '1990-01-10', lugar_nacimiento: 'La Paz', activo: true },
+      { id: 2, nombre: 'Ana', apellido_paterno: 'Rodríguez', apellido_materno: 'Guzmán', carnet_identidad: '3456789 CB', fecha_nacimiento: '1995-04-18', lugar_nacimiento: 'Cochabamba', activo: false },
+    ]);
+  };
+
+  const handleSelectResultado = (row) => {
+    setSelectedPerson(row);
+    // TODO: cargar datos específicos del sacramento seleccionado si es necesario
+  };
+
+  const handleGuardarEdicion = (e) => {
+    e.preventDefault();
+    console.log('[SACRAMENTOS] Guardar edición de', selectedPerson, '→ payload aún por definir según API');
+    // TODO: dispatch thunk updateSacramento(id, data)
+  };
+
   return (
     <Layout title="Gestión de Sacramentos">
       {/* Selector de tipo de sacramento */}
@@ -72,53 +178,28 @@ export default function Sacramentos() {
               <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary">{tipoSacramento === 'comunion' ? 'Primera Comunión' : tipoSacramento.charAt(0).toUpperCase() + tipoSacramento.slice(1)}</span>
             </div>
           </div>
-          <form className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="nombre">Nombre</label>
-                <input id="nombre" placeholder="Ingrese el nombre" type="text"
-                  className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3" />
+          <form className="p-6" onSubmit={handleSubmitAgregar}>
+            {/* Campo para buscar la persona que recibió el sacramento (solo Bautizo y Primera Comunión) */}
+            {(tipoSacramento === 'bautizo' || tipoSacramento === 'comunion') && (
+              <div className="mt-2 mb-6">
+                <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3">
+                  Persona que recibió el {tipoSacramento === 'comunion' ? 'Primera Comunión' : 'Bautizo'}
+                </h4>
+                <div className="relative">
+                  <input
+                    type="search"
+                    placeholder="Buscar persona (nombre o CI registrado)"
+                    value={form.personaId ? `ID seleccionado: ${form.personaId}` : ''}
+                    onChange={(e) => handleChange('personaId', null)}
+                    className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3 pr-10"
+                  />
+                  <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">search</span>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Busque la persona registrada en la base de datos que se bautizó o realizó la comunión.
+                </p>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="apellido_paterno">Apellido paterno</label>
-                <input id="apellido_paterno" placeholder="Ingrese el apellido paterno" type="text"
-                  className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="apellido_materno">Apellido materno</label>
-                <input id="apellido_materno" placeholder="Ingrese el apellido materno" type="text"
-                  className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="carnet_identidad">Carnet de identidad</label>
-                <input id="carnet_identidad" placeholder="Ingrese el CI" type="text"
-                  className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="fecha_nacimiento">Fecha de nacimiento</label>
-                <input id="fecha_nacimiento" type="date"
-                  className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="lugar_nacimiento">Lugar de nacimiento</label>
-                <input id="lugar_nacimiento" placeholder="Ingrese el lugar" type="text"
-                  className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="nombre_padre">Nombre del padre</label>
-                <input id="nombre_padre" placeholder="Ingrese el nombre del padre" type="text"
-                  className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="nombre_madre">Nombre de la madre</label>
-                <input id="nombre_madre" placeholder="Ingrese el nombre de la madre" type="text"
-                  className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3" />
-              </div>
-              <div className="md:col-span-2 flex items-center gap-3">
-                <input id="activo" type="checkbox" className="h-4 w-4 border-gray-300 dark:border-gray-700 rounded" />
-                <label htmlFor="activo" className="text-sm font-medium text-gray-700 dark:text-gray-300">Activo</label>
-              </div>
-            </div>
+            )}
             {/* Campos específicos para Bautizo y Confirmación (sin foja) */}
             {(tipoSacramento === 'bautizo' || tipoSacramento === 'comunion') && (
               <div className="mt-6">
@@ -130,6 +211,8 @@ export default function Sacramentos() {
                       <input
                         type="search"
                         placeholder="Buscar padrino (persona registrada)"
+                        value={form.padrinoId ? `ID seleccionado: ${form.padrinoId}` : ''}
+                        onChange={() => handleChange('padrinoId', null)}
                         className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3 pr-10"
                       />
                       <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">search</span>
@@ -141,14 +224,42 @@ export default function Sacramentos() {
                     <input
                       type="text"
                       placeholder="Nombre del ministro"
+                      value={form.ministro}
+                      onChange={e => handleChange('ministro', e.target.value)}
                       className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Número de Acta</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Parroquia</label>
+                    <div className="relative">
+                      <input
+                        type="search"
+                        placeholder="Buscar parroquia (nombre registrada)"
+                        value={form.parroquiaId ? `ID seleccionado: ${form.parroquiaId}` : ''}
+                        onChange={() => handleChange('parroquiaId', null)}
+                        className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3 pr-10"
+                      />
+                      <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">search</span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">Escriba el nombre para buscar en Parroquias registradas.</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Foja</label>
                     <input
                       type="text"
                       placeholder="Ej. 123-A"
+                      value={form.foja}
+                      onChange={e => handleChange('foja', e.target.value)}
+                      className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Número</label>
+                    <input
+                      type="text"
+                      placeholder="Ej. 123-A"
+                      value={form.numero}
+                      onChange={e => handleChange('numero', e.target.value)}
                       className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3"
                     />
                   </div>
@@ -156,6 +267,135 @@ export default function Sacramentos() {
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fecha del Sacramento</label>
                     <input
                       type="date"
+                      value={form.fecha_sacramento}
+                      onChange={e => handleChange('fecha_sacramento', e.target.value)}
+                      className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+            {/* Campos específicos para Matrimonio */}
+            {tipoSacramento === 'matrimonio' && (
+              <div className="mt-6">
+                <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3">Detalles del Matrimonio</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Esposo</label>
+                    <div className="relative">
+                      <input
+                        type="search"
+                        placeholder="Buscar esposo (persona registrada)"
+                        value={matrimonio.esposoId ? `ID seleccionado: ${matrimonio.esposoId}` : ''}
+                        onChange={() => handleMatChange('esposoId', null)}
+                        className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3 pr-10"
+                      />
+                      <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">search</span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">Busque la persona registrada en la base de datos que corresponde al esposo.</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Esposa</label>
+                    <div className="relative">
+                      <input
+                        type="search"
+                        placeholder="Buscar esposa (persona registrada)"
+                        value={matrimonio.esposaId ? `ID seleccionado: ${matrimonio.esposaId}` : ''}
+                        onChange={() => handleMatChange('esposaId', null)}
+                        className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3 pr-10"
+                      />
+                      <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">search</span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">Busque la persona registrada en la base de datos que corresponde a la esposa.</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Lugar de la Ceremonia</label>
+                    <input
+                      type="text"
+                      placeholder="Lugar donde se realizó el matrimonio"
+                      value={matrimonio.lugar_ceremonia}
+                      onChange={e => handleMatChange('lugar_ceremonia', e.target.value)}
+                      className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Acta del Registro Civil</label>
+                    <input
+                      type="text"
+                      placeholder="Ej. 123/2025 - Oficialía X"
+                      value={matrimonio.reg_civil}
+                      onChange={e => handleMatChange('reg_civil', e.target.value)}
+                      className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Número de Acta</label>
+                    <input
+                      type="text"
+                      placeholder="Ej. 0456 / Libro 23"
+                      value={matrimonio.numero_acta}
+                      onChange={e => handleMatChange('numero_acta', e.target.value)}
+                      className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Padrino</label>
+                    <div className="relative">
+                      <input
+                        type="search"
+                        placeholder="Buscar padrino (persona registrada)"
+                        value={form.padrinoId ? `ID seleccionado: ${form.padrinoId}` : ''}
+                        onChange={() => handleChange('padrinoId', null)}
+                        className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3 pr-10"
+                      />
+                      <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">search</span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">Escriba nombre o CI para buscar en Personas.</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ministro</label>
+                    <input
+                      type="text"
+                      placeholder="Nombre del ministro"
+                      value={form.ministro}
+                      onChange={e => handleChange('ministro', e.target.value)}
+                      className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Parroquia</label>
+                    <div className="relative">
+                      <input
+                        type="search"
+                        placeholder="Buscar parroquia (nombre registrada)"
+                        value={form.parroquiaId ? `ID seleccionado: ${form.parroquiaId}` : ''}
+                        onChange={() => handleChange('parroquiaId', null)}
+                        className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3 pr-10"
+                      />
+                      <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">search</span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">Escriba el nombre para buscar en Parroquias registradas.</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Foja</label>
+                    <input
+                      type="text"
+                      placeholder="Ej. 123-A"
+                      value={form.foja}
+                      onChange={e => handleChange('foja', e.target.value)}
+                      className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Número</label>
+                    <input
+                      type="text"
+                      placeholder="Ej. 123-A"
+                      value={form.numero}
+                      onChange={e => handleChange('numero', e.target.value)}
                       className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3"
                     />
                   </div>
@@ -170,7 +410,8 @@ export default function Sacramentos() {
                 Registrar Sacramento
               </button>
               <button
-                type="reset"
+                type="button"
+                onClick={resetForm}
                 className="px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/40"
               >
                 Limpiar
@@ -194,39 +435,67 @@ export default function Sacramentos() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="f-nombre">Nombre</label>
-                  <input id="f-nombre" placeholder="Nombre" type="text" className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3" />
+                  <input id="f-nombre" placeholder="Nombre" type="text"
+                    value={filters.nombre}
+                    onChange={e => setFilters(f => ({ ...f, nombre: e.target.value }))}
+                    className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="f-apellido_paterno">Apellido paterno</label>
-                  <input id="f-apellido_paterno" placeholder="Apellido paterno" type="text" className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3" />
+                  <input id="f-apellido_paterno" placeholder="Apellido paterno" type="text"
+                    value={filters.apellido_paterno}
+                    onChange={e => setFilters(f => ({ ...f, apellido_paterno: e.target.value }))}
+                    className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="f-apellido_materno">Apellido materno</label>
-                  <input id="f-apellido_materno" placeholder="Apellido materno" type="text" className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3" />
+                  <input id="f-apellido_materno" placeholder="Apellido materno" type="text"
+                    value={filters.apellido_materno}
+                    onChange={e => setFilters(f => ({ ...f, apellido_materno: e.target.value }))}
+                    className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="f-carnet_identidad">Carnet de identidad</label>
-                  <input id="f-carnet_identidad" placeholder="CI" type="text" className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3" />
+                  <input id="f-carnet_identidad" placeholder="CI" type="text"
+                    value={filters.carnet_identidad}
+                    onChange={e => setFilters(f => ({ ...f, carnet_identidad: e.target.value }))}
+                    className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="f-fecha_nacimiento">Fecha de nacimiento</label>
-                  <input id="f-fecha_nacimiento" type="date" className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3" />
+                  <input id="f-fecha_nacimiento" type="date"
+                    value={filters.fecha_nacimiento}
+                    onChange={e => setFilters(f => ({ ...f, fecha_nacimiento: e.target.value }))}
+                    className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="f-lugar_nacimiento">Lugar de nacimiento</label>
-                  <input id="f-lugar_nacimiento" placeholder="Lugar" type="text" className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3" />
+                  <input id="f-lugar_nacimiento" placeholder="Lugar" type="text"
+                    value={filters.lugar_nacimiento}
+                    onChange={e => setFilters(f => ({ ...f, lugar_nacimiento: e.target.value }))}
+                    className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3" />
                 </div>
-                <div>
+                {/* Estos campos no están en filters de ejemplo, pero pueden añadirse si se desea */}
+                {/* <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="f-nombre_padre">Nombre del padre</label>
-                  <input id="f-nombre_padre" placeholder="Padre" type="text" className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3" />
+                  <input id="f-nombre_padre" placeholder="Padre" type="text"
+                    value={filters.nombre_padre || ''}
+                    onChange={e => setFilters(f => ({ ...f, nombre_padre: e.target.value }))}
+                    className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="f-nombre_madre">Nombre de la madre</label>
-                  <input id="f-nombre_madre" placeholder="Madre" type="text" className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3" />
-                </div>
+                  <input id="f-nombre_madre" placeholder="Madre" type="text"
+                    value={filters.nombre_madre || ''}
+                    onChange={e => setFilters(f => ({ ...f, nombre_madre: e.target.value }))}
+                    className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3" />
+                </div> */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="f-activo">Estado</label>
-                  <select id="f-activo" className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3">
+                  <select id="f-activo"
+                    value={filters.activo}
+                    onChange={e => setFilters(f => ({ ...f, activo: e.target.value }))}
+                    className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3">
                     <option value="">Todos</option>
                     <option value="true">Activo</option>
                     <option value="false">Inactivo</option>
@@ -234,7 +503,7 @@ export default function Sacramentos() {
                 </div>
               </div>
               <div className="mt-6 flex items-center gap-3">
-                <button type="button" className="inline-flex items-center px-5 py-2.5 rounded-lg bg-primary text-white font-medium hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">Buscar</button>
+                <button type="button" onClick={handleBuscar} className="inline-flex items-center px-5 py-2.5 rounded-lg bg-primary text-white font-medium hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">Buscar</button>
                 <button type="reset" className="px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/40">Limpiar</button>
               </div>
             </form>
@@ -259,37 +528,34 @@ export default function Sacramentos() {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr
-                    onClick={() => setSelectedPerson({ id: 1, nombre: 'Carlos', apellido_paterno: 'Mendoza', apellido_materno: 'Pérez', carnet_identidad: '6789012 LP', fecha_nacimiento: '1990-01-10', lugar_nacimiento: 'La Paz', nombre_padre: 'Juan Mendoza', nombre_madre: 'María Pérez', activo: true })}
-                    className="cursor-pointer bg-white dark:bg-background-dark/50 border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
-                  >
-                    <td className="px-6 py-4">Carlos</td>
-                    <td className="px-6 py-4">Mendoza</td>
-                    <td className="px-6 py-4">Pérez</td>
-                    <td className="px-6 py-4">6789012 LP</td>
-                    <td className="px-6 py-4">1990-01-10</td>
-                    <td className="px-6 py-4">La Paz</td>
-                    <td className="px-6 py-4"><span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">Activo</span></td>
-                  </tr>
-                  <tr
-                    onClick={() => setSelectedPerson({ id: 2, nombre: 'Ana', apellido_paterno: 'Rodríguez', apellido_materno: 'Guzmán', carnet_identidad: '3456789 CB', fecha_nacimiento: '1995-04-18', lugar_nacimiento: 'Cochabamba', nombre_padre: 'Pedro Rodríguez', nombre_madre: 'Elena Guzmán', activo: false })}
-                    className="cursor-pointer bg-white dark:bg-background-dark/50 hover:bg-gray-50 dark:hover:bg-gray-800"
-                  >
-                    <td className="px-6 py-4">Ana</td>
-                    <td className="px-6 py-4">Rodríguez</td>
-                    <td className="px-6 py-4">Guzmán</td>
-                    <td className="px-6 py-4">3456789 CB</td>
-                    <td className="px-6 py-4">1995-04-18</td>
-                    <td className="px-6 py-4">Cochabamba</td>
-                    <td className="px-6 py-4"><span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">Inactivo</span></td>
-                  </tr>
+                  {results.map(row => (
+                    <tr
+                      key={row.id}
+                      onClick={() => handleSelectResultado(row)}
+                      className="cursor-pointer bg-white dark:bg-background-dark/50 border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
+                    >
+                      <td className="px-6 py-4">{row.nombre}</td>
+                      <td className="px-6 py-4">{row.apellido_paterno}</td>
+                      <td className="px-6 py-4">{row.apellido_materno}</td>
+                      <td className="px-6 py-4">{row.carnet_identidad}</td>
+                      <td className="px-6 py-4">{row.fecha_nacimiento}</td>
+                      <td className="px-6 py-4">{row.lugar_nacimiento}</td>
+                      <td className="px-6 py-4">
+                        {row.activo ? (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">Activo</span>
+                        ) : (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">Inactivo</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
             {selectedPerson && (
               <div className="mt-8 bg-white dark:bg-background-dark/50 rounded-xl shadow-sm p-6">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Editar Sacramento</h3>
-                <form className="grid grid-cols-1 md-grid-cols-2 md:grid-cols-2 gap-6">
+                <form className="grid grid-cols-1 md-grid-cols-2 md:grid-cols-2 gap-6" onSubmit={handleGuardarEdicion}>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nombre</label>
                     <input type="text" value={selectedPerson.nombre} onChange={() => {}} className="w-full rounded-lg border border-gray-300 dark:border-gray-700 p-3 bg-background-light dark:bg-background-dark" />
@@ -316,11 +582,11 @@ export default function Sacramentos() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nombre del padre</label>
-                    <input type="text" value={selectedPerson.nombre_padre} onChange={() => {}} className="w-full rounded-lg border border-gray-300 dark:border-gray-700 p-3 bg-background-light dark:bg-background-dark" />
+                    <input type="text" value={selectedPerson.nombre_padre || ''} onChange={() => {}} className="w-full rounded-lg border border-gray-300 dark:border-gray-700 p-3 bg-background-light dark:bg-background-dark" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nombre de la madre</label>
-                    <input type="text" value={selectedPerson.nombre_madre} onChange={() => {}} className="w-full rounded-lg border border-gray-300 dark:border-gray-700 p-3 bg-background-light dark:bg-background-dark" />
+                    <input type="text" value={selectedPerson.nombre_madre || ''} onChange={() => {}} className="w-full rounded-lg border border-gray-300 dark:border-gray-700 p-3 bg-background-light dark:bg-background-dark" />
                   </div>
                   {/* Campos específicos para Bautizo y Confirmación (sin foja) en edición */}
                   {(tipoSacramento === 'bautizo' || tipoSacramento === 'comunion') && (
@@ -341,6 +607,17 @@ export default function Sacramentos() {
                         <div>
                           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ministro</label>
                           <input type="text" placeholder="Nombre del ministro" className="w-full rounded-lg border border-gray-300 dark:border-gray-700 p-3 bg-background-light dark:bg-background-dark" />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Parroquia</label>
+                          <div className="relative">
+                            <input
+                              type="search"
+                              placeholder="Buscar parroquia (nombre registrada)"
+                              className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3 pr-10"
+                            />
+                            <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">search</span>
+                          </div>
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Número de Acta</label>
