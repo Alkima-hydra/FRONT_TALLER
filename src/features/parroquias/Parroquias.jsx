@@ -109,6 +109,16 @@ export default function Parroquias() {
   // ====== RENDER ======
   return (
     <Layout title="Gestión de Parroquias">
+      {toast && (
+        <div className={`fixed top-5 right-5 z-50 px-4 py-3 rounded-lg shadow-lg text-white ${toast.type === 'success' ? 'bg-green-600' : 'bg-red-600'}`}>
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-white/90">
+              {toast.type === 'success' ? 'check_circle' : 'error'}
+            </span>
+            <span className="text-sm font-medium">{toast.message}</span>
+          </div>
+        </div>
+      )}
       {/* Tabs */}
       <div className="flex gap-1 mb-6 border-b border-gray-200 dark:border-gray-700">
         <button
@@ -394,3 +404,4 @@ export default function Parroquias() {
     </Layout>
   );
 }
+
