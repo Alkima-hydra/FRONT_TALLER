@@ -199,7 +199,7 @@ export default function Personas() {
                   <label htmlFor="activo" className="text-sm font-medium text-gray-700 dark:text-gray-300">Activo</label>
                 </div>
                 <div>
-                  <label htmlFor="estado" className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1">Estado</label>
+                  <label htmlFor="estado" className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1">Estado de verificación</label>
                   <select
                     id="estado"
                     value={formAdd.estado}
@@ -341,7 +341,7 @@ export default function Personas() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="f-estado">estado</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="f-estado">Estado de verificación</label>
                   <select
                     id="f-estado"
                     value={filters.estado}
@@ -349,8 +349,8 @@ export default function Personas() {
                     className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3"
                   >
                     <option value="">Todos</option>
-                    <option value="estado">estado</option>
-                    <option value="No estado">No estado</option>
+                    <option value="estado">Verificado</option>
+                    <option value="No estado">No verificado</option>
                   </select>
                 </div>
               </div>
@@ -377,7 +377,7 @@ export default function Personas() {
                     <th className="px-6 py-3" scope="col">Fecha nac.</th>
                     <th className="px-6 py-3" scope="col">Lugar nac.</th>
                     <th className="px-6 py-3" scope="col">Estado</th>
-                    <th className="px-6 py-3" scope="col">estado</th>
+                    <th className="px-6 py-3" scope="col">Estado de verificación</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -407,10 +407,10 @@ export default function Personas() {
                         )}
                       </td>
                       <td className="px-6 py-4">
-                        {p.estado === 'estado' ? (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">estado</span>
+                        {p.estado === 'Verificado' ? (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">Verificado</span>
                         ) : (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300">No estado</span>
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300">No verificado</span>
                         )}
                       </td>
                     </tr>
@@ -506,7 +506,7 @@ export default function Personas() {
                       <label htmlFor="e-activo" className="text-sm font-medium text-gray-700 dark:text-gray-300">Activo</label>
                     </div>
                     <div>
-                      <label htmlFor="e-estado" className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1">estado</label>
+                      <label htmlFor="e-estado" className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1">Estado de verificación</label>
                       <select
                         id="e-estado"
                         value={selectedPerson.estado || ''}
@@ -514,8 +514,8 @@ export default function Personas() {
                         className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-2"
                       >
                         <option value="">Seleccione</option>
-                        <option value="estado">estado</option>
-                        <option value="No estado">No estado</option>
+                        <option value="Verificado">Verificado</option>
+                        <option value="No verificado">No verificado</option>
                       </select>
                     </div>
                   </div>
