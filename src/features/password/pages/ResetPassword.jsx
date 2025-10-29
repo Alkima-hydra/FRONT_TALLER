@@ -84,7 +84,14 @@ export default function ForgotPassword() {
   };
 
   useEffect(() => {
-  }, [success, showPasswordForm]);
+    const params = new URLSearchParams(window.location.search);
+    const tokenFromUrl = params.get('token');
+    if (tokenFromUrl) {
+      setToken(tokenFromUrl);
+      setShowPasswordForm(true);
+      dispatch(validarToken(tokenFromUrl));
+    }
+  }, [dispatch]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background-light dark:bg-background-dark p-4 transition-colors">
