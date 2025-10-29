@@ -3,11 +3,9 @@ import { useDispatch, useSelector } from 'react-redux';
 import Layout from '../../shared/components/layout/Layout';
 import DuplicatesMergeModal from './components/DuplicatesMergeModal';
 
-
 import {
   fetchParroquias,
   fetchParroquiaById,
-  fetchAllParroquias,
   createParroquia,
 } from './slices/parroquiasThunk';
 
@@ -22,9 +20,12 @@ import {
 export default function Parroquias() {
   const dispatch = useDispatch();
 
-  // Estados locales
+  // ====== ESTADOS ======
   const [mergeOpen, setMergeOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('agregar');
+  const [boolSelected, setBoolSelected] = useState(false);
+  const [parroquiaSeleccionada, setParroquiaSeleccionada] = useState(null);
+
   const [formData, setFormData] = useState({
     nombre: '',
     direccion: '',
@@ -32,22 +33,21 @@ export default function Parroquias() {
     email: '',
   });
   const [filters, setFilters] = useState({ nombre: '', direccion: '' });
-
-  // Estados globales de Redux
-  const parroquias = useSelector(selectParroquias);
   const [parroquiasLocal, setParroquiasLocal] = useState([]);
+
+  //const parroquiaSeleccionada = useSelector(selectParroquiaSeleccionada);
+  const parroquias = useSelector(selectParroquias);
   const isLoading = useSelector(selectIsLoading);
   const error = useSelector(selectError);
-  const parroquiaSeleccionada = useSelector(selectParroquiaSeleccionada);
 
-  // Al abrir la pestaña de búsqueda, cargar parroquias
+  // ====== EFECTOS ======
   useEffect(() => {
     if (activeTab === 'buscar') {
       dispatch(fetchParroquias(filters));
     }
   }, [activeTab, filters, dispatch]);
 
-  // Manejadores?
+  // ====== MANEJADORES ======
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
   };
@@ -58,35 +58,48 @@ export default function Parroquias() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log('Formulario a enviar:', formData);
-    // Aquí podrías despachar un thunk para crear una parroquia:
     dispatch(createParroquia(formData));
   };
 
   const handleBuscar = async () => {
-    
     const resultAction = await dispatch(fetchParroquias(filters));
     if (fetchParroquias.fulfilled.match(resultAction)) {
       const data = resultAction.payload;
-      // 🔹 Si el backend devuelve un array directamente
       if (Array.isArray(data)) {
         setParroquiasLocal(data);
-      } 
-      // 🔹 Si devuelve un objeto con "parroquias"
-      else if (data.parroquias) {
+      } else if (data.parroquias) {
         setParroquiasLocal(data.parroquias);
       }
     }
   };
-
-  const handleSelectParroquia = (p) => {
-    dispatch(fetchParroquiaById(p.id));
+  const handleSelectParroquia = async (p) => {
+    console.log('ID Parroquia seleccionada:', p.id_parroquia);
+    const result = await dispatch(fetchParroquiaById(p.id_parroquia));
+    
+    if (fetchParroquiaById.fulfilled.match(result)) {
+      console.log('✅ Parroquia cargada:', result.payload);
+      setParroquiaSeleccionada(result.payload); 
+    } else {
+      console.error('❌ Error al cargar parroquia:', result.error);
+    }
   };
-
+  
+  useEffect(() => {
+    if (parroquiaSeleccionada) {
+      console.log('🟢 parroquiaSeleccionada actualizada:', parroquiaSeleccionada);
+      dispatch({
+        type: 'parroquias/setParroquiaSeleccionada',
+        payload: parroquiaSeleccionada,
+      });
+      setBoolSelected(true);
+    }
+  }, [parroquiaSeleccionada]);
   const handleCancelarEdicion = () => {
     dispatch(clearParroquiaSeleccionada());
+    setBoolSelected(false); // 👈 RESETEAMOS LA BANDERA
   };
 
+  // ====== RENDER ======
   return (
     <Layout title="Gestión de Parroquias">
       {/* Tabs */}
@@ -171,7 +184,7 @@ export default function Parroquias() {
             <form className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="f-nombre">
+                  <label htmlFor="f-nombre" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Nombre
                   </label>
                   <input
@@ -184,7 +197,7 @@ export default function Parroquias() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="f-direccion">
+                  <label htmlFor="f-direccion" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Dirección
                   </label>
                   <input
@@ -263,8 +276,9 @@ export default function Parroquias() {
               </div>
             )}
 
-            {/* Edición */}
-            {parroquiaSeleccionada && (
+            {/* Editar Parroquia */}
+            
+            {boolSelected && (
               <div className="mt-8 bg-white dark:bg-background-dark/50 rounded-xl shadow-sm p-6">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                   Editar Parroquia
@@ -284,6 +298,24 @@ export default function Parroquias() {
                     <input
                       type="text"
                       value={parroquiaSeleccionada.direccion || ''}
+                      readOnly
+                      className="w-full rounded-lg border border-gray-300 dark:border-gray-700 p-3 bg-background-light dark:bg-background-dark"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Teléfono</label>
+                    <input
+                      type="text"
+                      value={parroquiaSeleccionada.telefono || ''}
+                      readOnly
+                      className="w-full rounded-lg border border-gray-300 dark:border-gray-700 p-3 bg-background-light dark:bg-background-dark"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+                    <input
+                      type="text"
+                      value={parroquiaSeleccionada.email || ''}
                       readOnly
                       className="w-full rounded-lg border border-gray-300 dark:border-gray-700 p-3 bg-background-light dark:bg-background-dark"
                     />
