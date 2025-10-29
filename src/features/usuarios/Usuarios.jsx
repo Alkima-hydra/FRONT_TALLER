@@ -6,11 +6,11 @@ import {
   fetchUsuarios,
   fetchAllUsuarios,
   fetchUsuarioById,
-  createUsuario,
+  createUsuarioAndSendReset,
   updateUsuario,
 } from './slices/usuariosTrunk';
 import {
-  selectIsLoading,
+  selectIsLoading, 
   selectUsuarios,
   selectAllUsuarios,
   selectUsuarioSeleccionado,
@@ -139,7 +139,7 @@ export default function Usuarios() {
       activo: formAdd.activo === '' ? undefined : (formAdd.activo ? 'Activo' : 'Inactivo'),
     };
     try {
-      const action = await dispatch(createUsuario(payload));
+      const action = await dispatch(createUsuarioAndSendReset(payload));
       console.debug('createUsuario result:', action);
       if (action.meta.requestStatus === 'fulfilled') {
         setToast({ type: 'success', message: 'Usuario creado correctamente.' });

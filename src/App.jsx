@@ -11,6 +11,7 @@ import Usuarios from './features/usuarios/Usuarios'
 import Reportes from './features/reportes/Reportes'
 import Certificados from './features/certificados/Certificados'
 import Parroquias from './features/parroquias/parroquias';
+import RestaurarContrasenaPage from './features/restaurarContrasena/restaurarCotrasena';
 
 export default function App() {
   return (
@@ -26,6 +27,8 @@ export default function App() {
         <Route path="/certificados" element={<Certificados />} />
         <Route path="/parroquias" element={<Parroquias />} />
         <Route path="/auditoria" element={<Auditoria />} />
+        <Route path="/reset-password" element={<RestaurarContrasenaPage />} />
+
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Provider>

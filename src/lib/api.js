@@ -71,4 +71,11 @@ export const usuariosApi = {
 
   deleteUsuario: (id) =>
     api.patch(`/usuarios/${id}`).then((res) => res.data).catch(handleError),
+
+  // para restablecer contraseña
+  resetPassword: (email) =>
+    api.post('/password/solicitar', { email }).then((res) => res.data).catch(handleError),
+  //para cambiar la contraseña
+  changePassword: (token, newPassword) =>
+    api.post('/password/cambiar', { token, newPassword }).then((res) => res.data).catch(handleError),
 };
