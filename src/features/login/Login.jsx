@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { loginUser } from './slices/loginThunks';
-import { selectIsLoading, selectError } from './slices/loginSlice';
+import { selectIsLoading, selectError } from './slices/loginSelectors';
 import LoginPanel from './components/LoginPanel';
 import LoginForm from './components/LoginForm';
 import HeroPanel from './components/HeroPanel';

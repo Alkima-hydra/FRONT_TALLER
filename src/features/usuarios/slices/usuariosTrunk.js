@@ -56,6 +56,27 @@ export const createUsuario = createAsyncThunk(
   }
 
 )
+// para las contrasenas
+export const createUsuarioAndSendReset = createAsyncThunk(
+  'usuarios/createUsuarioAndSendReset',
+  async (payload, { rejectWithValue }) => {
+    try {
+      console.log('[usuariosThunk] Creando usuario (con reset):', payload);
+      const created = await usuariosApi.createUsuario(payload);
+      const usuario = created?.usuario || created;
+      const email = usuario?.email || payload?.email;
+      if (!email) {
+        throw new Error('No se pudo determinar el email para enviar restablecimiento.');
+      }
+      const resetResp = await usuariosApi.resetPassword(email);
+      return { usuario, reset: resetResp };
+    } catch (error) {
+      console.error('[usuariosThunk] Error create+reset:', error);
+      return rejectWithValue(error?.response?.data || error.message || error);
+    }
+  }
+);
+//normal de usuario
 export const updateUsuario = createAsyncThunk(
   'usuarios/updateUsuario',
   async ({ id, data }, { rejectWithValue }) => {
@@ -84,4 +105,35 @@ export const deleteUsuario = createAsyncThunk(
       return rejectWithValue(error?.response?.data || error.message || error);  
     }
   }
+); 
+//funciones para contrasenas
+export const resetUsuarioPassword = createAsyncThunk(
+    'usuarios/resetPassword',
+    async (email, { rejectWithValue }) => {
+        try {
+            console.log('[usuariosThunk] Restableciendo contraseña para email:', email);
+            const response = await usuariosApi.resetPassword(email);
+            console.log('[usuariosThunk] Respuesta de restablecimiento de contraseña:', response);
+            return response;
+        }
+        catch (error) {
+            console.error('[usuariosThunk] Error restableciendo contraseña:', error);
+            return rejectWithValue(error?.response?.data || error.message || error);
+        }
+    }
+);
+export const changeUsuarioPassword = createAsyncThunk(
+    'usuarios/changePassword',
+    async ({ token, passwords }, { rejectWithValue }) => {
+        try {
+            console.log('[usuariosThunk] Cambiando contraseña para usuario con token:', token);
+            const response = await usuariosApi.changePassword(token, passwords);
+            console.log('[usuariosThunk] Respuesta de cambio de contraseña:', response);
+            return response;
+        }
+        catch (error) {
+            console.error('[usuariosThunk] Error cambiando contraseña:', error);
+            return rejectWithValue(error?.response?.data || error.message || error);
+        }
+    }
 );  

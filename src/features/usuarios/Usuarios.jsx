@@ -6,11 +6,11 @@ import {
   fetchUsuarios,
   fetchAllUsuarios,
   fetchUsuarioById,
-  createUsuario,
+  createUsuarioAndSendReset,
   updateUsuario,
 } from './slices/usuariosTrunk';
 import {
-  selectIsLoading,
+  selectIsLoading, 
   selectUsuarios,
   selectAllUsuarios,
   selectUsuarioSeleccionado,
@@ -139,7 +139,7 @@ export default function Usuarios() {
       activo: formAdd.activo === '' ? undefined : (formAdd.activo ? 'Activo' : 'Inactivo'),
     };
     try {
-      const action = await dispatch(createUsuario(payload));
+      const action = await dispatch(createUsuarioAndSendReset(payload));
       console.debug('createUsuario result:', action);
       if (action.meta.requestStatus === 'fulfilled') {
         setToast({ type: 'success', message: 'Usuario creado correctamente.' });
@@ -433,7 +433,7 @@ export default function Usuarios() {
                       <th scope="col" className="px-6 py-3">Email</th>
                       <th scope="col" className="px-6 py-3">Rol</th>
                       <th scope="col" className="px-6 py-3">Estado</th>
-                      <th scope="col" className="px-6 py-3 text-right">Acciones</th>
+                
                     </tr>
                   </thead>
                   <tbody>
@@ -469,7 +469,6 @@ export default function Usuarios() {
                             <span className="bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-300 text-xs font-medium px-2.5 py-0.5 rounded-full">Inactivo</span>
                           )}
                         </td>
-                        <td className="px-6 py-4 text-right"><button className="font-medium text-primary hover:underline">Editar</button></td>
                       </tr>
                     ))}
                   </tbody>
@@ -481,7 +480,7 @@ export default function Usuarios() {
               <div className="grid grid-cols-1 md:grid-cols-1 gap-8 mt-8">
                 <div className="bg-white dark:bg-background-dark p-6 rounded-xl shadow-sm">
                   <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Editar Usuario</h3>
-                  <form className="space-y-4" onSubmit={handleUpdate}>
+                  <form className="grid grid-cols-1 md:grid-cols-2 gap-6" onSubmit={handleUpdate}>
                     <div>
                       <label htmlFor="e-name" className="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">Nombre</label>
                       <input
@@ -493,12 +492,42 @@ export default function Usuarios() {
                       />
                     </div>
                     <div>
+                      <label htmlFor="e-lastp" className="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">Apellido paterno</label>
+                      <input
+                        id="e-lastp"
+                        type="text"
+                        value={selectedUser.apellido_paterno || ''}
+                        onChange={(e)=>setSelectedUser({ ...selectedUser, apellido_paterno: e.target.value })}
+                        className="bg-background-light dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary focus:border-primary block w-full p-2.5"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="e-lastm" className="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">Apellido materno</label>
+                      <input
+                        id="e-lastm"
+                        type="text"
+                        value={selectedUser.apellido_materno || ''}
+                        onChange={(e)=>setSelectedUser({ ...selectedUser, apellido_materno: e.target.value })}
+                        className="bg-background-light dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary focus:border-primary block w-full p-2.5"
+                      />
+                    </div>
+                    <div>
                       <label htmlFor="e-email" className="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">Email</label>
                       <input
                         id="e-email"
                         type="email"
                         value={selectedUser.email || ''}
                         onChange={(e)=>setSelectedUser({ ...selectedUser, email: e.target.value })}
+                        className="bg-background-light dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary focus:border-primary block w-full p-2.5"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="e-birth" className="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">Fecha de nacimiento</label>
+                      <input
+                        id="e-birth"
+                        type="date"
+                        value={selectedUser.fecha_nacimiento || ''}
+                        onChange={(e)=>setSelectedUser({ ...selectedUser, fecha_nacimiento: e.target.value })}
                         className="bg-background-light dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-primary focus:border-primary block w-full p-2.5"
                       />
                     </div>
@@ -525,7 +554,7 @@ export default function Usuarios() {
                         <option value="false">Inactivo</option>
                       </select>
                     </div>
-                    <div className="flex justify-end gap-4 pt-2">
+                    <div className="md:col-span-2 flex justify-end gap-4 pt-2">
                       <button type="button" onClick={() => setSelectedUser(null)} className="px-6 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600">Cancelar</button>
                       <button type="submit" disabled={isUpdating} className={`px-6 py-2 rounded-lg text-white ${isUpdating ? 'bg-primary/60 cursor-not-allowed' : 'bg-primary hover:bg-primary/90'}`}>
                         {isUpdating ? 'Guardando…' : 'Guardar Cambios'}

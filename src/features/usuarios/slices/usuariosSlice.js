@@ -6,7 +6,23 @@ import {
   createUsuario,
   updateUsuario,
   deleteUsuario,
+  resetUsuarioPassword,
+  changeUsuarioPassword,
+  createUsuarioAndSendReset,
 } from './usuariosTrunk';
+
+// Re-export thunks so consumers can import from this slice file
+export {
+  fetchUsuarios,
+  fetchAllUsuarios,
+  fetchUsuarioById,
+  createUsuario,
+  updateUsuario,
+  deleteUsuario,
+  resetUsuarioPassword,
+  changeUsuarioPassword,
+  createUsuarioAndSendReset,
+};
 
 
 const initialState = {
@@ -25,6 +41,12 @@ const initialState = {
   isUpdating: false,
   isDeleting: false,
   error: null,
+
+  isResettingPassword: false,
+  isChangingPassword: false,
+  lastResetEmail: null,
+  lastResetResponse: null,
+  lastChangeResponse: null,
 };
 
 const usuariosSlice = createSlice({
@@ -43,6 +65,14 @@ const usuariosSlice = createSlice({
       state.totalPages = 1;
       state.currentPage = 1;
     },
+    clearPasswordState(state) {
+      state.isResettingPassword = false;
+      state.isChangingPassword = false;
+      state.lastResetEmail = null;
+      state.lastResetResponse = null;
+      state.lastChangeResponse = null;
+      state.error = null;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -53,10 +83,12 @@ const usuariosSlice = createSlice({
       })
       .addCase(fetchUsuarios.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.usuarios = action.payload.usuarios;
-        state.totalItems = action.payload.totalItems;
-        state.totalPages = action.payload.totalPages;
-        state.currentPage = action.payload.currentPage;
+        const p = action.payload;
+        const list = Array.isArray(p) ? p : (p?.usuarios || p?.items || []);
+        state.usuarios = list;
+        state.totalItems = p?.totalItems ?? list.length ?? 0;
+        state.totalPages = p?.totalPages ?? 1;
+        state.currentPage = p?.currentPage ?? 1;
       })
       .addCase(fetchUsuarios.rejected, (state, action) => {
         state.isLoading = false;
@@ -119,8 +151,10 @@ const usuariosSlice = createSlice({
       .addCase(updateUsuario.fulfilled, (state, action) => {
         state.isUpdating = false;
         const updated = action.payload;
-        state.usuarios = state.usuarios.map(p => p.id === updated.id ? updated : p);
-        if (state.usuarioSeleccionado?.id === updated.id) {
+        const getId = (x) => x?.id ?? x?.id_usuario;
+        const upId = getId(updated);
+        state.usuarios = (state.usuarios || []).map(u => (getId(u) === upId ? updated : u));
+        if (getId(state.usuarioSeleccionado) === upId) {
           state.usuarioSeleccionado = updated;
         }
       })
@@ -136,9 +170,11 @@ const usuariosSlice = createSlice({
       })
       .addCase(deleteUsuario.fulfilled, (state, action) => {
         state.isDeleting = false;
-        const deletedId = action.payload.id;
-        state.usuarios = state.usuarios.filter(p => p.id !== deletedId);
-        if (state.usuarioSeleccionado?.id === deletedId) {
+        const payload = action.payload;
+        const getId = (x) => x?.id ?? x?.id_usuario;
+        const deletedId = getId(payload) ?? payload;
+        state.usuarios = (state.usuarios || []).filter(u => getId(u) !== deletedId);
+        if ((state.usuarioSeleccionado && getId(state.usuarioSeleccionado) === deletedId)) {
           state.usuarioSeleccionado = null;
         }
         state.totalItems = Math.max(0, (state.totalItems || 1) - 1);
@@ -146,12 +182,65 @@ const usuariosSlice = createSlice({
       .addCase(deleteUsuario.rejected, (state, action) => {
         state.isDeleting = false;
         state.error = action.payload?.message || 'Error al eliminar Usuario';
+      })
+
+      // resetUsuarioPassword
+      .addCase(resetUsuarioPassword.pending, (state) => {
+        state.isResettingPassword = true;
+        state.error = null;
+      })
+      .addCase(resetUsuarioPassword.fulfilled, (state, action) => {
+        state.isResettingPassword = false;
+        state.lastResetResponse = action.payload || true;
+        if (typeof action.meta?.arg === 'string') state.lastResetEmail = action.meta.arg;
+      })
+      .addCase(resetUsuarioPassword.rejected, (state, action) => {
+        state.isResettingPassword = false;
+        state.error = action.payload?.message || action.payload || 'Error al solicitar restablecimiento';
+      })
+
+      // changeUsuarioPassword
+      .addCase(changeUsuarioPassword.pending, (state) => {
+        state.isChangingPassword = true;
+        state.error = null;
+      })
+      .addCase(changeUsuarioPassword.fulfilled, (state, action) => {
+        state.isChangingPassword = false;
+        state.lastChangeResponse = action.payload?.message || action.payload || 'Contraseña actualizada correctamente';
+      })
+      .addCase(changeUsuarioPassword.rejected, (state, action) => {
+        state.isChangingPassword = false;
+        state.error = action.payload?.message || action.payload || 'Error al cambiar contraseña';
+      })
+
+      // createUsuarioAndSendReset
+      .addCase(createUsuarioAndSendReset.pending, (state) => {
+        state.isCreating = true;
+        state.isResettingPassword = true;
+        state.error = null;
+      })
+      .addCase(createUsuarioAndSendReset.fulfilled, (state, action) => {
+        state.isCreating = false;
+        state.isResettingPassword = false;
+        const usuario = action.payload?.usuario;
+        if (usuario) {
+          state.usuarios = [usuario, ...(state.usuarios || [])];
+          state.totalItems = (state.totalItems || 0) + 1;
+          state.usuarioSeleccionado = usuario;
+          state.lastResetEmail = usuario.email || null;
+          state.lastResetResponse = action.payload?.reset || true;
+        }
+      })
+      .addCase(createUsuarioAndSendReset.rejected, (state, action) => {
+        state.isCreating = false;
+        state.isResettingPassword = false;
+        state.error = action.payload?.message || action.payload || 'Error al crear y enviar restablecimiento';
       });
   },
 });
 
 // Acciones síncronas
-export const { clearError, clearUsuarioSeleccionado, resetPagination } = usuariosSlice.actions;
+export const { clearError, clearUsuarioSeleccionado, resetPagination, clearPasswordState } = usuariosSlice.actions;
 
 // Selectores
 export const selectUsuarios = (state) => state.usuarios.usuarios;
@@ -169,6 +258,13 @@ export const selectError = (state) => state.usuarios.error;
 export const selectIsCreating = (state) => state.usuarios.isCreating;
 export const selectIsUpdating = (state) => state.usuarios.isUpdating;
 export const selectIsDeleting = (state) => state.usuarios.isDeleting;
+
+export const selectUsuariosIsResettingPassword = (state) => state.usuarios.isResettingPassword;
+export const selectUsuariosIsChangingPassword = (state) => state.usuarios.isChangingPassword;
+export const selectUsuariosLastResetEmail = (state) => state.usuarios.lastResetEmail;
+export const selectUsuariosLastResetResponse = (state) => state.usuarios.lastResetResponse;
+export const selectUsuariosLastChangeResponse = (state) => state.usuarios.lastChangeResponse;
+export const selectUsuariosError = (state) => state.usuarios.error;
 
 // Exportar reducer
 export const usuariosReducer = usuariosSlice.reducer;
