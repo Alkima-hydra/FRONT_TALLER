@@ -6,12 +6,14 @@ import {
   fetchPersonas,
   fetchAllPersonas,
   fetchPersonaById,
+  createPersona,
 } from './slices/personasThunk';
 import {
   selectIsLoading,
   selectPersonas,
   selectAllPersonas,
   selectPersonaSeleccionada,
+  selectIsCreating,
 } from './slices/personasSlice';
 
 export default function Personas() {
@@ -20,6 +22,7 @@ export default function Personas() {
   const personas = useSelector(selectPersonas);
   const allPersonas = useSelector(selectAllPersonas);
   const personaSeleccionada = useSelector(selectPersonaSeleccionada);
+  const isCreating = useSelector(selectIsCreating);
 
   const [mergeOpen, setMergeOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('agregar');
@@ -27,6 +30,13 @@ export default function Personas() {
 
   const [formAdd, setFormAdd] = useState({ /* ... */ });
   const [filters, setFilters] = useState({ /* ... */ });
+
+  const [toast, setToast] = useState(null); // { type: 'success'|'error', message: string }
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 3000);
+    return () => clearTimeout(t);
+  }, [toast]);
 
   // Cargar todos al inicio
   useEffect(() => {
@@ -66,16 +76,27 @@ export default function Personas() {
     dispatch(fetchPersonaById(id));
   };
   
-  const handleCreate = (e) => {
-    e.preventDefault()
-    createPerson(formAdd)
+  const handleCreate = async (e) => {
+    e.preventDefault();
+    try {
+      const action = await dispatch(createPersona(formAdd));
+      if (action.meta.requestStatus === 'fulfilled') {
+        setToast({ type: 'success', message: 'Persona creada correctamente.' });
+        // Opcional: recargar lista completa
+        dispatch(fetchAllPersonas());
+      } else {
+        const msg = action.payload?.message || 'No se pudo crear la persona';
+        setToast({ type: 'error', message: msg });
+      }
+    } catch (err) {
+      setToast({ type: 'error', message: err?.message || 'Error inesperado al crear' });
+    }
   }
 
   const handleUpdate = (e) => {
-    e.preventDefault()
-    if (!selectedPerson?.id) return
-    const { id, ...payload } = selectedPerson
-    updatePerson(id, payload)
+    e.preventDefault();
+    // TODO: conectar update thunk cuando esté disponible
+    setToast({ type: 'success', message: 'Cambios preparados para guardar (falta cablear update).' });
   }
 
   return (
@@ -228,9 +249,17 @@ export default function Personas() {
             <div className="mt-6 flex items-center gap-3">
               <button
                 type="submit"
-                className="inline-flex items-center px-5 py-2.5 rounded-lg bg-primary text-white font-medium hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+                disabled={isCreating}
+                className={`inline-flex items-center px-5 py-2.5 rounded-lg text-white font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary ${isCreating ? 'bg-primary/60 cursor-not-allowed' : 'bg-primary hover:bg-primary/90'}`}
               >
-                Agregar Persona
+                {isCreating ? (
+                  <>
+                    <span className="material-symbols-outlined mr-2 animate-spin">progress_activity</span>
+                    Guardando...
+                  </>
+                ) : (
+                  'Agregar Persona'
+                )}
               </button>
               <button
                 type="reset"
@@ -543,6 +572,14 @@ export default function Personas() {
       )}
 
       <DuplicatesMergeModal open={mergeOpen} onClose={() => setMergeOpen(false)} />
+    {toast && (
+      <div className={`fixed bottom-6 right-6 z-50 max-w-sm rounded-lg shadow-lg px-4 py-3 text-white ${toast.type === 'success' ? 'bg-emerald-600' : 'bg-rose-600'}`}>
+        <div className="flex items-center gap-2">
+          <span className="material-symbols-outlined">{toast.type === 'success' ? 'check_circle' : 'error'}</span>
+          <span className="text-sm font-medium">{toast.message}</span>
+        </div>
+      </div>
+    )}
     </Layout>
   )
 }

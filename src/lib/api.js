@@ -45,4 +45,6 @@ export const personasApi = {
 
   fetchPersonaById: (id) =>
     api.get(`/personas/${id}`).then((res) => res.data).catch(handleError),
+  createPersona: (data) =>
+    api.post('/personas/new', data).then((res) => res.data).catch(handleError),
 };

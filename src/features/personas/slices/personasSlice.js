@@ -3,6 +3,7 @@ import {
   fetchPersonas,
   fetchAllPersonas,
   fetchPersonaById,
+  createPersona,
 } from './personasThunk';
 
 const initialState = {
@@ -17,6 +18,7 @@ const initialState = {
   isLoading: false,
   isLoadingAll: false,
   isLoadingById: false,
+  isCreating: false,
   error: null,
 };
 
@@ -82,6 +84,26 @@ const personasSlice = createSlice({
       .addCase(fetchPersonaById.rejected, (state, action) => {
         state.isLoadingById = false;
         state.error = action.payload?.message || 'Error al cargar la persona';
+      })
+
+      // createPersona
+      .addCase(createPersona.pending, (state) => {
+        state.isCreating = true;
+        state.error = null;
+      })
+      .addCase(createPersona.fulfilled, (state, action) => {
+        state.isCreating = false;
+        const nueva = action.payload;
+        // Si ya hay lista paginada cargada, insertamos al inicio (opcional)
+        if (Array.isArray(state.personas)) {
+          state.personas = [nueva, ...state.personas];
+          state.totalItems = (state.totalItems || 0) + 1;
+        }
+        state.personaSeleccionada = nueva;
+      })
+      .addCase(createPersona.rejected, (state, action) => {
+        state.isCreating = false;
+        state.error = action.payload?.message || 'Error al crear persona';
       });
   },
 });
@@ -102,6 +124,7 @@ export const selectIsLoading = (state) => state.personas.isLoading;
 export const selectIsLoadingAll = (state) => state.personas.isLoadingAll;
 export const selectIsLoadingById = (state) => state.personas.isLoadingById;
 export const selectError = (state) => state.personas.error;
+export const selectIsCreating = (state) => state.personas.isCreating;
 
 // Exportar reducer
 export const personasReducer = personasSlice.reducer;

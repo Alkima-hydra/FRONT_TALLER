@@ -39,3 +39,19 @@ export const fetchPersonaById = createAsyncThunk(
     }
   }
 );
+
+export const createPersona = createAsyncThunk(
+  'personas/createPersona',
+  async (payload, { rejectWithValue }) => {
+    try {
+      console.log('[personasThunk] Creando persona:', payload)
+      const response = await personasApi.createPersona(payload)
+      console.log('[personasThunk] Persona creada:', response)
+      // Algunos backends devuelven { persona }, otros el objeto directo
+      return response?.persona || response
+    } catch (error) {
+      console.error('[personasThunk] Error creando persona:', error)
+      return rejectWithValue(error?.response?.data || error.message || error)
+    }
+  }
+)
