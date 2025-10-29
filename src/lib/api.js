@@ -103,5 +103,5 @@ export const auditoriaApi = {
 
 export const dashboardApi = {
   fetchStats: (filters = {}) =>
-    api.get('/dashboard/stats', { params: filters }).then(res => res.data).catch(handleError),
+    api.get('/dashboard/summary/', { params: filters }).then(res => res.data).catch(handleError),
 };
