@@ -9,6 +9,7 @@ import {
   fetchParroquiaById,
   fetchAllParroquias,
   createParroquia,
+  updateParroquia,
 } from './slices/parroquiasThunk';
 
 import {
@@ -22,6 +23,12 @@ import {
 export default function Parroquias() {
   const dispatch = useDispatch();
 
+  // Estados globales de Redux
+  const parroquias = useSelector(selectParroquias);
+  const isLoading = useSelector(selectIsLoading);
+  const error = useSelector(selectError);
+  const parroquiaSeleccionada = useSelector(selectParroquiaSeleccionada);
+
   // Estados locales
   const [mergeOpen, setMergeOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('agregar');
@@ -32,13 +39,35 @@ export default function Parroquias() {
     email: '',
   });
   const [filters, setFilters] = useState({ nombre: '', direccion: '' });
-
-  // Estados globales de Redux
-  const parroquias = useSelector(selectParroquias);
+  const [parroquiaLocalSeleccionada, setParroquiaLocalSeleccionada] = useState(null);
+  // Formulario de edición (editable) sincronizado con la selección
+  const [editForm, setEditForm] = useState({ nombre: '', direccion: '', telefono: '', email: '' });
   const [parroquiasLocal, setParroquiasLocal] = useState([]);
-  const isLoading = useSelector(selectIsLoading);
-  const error = useSelector(selectError);
-  const parroquiaSeleccionada = useSelector(selectParroquiaSeleccionada);
+
+  // --- Toast local minimalista ---
+  const [toast, setToast] = useState(null); // { type: 'success'|'error', message: string }
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 3000);
+    return () => clearTimeout(t);
+  }, [toast]);
+
+  useEffect(() => {
+    const p = (parroquiaSeleccionada || parroquiaLocalSeleccionada);
+    if (p) {
+      setEditForm({
+        nombre: p?.nombre || '',
+        direccion: p?.direccion || '',
+        telefono: p?.telefono || '',
+        email: p?.email || '',
+      });
+    } else {
+      setEditForm({ nombre: '', direccion: '', telefono: '', email: '' });
+    }
+  }, [parroquiaSeleccionada, parroquiaLocalSeleccionada]);
+
+  const parroquiaParaEditar = parroquiaSeleccionada || parroquiaLocalSeleccionada;
+  console.log('[DEBUG COMPONENT] parroquiaParaEditar:', parroquiaParaEditar);
 
   // Al abrir la pestaña de búsqueda, cargar parroquias
   useEffect(() => {
@@ -80,20 +109,59 @@ export default function Parroquias() {
   };
 
   const handleSelectParroquia = (p) => {
-    const id = p?.id_parroquia || p?.id || p?.uuid;
+    console.log('[DEBUG] Parroquia seleccionada:', p);
+    setParroquiaLocalSeleccionada(p); // fallback inmediato
+    const id = p?.id_parroquia ?? p?.id ?? p?.uuid ?? p?.idParroquia;
     if (!id) {
-      console.warn('[Parroquias] No se encontró un identificador en el elemento seleccionado:', p);
+      console.warn('[Parroquias] No se encontró un identificador válido en el elemento seleccionado:', p);
       return;
     }
+    console.log('[DEBUG] ID detectado para fetchParroquiaById:', id);
     dispatch(fetchParroquiaById(id));
   };
 
   const handleCancelarEdicion = () => {
     dispatch(clearParroquiaSeleccionada());
+    setParroquiaLocalSeleccionada(null);
+  };
+
+  const handleGuardarCambios = async () => {
+    if (!parroquiaParaEditar) return;
+    const id = parroquiaParaEditar?.id_parroquia ?? parroquiaParaEditar?.id ?? parroquiaParaEditar?.uuid;
+    if (!id) return console.warn('[Parroquias] No se pudo determinar el ID para actualizar.');
+
+    const payload = { ...editForm };
+    try {
+      const result = await dispatch(updateParroquia({ id, data: payload }));
+      if (updateParroquia.fulfilled.match(result)) {
+        const actualizado = result.payload?.parroquia || result.payload || payload;
+        setParroquiaLocalSeleccionada(prev => ({ ...(prev || {}), ...actualizado }));
+        setToast({ type: 'success', message: 'Cambios guardados correctamente.' });
+        // Recargar lista para reflejar cambios
+        await dispatch(fetchParroquias(filters));
+        setActiveTab('buscar');
+      } else {
+        const msg = result.payload?.msg || result.error?.message || 'No se pudo actualizar.';
+        setToast({ type: 'error', message: msg || 'Ocurrió un error.' });
+      }
+    } catch (e) {
+      console.error(e);
+      setToast({ type: 'error', message: 'Ocurrió un error al actualizar.' });
+    }
   };
 
   return (
     <Layout title="Gestión de Parroquias">
+      {toast && (
+        <div className={`fixed top-5 right-5 z-50 px-4 py-3 rounded-lg shadow-lg text-white ${toast.type === 'success' ? 'bg-green-600' : 'bg-red-600'}`}>
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-white/90">
+              {toast.type === 'success' ? 'check_circle' : 'error'}
+            </span>
+            <span className="text-sm font-medium">{toast.message}</span>
+          </div>
+        </div>
+      )}
       {/* Tabs */}
       <div className="flex gap-1 mb-6 border-b border-gray-200 dark:border-gray-700">
         <button
@@ -269,7 +337,7 @@ export default function Parroquias() {
             )}
 
             {/* Edición */}
-            {parroquiaSeleccionada && (
+            {parroquiaParaEditar && (
               <div className="mt-8 bg-white dark:bg-background-dark/50 rounded-xl shadow-sm p-6">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                   Editar Parroquia
@@ -279,8 +347,8 @@ export default function Parroquias() {
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nombre</label>
                     <input
                       type="text"
-                      value={parroquiaSeleccionada.nombre || ''}
-                      readOnly
+                      value={editForm.nombre}
+                      onChange={(e) => setEditForm(f => ({ ...f, nombre: e.target.value }))}
                       className="w-full rounded-lg border border-gray-300 dark:border-gray-700 p-3 bg-background-light dark:bg-background-dark"
                     />
                   </div>
@@ -288,8 +356,26 @@ export default function Parroquias() {
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Dirección</label>
                     <input
                       type="text"
-                      value={parroquiaSeleccionada.direccion || ''}
-                      readOnly
+                      value={editForm.direccion}
+                      onChange={(e) => setEditForm(f => ({ ...f, direccion: e.target.value }))}
+                      className="w-full rounded-lg border border-gray-300 dark:border-gray-700 p-3 bg-background-light dark:bg-background-dark"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Teléfono</label>
+                    <input
+                      type="text"
+                      value={editForm.telefono}
+                      onChange={(e) => setEditForm(f => ({ ...f, telefono: e.target.value }))}
+                      className="w-full rounded-lg border border-gray-300 dark:border-gray-700 p-3 bg-background-light dark:bg-background-dark"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+                    <input
+                      type="email"
+                      value={editForm.email}
+                      onChange={(e) => setEditForm(f => ({ ...f, email: e.target.value }))}
                       className="w-full rounded-lg border border-gray-300 dark:border-gray-700 p-3 bg-background-light dark:bg-background-dark"
                     />
                   </div>
@@ -300,6 +386,13 @@ export default function Parroquias() {
                       className="px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/40"
                     >
                       Cerrar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleGuardarCambios}
+                      className="inline-flex items-center px-5 py-2.5 rounded-lg bg-primary text-white font-medium hover:bg-primary/90 focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+                    >
+                      Guardar cambios
                     </button>
                   </div>
                 </form>
@@ -313,3 +406,4 @@ export default function Parroquias() {
     </Layout>
   );
 }
+
