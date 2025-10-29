@@ -7,12 +7,16 @@ const initialState = {
     avatar: 'https://lh3.googleusercontent.com/...', // Reemplazar con api lol
   },
   notifications: 1, // Borrar si matamos lo de notis
+  isLoading: false,
 };
 
 const loginSlice = createSlice({
   name: 'login',
   initialState,
   reducers: {
+    setLoading(state) {
+      state.isLoading = true;
+    },
     setUser(state, action) {
       state.user = action.payload;
     },
