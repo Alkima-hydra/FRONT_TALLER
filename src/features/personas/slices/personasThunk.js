@@ -1,5 +1,5 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
-import { personasApi, api } from '../../../lib/api';
+import { personasApi } from '../../../lib/api';
 
 export const fetchPersonas = createAsyncThunk(
   'personas/fetchPersonas',

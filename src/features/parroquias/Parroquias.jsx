@@ -80,7 +80,12 @@ export default function Parroquias() {
   };
 
   const handleSelectParroquia = (p) => {
-    dispatch(fetchParroquiaById(p.id));
+    const id = p?.id_parroquia || p?.id || p?.uuid;
+    if (!id) {
+      console.warn('[Parroquias] No se encontró un identificador en el elemento seleccionado:', p);
+      return;
+    }
+    dispatch(fetchParroquiaById(id));
   };
 
   const handleCancelarEdicion = () => {
