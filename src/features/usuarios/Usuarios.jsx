@@ -433,7 +433,7 @@ export default function Usuarios() {
                       <th scope="col" className="px-6 py-3">Email</th>
                       <th scope="col" className="px-6 py-3">Rol</th>
                       <th scope="col" className="px-6 py-3">Estado</th>
-                      <th scope="col" className="px-6 py-3 text-right">Acciones</th>
+                
                     </tr>
                   </thead>
                   <tbody>
@@ -469,7 +469,6 @@ export default function Usuarios() {
                             <span className="bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-300 text-xs font-medium px-2.5 py-0.5 rounded-full">Inactivo</span>
                           )}
                         </td>
-                        <td className="px-6 py-4 text-right"><button className="font-medium text-primary hover:underline">Editar</button></td>
                       </tr>
                     ))}
                   </tbody>
