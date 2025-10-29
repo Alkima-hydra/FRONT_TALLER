@@ -5,7 +5,7 @@ import Dashboard from './features/dashboard/Dashboard'
 import Login from './features/login/Login'
 import Registros from './features/registros/Registros'
 import Personas from './features/personas/Personas'
-// import Auditoria from './features/auditoria/Auditoria'
+import Auditoria from './features/auditoria/Auditoria'
 import Sacramentos from './features/sacramentos/Sacramentos'
 import Usuarios from './features/usuarios/Usuarios'
 import Reportes from './features/reportes/Reportes'
@@ -25,6 +25,7 @@ export default function App() {
         <Route path="/reportes" element={<Reportes />} />
         <Route path="/certificados" element={<Certificados />} />
         <Route path="/parroquias" element={<Parroquias />} />
+        <Route path="/auditoria" element={<Auditoria />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Provider>

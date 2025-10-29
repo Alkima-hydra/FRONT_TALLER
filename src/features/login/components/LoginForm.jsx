@@ -15,13 +15,13 @@ export default function LoginForm({
   return (
     <div className="space-y-6">
       <InputField
-        id="username"
-        label="Usuario"
-        type="text"
-        placeholder="Ingresa tu usuario"
-        value={formData.username}
-        onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-        autoComplete="username"
+        id="email"
+        label="Email"
+        type="email"
+        placeholder="Ingresa tu email"
+        value={formData.email}
+        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+        autoComplete="email"
       />
 
       <InputField
