@@ -9,6 +9,7 @@ export const fetchPersonas = createAsyncThunk(
       console.log('[personasThunk] Enviando filtros:', filters);
       const response = await personasApi.fetchPersonas(filters);
       console.log('[personasThunk] Respuesta del servidor:', response);
+      console.log('[personasThunk] Personas obtenidas:', response.personas || response);
       return response;
     } catch (error) {
       return rejectWithValue(error);
@@ -54,4 +55,34 @@ export const createPersona = createAsyncThunk(
       return rejectWithValue(error?.response?.data || error.message || error)
     }
   }
+
 )
+export const updatePersona = createAsyncThunk(
+  'personas/updatePersona',
+  async ({ id, data }, { rejectWithValue }) => {
+    try {
+      console.log('[personasThunk] Actualizando persona:', id, data);
+      const response = await personasApi.updatePersona(id, data);
+      console.log('[personasThunk] Persona actualizada:', response);
+      return response?.persona || response;
+    } catch (error) {
+      console.error('[personasThunk] Error actualizando persona:', error);
+      return rejectWithValue(error?.response?.data || error.message || error);
+    }
+  }
+);
+
+export const deletePersona = createAsyncThunk(
+  'personas/deletePersona',
+  async (id, { rejectWithValue }) => {
+    try {
+      console.log('[personasThunk] Eliminando persona ID:', id)
+      const response = await personasApi.deletePersona(id)
+      console.log('[personasThunk] Persona eliminada:', response)
+      return response?.persona || response
+    } catch (error) {
+      console.error('[personasThunk] Error eliminando persona:', error)
+      return rejectWithValue(error?.response?.data || error.message || error)
+    }
+  }
+);  

@@ -7,6 +7,8 @@ import {
   fetchAllPersonas,
   fetchPersonaById,
   createPersona,
+  updatePersona,
+  deletePersona
 } from './slices/personasThunk';
 import {
   selectIsLoading,
@@ -14,6 +16,8 @@ import {
   selectAllPersonas,
   selectPersonaSeleccionada,
   selectIsCreating,
+  selectIsUpdating,
+  selectIsDeleting
 } from './slices/personasSlice';
 
 export default function Personas() {
@@ -23,6 +27,8 @@ export default function Personas() {
   const allPersonas = useSelector(selectAllPersonas);
   const personaSeleccionada = useSelector(selectPersonaSeleccionada);
   const isCreating = useSelector(selectIsCreating);
+  const isUpdating = useSelector(selectIsUpdating);
+  const isDeleting = useSelector(selectIsDeleting);
 
   const [mergeOpen, setMergeOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('agregar');
@@ -79,7 +85,7 @@ export default function Personas() {
   const handleCreate = async (e) => {
     e.preventDefault();
     try {
-      const action = await dispatch(createPersona(formAdd));
+      dispatch(createPersona(formAdd));
       if (action.meta.requestStatus === 'fulfilled') {
         setToast({ type: 'success', message: 'Persona creada correctamente.' });
         // Opcional: recargar lista completa
@@ -93,11 +99,35 @@ export default function Personas() {
     }
   }
 
-  const handleUpdate = (e) => {
-    e.preventDefault();
-    // TODO: conectar update thunk cuando esté disponible
-    setToast({ type: 'success', message: 'Cambios preparados para guardar (falta cablear update).' });
+ const handleUpdate = async (e) => {
+  e.preventDefault();
+
+  // ✅ aceptar tanto id como id_persona
+  const id = selectedPerson.id || selectedPerson.id_persona;
+  if (!id) {
+    console.error("No se encontró el ID de la persona seleccionada");
+    setToast({ type: 'error', message: 'No se pudo determinar el ID de la persona.' });
+    return;
   }
+
+  const { id_persona, id: _, ...data } = selectedPerson; // excluye ambos del body
+  try {
+    const action = await dispatch(updatePersona({ id, data }));
+    if (action.meta.requestStatus === 'fulfilled') {
+      setToast({ type: 'success', message: 'Cambios guardados correctamente.' });
+      if (hasFilters) {
+        dispatch(fetchPersonas(filters));
+      } else {
+        dispatch(fetchAllPersonas());
+      }
+    } else {
+      const msg = action.payload?.message || 'No se pudo actualizar la persona';
+      setToast({ type: 'error', message: msg });
+    }
+  } catch (err) {
+    setToast({ type: 'error', message: err?.message || 'Error inesperado al actualizar' });
+  }
+};
 
   return (
     <Layout title="Gestión de Personas">
@@ -562,7 +592,20 @@ export default function Personas() {
                   </div>
                   <div className="mt-4 col-span-2 flex justify-end gap-3">
                     <button type="button" onClick={() => setSelectedPerson(null)} className="px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/40">Cancelar</button>
-                    <button type="submit" className="inline-flex items-center px-5 py-2.5 rounded-lg bg-primary text-white font-medium hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">Guardar Cambios</button>
+                    <button
+                      type="submit"
+                      disabled={isUpdating}
+                      className={`inline-flex items-center px-5 py-2.5 rounded-lg text-white font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary ${isUpdating ? 'bg-primary/60 cursor-not-allowed' : 'bg-primary hover:bg-primary/90'}`}
+                    >
+                      {isUpdating ? (
+                        <>
+                          <span className="material-symbols-outlined mr-2 animate-spin">progress_activity</span>
+                          Guardando...
+                        </>
+                      ) : (
+                        'Guardar Cambios'
+                      )}
+                    </button>
                   </div>
                 </form>
               </div>

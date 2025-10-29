@@ -4,6 +4,8 @@ import {
   fetchAllPersonas,
   fetchPersonaById,
   createPersona,
+  updatePersona,
+  deletePersona,
 } from './personasThunk';
 
 const initialState = {
@@ -19,6 +21,8 @@ const initialState = {
   isLoadingAll: false,
   isLoadingById: false,
   isCreating: false,
+  isUpdating: false,
+  isDeleting: false,
   error: null,
 };
 
@@ -104,6 +108,43 @@ const personasSlice = createSlice({
       .addCase(createPersona.rejected, (state, action) => {
         state.isCreating = false;
         state.error = action.payload?.message || 'Error al crear persona';
+      })
+
+      // updatePersona
+      .addCase(updatePersona.pending, (state) => {
+        state.isUpdating = true;
+        state.error = null;
+      })
+      .addCase(updatePersona.fulfilled, (state, action) => {
+        state.isUpdating = false;
+        const updated = action.payload;
+        state.personas = state.personas.map(p => p.id === updated.id ? updated : p);
+        if (state.personaSeleccionada?.id === updated.id) {
+          state.personaSeleccionada = updated;
+        }
+      })
+      .addCase(updatePersona.rejected, (state, action) => {
+        state.isUpdating = false;
+        state.error = action.payload?.message || 'Error al actualizar persona';
+      })
+
+      // deletePersona
+      .addCase(deletePersona.pending, (state) => {
+        state.isDeleting = true;
+        state.error = null;
+      })
+      .addCase(deletePersona.fulfilled, (state, action) => {
+        state.isDeleting = false;
+        const deletedId = action.payload.id;
+        state.personas = state.personas.filter(p => p.id !== deletedId);
+        if (state.personaSeleccionada?.id === deletedId) {
+          state.personaSeleccionada = null;
+        }
+        state.totalItems = Math.max(0, (state.totalItems || 1) - 1);
+      })
+      .addCase(deletePersona.rejected, (state, action) => {
+        state.isDeleting = false;
+        state.error = action.payload?.message || 'Error al eliminar persona';
       });
   },
 });
@@ -125,6 +166,8 @@ export const selectIsLoadingAll = (state) => state.personas.isLoadingAll;
 export const selectIsLoadingById = (state) => state.personas.isLoadingById;
 export const selectError = (state) => state.personas.error;
 export const selectIsCreating = (state) => state.personas.isCreating;
+export const selectIsUpdating = (state) => state.personas.isUpdating;
+export const selectIsDeleting = (state) => state.personas.isDeleting;
 
 // Exportar reducer
 export const personasReducer = personasSlice.reducer;
