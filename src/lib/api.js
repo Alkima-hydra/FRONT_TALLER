@@ -72,3 +72,21 @@ export const usuariosApi = {
   deleteUsuario: (id) =>
     api.patch(`/usuarios/${id}`).then((res) => res.data).catch(handleError),
 };
+};
+
+export const parroquiasApi = {
+  fetchParroquias: (params = {}) =>
+    api.get('/parroquias/', { params }).then((res) => res.data).catch(handleError),
+
+  fetchAllParroquias: () =>
+    api.get('/parroquias/all').then((res) => res.data).catch(handleError),
+
+  fetchParroquiaById: (id) =>
+    api.get(`/parroquias/${id}`).then((res) => res.data).catch(handleError),
+
+  createParroquia: (data) =>
+    api.post('/parroquias/new', data).then((res) => res.data).catch(handleError),
+
+  updateParroquia: (id, data) =>
+    api.put(`/parroquias/${id}`, data).then((res) => res.data).catch(handleError),
+};
