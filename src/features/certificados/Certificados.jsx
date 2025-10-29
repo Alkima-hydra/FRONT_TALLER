@@ -177,7 +177,7 @@ export default function Certificados() {
                       className="w-full p-2 rounded-lg bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark focus:outline-none focus:ring-2 focus:ring-primary"
                     >
                       <option value="bautizo-rellenable">bautizo-rellenable</option>
-                      <option value="iglesia-rellenable">defuncion-rellenable</option>
+                      <option value="iglesia-rellenable">iglesia-rellenable</option>
                     </select>
                   </div>
 
