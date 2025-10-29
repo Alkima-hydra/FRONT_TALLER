@@ -45,6 +45,7 @@ export const personasApi = {
 
   fetchPersonaById: (id) =>
     api.get(`/personas/${id}`).then((res) => res.data).catch(handleError),
+
   createPersona: (data) =>
     api.post('/personas/new', data).then((res) => res.data).catch(handleError),
 
@@ -88,4 +89,14 @@ export const parroquiasApi = {
 
   updateParroquia: (id, data) =>
     api.put(`/parroquias/${id}`, data).then((res) => res.data).catch(handleError),
+};
+export const passwordApi = {
+  solicitar: (email) => api.post('/password/solicitar', { email }),
+  validar: (token) => api.get('/password/validar', { params: { token } }),
+  cambiar: (token, newPassword) => api.post('/password/cambiar', { token, newPassword }),
+};
+
+export const auditoriaApi = {
+  fetchAuditorias: (params = {}) =>
+    api.get('/auditoria/', { params }).then((res) => res.data).catch(handleError),
 };
