@@ -29,7 +29,7 @@ export default function AuditTable({ data, onViewDetails }) {
                 Petición HTTP
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-light dark:text-muted-dark">
-                Username
+                Correo
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-light dark:text-muted-dark">
                 IP

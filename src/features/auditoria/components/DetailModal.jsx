@@ -69,7 +69,7 @@ export default function DetailModal({ isOpen, onClose, data }) {
             />
             
             <DetailRow 
-              label="Username" 
+              label="Correo" 
               value={data.username} 
             />
             

@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
+import Swal from 'sweetalert2';
 import { loginUser } from './slices/loginThunks';
+import { clearError } from './slices/loginSlice';
 import { selectIsLoading, selectError } from './slices/loginSelectors';
 import LoginPanel from './components/LoginPanel';
 import LoginForm from './components/LoginForm';
@@ -21,15 +23,39 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e?.preventDefault();
-    console.log('[Login] Enviando formulario:', formData);
+
+    if (!formData.email || !formData.password) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Campos incompletos',
+        text: 'Por favor ingrese email y contraseña',
+        confirmButtonColor: '#3b82f6',
+      });
+      return;
+    }
 
     const result = await dispatch(loginUser(formData));
 
     if (loginUser.fulfilled.match(result)) {
-      console.log('[Login] Login exitoso, redirigiendo...');
+      Swal.fire({
+        icon: 'success',
+        title: '¡Bienvenido!',
+        text: `Hola ${result.payload.name}`,
+        timer: 1500,
+        showConfirmButton: false,
+      });
       navigate('/dashboard');
     } else {
-      console.error('[Login] Falló el login:', result.payload);
+      const errorData = result.payload || {};
+      
+      Swal.fire({
+        icon: errorData.type || 'error',
+        title: 'Error al iniciar sesión',
+        text: errorData.message || 'Credenciales incorrectas',
+        confirmButtonColor: '#3b82f6',
+      });
+      
+      dispatch(clearError());
     }
   };
 
