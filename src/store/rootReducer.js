@@ -5,6 +5,7 @@ import storage from 'redux-persist/lib/storage';
 import { loginReducer } from '../features/login/slices/loginSlice';
 import { dashboardReducer } from '../features/dashboard/slices/dashboardSlice';
 import { personasReducer } from '../features/personas/slices/personasSlice';
+import { passwordReducer } from '../features/password/slices/passwordSlice';
 // Agregar otros reducers aqui sdjalsd
 // Mantener los reducers en sus carpetas pofavo
 
@@ -18,6 +19,7 @@ export const rootReducer = combineReducers({
   login: persistReducer(loginPersistConfig, loginReducer),
   dashboard: dashboardReducer,
   personas: personasReducer,
+  password: passwordReducer,
 });
 
 export default rootReducer;

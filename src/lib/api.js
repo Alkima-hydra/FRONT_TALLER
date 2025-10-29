@@ -46,3 +46,9 @@ export const personasApi = {
   fetchPersonaById: (id) =>
     api.get(`/personas/${id}`).then((res) => res.data).catch(handleError),
 };
+
+export const passwordApi = {
+  solicitar: (email) => api.post('/password/solicitar', { email }),
+  validar: (token) => api.get('/password/validar', { params: { token } }),
+  cambiar: (token, newPassword) => api.post('/password/cambiar', { token, newPassword }),
+};
