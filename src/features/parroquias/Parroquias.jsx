@@ -3,11 +3,9 @@ import { useDispatch, useSelector } from 'react-redux';
 import Layout from '../../shared/components/layout/Layout';
 import DuplicatesMergeModal from './components/DuplicatesMergeModal';
 
-
 import {
   fetchParroquias,
   fetchParroquiaById,
-  fetchAllParroquias,
   createParroquia,
   updateParroquia,
 } from './slices/parroquiasThunk';
@@ -23,15 +21,12 @@ import {
 export default function Parroquias() {
   const dispatch = useDispatch();
 
-  // Estados globales de Redux
-  const parroquias = useSelector(selectParroquias);
-  const isLoading = useSelector(selectIsLoading);
-  const error = useSelector(selectError);
-  const parroquiaSeleccionada = useSelector(selectParroquiaSeleccionada);
-
-  // Estados locales
+  // ====== ESTADOS ======
   const [mergeOpen, setMergeOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('agregar');
+  const [boolSelected, setBoolSelected] = useState(false);
+  const [parroquiaSeleccionada, setParroquiaSeleccionada] = useState(null);
+
   const [formData, setFormData] = useState({
     nombre: '',
     direccion: '',
@@ -39,44 +34,21 @@ export default function Parroquias() {
     email: '',
   });
   const [filters, setFilters] = useState({ nombre: '', direccion: '' });
-  const [parroquiaLocalSeleccionada, setParroquiaLocalSeleccionada] = useState(null);
-  // Formulario de edición (editable) sincronizado con la selección
-  const [editForm, setEditForm] = useState({ nombre: '', direccion: '', telefono: '', email: '' });
   const [parroquiasLocal, setParroquiasLocal] = useState([]);
 
-  // --- Toast local minimalista ---
-  const [toast, setToast] = useState(null); // { type: 'success'|'error', message: string }
-  useEffect(() => {
-    if (!toast) return;
-    const t = setTimeout(() => setToast(null), 3000);
-    return () => clearTimeout(t);
-  }, [toast]);
+  //const parroquiaSeleccionada = useSelector(selectParroquiaSeleccionada);
+  const parroquias = useSelector(selectParroquias);
+  const isLoading = useSelector(selectIsLoading);
+  const error = useSelector(selectError);
 
-  useEffect(() => {
-    const p = (parroquiaSeleccionada || parroquiaLocalSeleccionada);
-    if (p) {
-      setEditForm({
-        nombre: p?.nombre || '',
-        direccion: p?.direccion || '',
-        telefono: p?.telefono || '',
-        email: p?.email || '',
-      });
-    } else {
-      setEditForm({ nombre: '', direccion: '', telefono: '', email: '' });
-    }
-  }, [parroquiaSeleccionada, parroquiaLocalSeleccionada]);
-
-  const parroquiaParaEditar = parroquiaSeleccionada || parroquiaLocalSeleccionada;
-  console.log('[DEBUG COMPONENT] parroquiaParaEditar:', parroquiaParaEditar);
-
-  // Al abrir la pestaña de búsqueda, cargar parroquias
+  // ====== EFECTOS ======
   useEffect(() => {
     if (activeTab === 'buscar') {
       dispatch(fetchParroquias(filters));
     }
   }, [activeTab, filters, dispatch]);
 
-  // Manejadores?
+  // ====== MANEJADORES ======
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
   };
@@ -87,69 +59,54 @@ export default function Parroquias() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log('Formulario a enviar:', formData);
-    // Aquí podrías despachar un thunk para crear una parroquia:
     dispatch(createParroquia(formData));
   };
 
   const handleBuscar = async () => {
-    
     const resultAction = await dispatch(fetchParroquias(filters));
     if (fetchParroquias.fulfilled.match(resultAction)) {
       const data = resultAction.payload;
-      // 🔹 Si el backend devuelve un array directamente
       if (Array.isArray(data)) {
         setParroquiasLocal(data);
-      } 
-      // 🔹 Si devuelve un objeto con "parroquias"
-      else if (data.parroquias) {
+      } else if (data.parroquias) {
         setParroquiasLocal(data.parroquias);
       }
     }
   };
-
-  const handleSelectParroquia = (p) => {
-    console.log('[DEBUG] Parroquia seleccionada:', p);
-    setParroquiaLocalSeleccionada(p); // fallback inmediato
-    const id = p?.id_parroquia ?? p?.id ?? p?.uuid ?? p?.idParroquia;
-    if (!id) {
-      console.warn('[Parroquias] No se encontró un identificador válido en el elemento seleccionado:', p);
-      return;
+  const handleSelectParroquia = async (p) => {
+    console.log('ID Parroquia seleccionada:', p.id_parroquia);
+    const result = await dispatch(fetchParroquiaById(p.id_parroquia));
+    
+    if (fetchParroquiaById.fulfilled.match(result)) {
+      console.log('✅ Parroquia cargada:', result.payload);
+      setParroquiaSeleccionada(result.payload); 
+    } else {
+      console.error('❌ Error al cargar parroquia:', result.error);
     }
-    console.log('[DEBUG] ID detectado para fetchParroquiaById:', id);
-    dispatch(fetchParroquiaById(id));
   };
-
+  
+  useEffect(() => {
+    if (parroquiaSeleccionada) {
+      console.log('🟢 parroquiaSeleccionada actualizada:', parroquiaSeleccionada);
+      dispatch({
+        type: 'parroquias/setParroquiaSeleccionada',
+        payload: parroquiaSeleccionada,
+      });
+      setBoolSelected(true);
+    }
+  }, [parroquiaSeleccionada]);
+  const handleEditarParroquia = () => {
+    console.log('Editando parroquia:', parroquiaSeleccionada);
+    if (parroquiaSeleccionada && parroquiaSeleccionada.id_parroquia) {
+      dispatch(updateParroquia({ id: parroquiaSeleccionada.id_parroquia, data: parroquiaSeleccionada }));
+    }
+  };
   const handleCancelarEdicion = () => {
     dispatch(clearParroquiaSeleccionada());
-    setParroquiaLocalSeleccionada(null);
+    setBoolSelected(false); // 👈 RESETEAMOS LA BANDERA
   };
 
-  const handleGuardarCambios = async () => {
-    if (!parroquiaParaEditar) return;
-    const id = parroquiaParaEditar?.id_parroquia ?? parroquiaParaEditar?.id ?? parroquiaParaEditar?.uuid;
-    if (!id) return console.warn('[Parroquias] No se pudo determinar el ID para actualizar.');
-
-    const payload = { ...editForm };
-    try {
-      const result = await dispatch(updateParroquia({ id, data: payload }));
-      if (updateParroquia.fulfilled.match(result)) {
-        const actualizado = result.payload?.parroquia || result.payload || payload;
-        setParroquiaLocalSeleccionada(prev => ({ ...(prev || {}), ...actualizado }));
-        setToast({ type: 'success', message: 'Cambios guardados correctamente.' });
-        // Recargar lista para reflejar cambios
-        await dispatch(fetchParroquias(filters));
-        setActiveTab('buscar');
-      } else {
-        const msg = result.payload?.msg || result.error?.message || 'No se pudo actualizar.';
-        setToast({ type: 'error', message: msg || 'Ocurrió un error.' });
-      }
-    } catch (e) {
-      console.error(e);
-      setToast({ type: 'error', message: 'Ocurrió un error al actualizar.' });
-    }
-  };
-
+  // ====== RENDER ======
   return (
     <Layout title="Gestión de Parroquias">
       {toast && (
@@ -244,7 +201,7 @@ export default function Parroquias() {
             <form className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="f-nombre">
+                  <label htmlFor="f-nombre" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Nombre
                   </label>
                   <input
@@ -257,7 +214,7 @@ export default function Parroquias() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="f-direccion">
+                  <label htmlFor="f-direccion" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Dirección
                   </label>
                   <input
@@ -336,68 +293,109 @@ export default function Parroquias() {
               </div>
             )}
 
-            {/* Edición */}
-            {parroquiaParaEditar && (
-              <div className="mt-8 bg-white dark:bg-background-dark/50 rounded-xl shadow-sm p-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                  Editar Parroquia
-                </h3>
-                <form className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nombre</label>
-                    <input
-                      type="text"
-                      value={editForm.nombre}
-                      onChange={(e) => setEditForm(f => ({ ...f, nombre: e.target.value }))}
-                      className="w-full rounded-lg border border-gray-300 dark:border-gray-700 p-3 bg-background-light dark:bg-background-dark"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Dirección</label>
-                    <input
-                      type="text"
-                      value={editForm.direccion}
-                      onChange={(e) => setEditForm(f => ({ ...f, direccion: e.target.value }))}
-                      className="w-full rounded-lg border border-gray-300 dark:border-gray-700 p-3 bg-background-light dark:bg-background-dark"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Teléfono</label>
-                    <input
-                      type="text"
-                      value={editForm.telefono}
-                      onChange={(e) => setEditForm(f => ({ ...f, telefono: e.target.value }))}
-                      className="w-full rounded-lg border border-gray-300 dark:border-gray-700 p-3 bg-background-light dark:bg-background-dark"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
-                    <input
-                      type="email"
-                      value={editForm.email}
-                      onChange={(e) => setEditForm(f => ({ ...f, email: e.target.value }))}
-                      className="w-full rounded-lg border border-gray-300 dark:border-gray-700 p-3 bg-background-light dark:bg-background-dark"
-                    />
-                  </div>
-                  <div className="mt-4 col-span-2 flex justify-end gap-3">
-                    <button
-                      type="button"
-                      onClick={handleCancelarEdicion}
-                      className="px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/40"
-                    >
-                      Cerrar
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleGuardarCambios}
-                      className="inline-flex items-center px-5 py-2.5 rounded-lg bg-primary text-white font-medium hover:bg-primary/90 focus:ring-2 focus:ring-offset-2 focus:ring-primary"
-                    >
-                      Guardar cambios
-                    </button>
-                  </div>
-                </form>
-              </div>
-            )}
+            {/* Editar Parroquia */}
+            
+            {boolSelected && (
+  <div className="mt-8 bg-white dark:bg-background-dark/50 rounded-xl shadow-sm p-6">
+    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+      Editar Parroquia
+    </h3>
+
+    <form className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Nombre */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Nombre
+        </label>
+        <input
+          type="text"
+          value={parroquiaSeleccionada.nombre || ''}
+          onChange={(e) =>
+            setParroquiaSeleccionada({
+              ...parroquiaSeleccionada,
+              nombre: e.target.value,
+            })
+          }
+          className="w-full rounded-lg border border-gray-300 dark:border-gray-700 p-3 bg-background-light dark:bg-background-dark"
+        />
+      </div>
+
+      {/* Dirección */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Dirección
+        </label>
+        <input
+          type="text"
+          value={parroquiaSeleccionada.direccion || ''}
+          onChange={(e) =>
+            setParroquiaSeleccionada({
+              ...parroquiaSeleccionada,
+              direccion: e.target.value,
+            })
+          }
+          className="w-full rounded-lg border border-gray-300 dark:border-gray-700 p-3 bg-background-light dark:bg-background-dark"
+        />
+      </div>
+
+      {/* Teléfono */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Teléfono
+        </label>
+        <input
+          type="text"
+          value={parroquiaSeleccionada.telefono || ''}
+          onChange={(e) =>
+            setParroquiaSeleccionada({
+              ...parroquiaSeleccionada,
+              telefono: e.target.value,
+            })
+          }
+          className="w-full rounded-lg border border-gray-300 dark:border-gray-700 p-3 bg-background-light dark:bg-background-dark"
+        />
+      </div>
+
+      {/* Email */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Email
+        </label>
+        <input
+          type="text"
+          value={parroquiaSeleccionada.email || ''}
+          onChange={(e) =>
+            setParroquiaSeleccionada({
+              ...parroquiaSeleccionada,
+              email: e.target.value,
+            })
+          }
+          className="w-full rounded-lg border border-gray-300 dark:border-gray-700 p-3 bg-background-light dark:bg-background-dark"
+        />
+      </div>
+
+      {/* Botones */}
+      <div className="mt-4 col-span-2 flex justify-end gap-3">
+        <button
+          type="button"
+          onClick={handleEditarParroquia}
+          className="px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/40"
+        >
+          Editar
+        </button>
+
+        <button
+          type="button"
+          onClick={handleCancelarEdicion}
+          className="px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/40"
+        >
+          Cerrar
+        </button>
+      </div>
+    </form>
+  </div>
+)}
+
           </div>
         </>
       )}
