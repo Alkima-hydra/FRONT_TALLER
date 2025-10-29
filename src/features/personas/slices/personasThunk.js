@@ -1,18 +1,32 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
-import { personasApi } from '../../../lib/api';
+import { personasApi, api } from '../../../lib/api';
 
 export const fetchPersonas = createAsyncThunk(
   'personas/fetchPersonas',
   async (filters = {}, { rejectWithValue }) => {
     try {
-      
-      console.log('[personasThunk] Enviando filtros:', filters);
-      const response = await personasApi.fetchPersonas(filters);
-      console.log('[personasThunk] Respuesta del servidor:', response);
-      console.log('[personasThunk] Personas obtenidas:', response.personas || response);
-      return response;
+      // Normalizar filtros: trim strings y eliminar vacíos
+      const isNonEmpty = (v) => v !== null && v !== undefined && (typeof v !== 'string' || v.trim() !== '');
+      const cleaned = Object.fromEntries(
+        Object.entries(filters || {})
+          .map(([k, v]) => [k, typeof v === 'string' ? v.trim() : v])
+          .filter(([, v]) => isNonEmpty(v))
+      );
+
+      console.log('[personasThunk] Filtros limpiados:', cleaned);
+
+      // Enviar como query params (GET) para que el backend filtre correctamente
+      const resp = await api.get('/personas', { params: cleaned });
+      const data = resp?.data ?? resp; // axios suele devolver .data
+      console.log('[personasThunk] Respuesta del servidor:', data);
+
+      // Unificar forma de retorno
+      const personas = data?.personas || data?.items || data;
+      console.log('[personasThunk] Personas obtenidas:', personas);
+      return { personas, totalItems: data?.totalItems, totalPages: data?.totalPages, currentPage: data?.currentPage };
     } catch (error) {
-      return rejectWithValue(error);
+      console.error('[personasThunk] Error fetchPersonas:', error);
+      return rejectWithValue(error?.response?.data || error.message || error);
     }
   }
 );
@@ -21,10 +35,11 @@ export const fetchAllPersonas = createAsyncThunk(
   'personas/fetchAllPersonas',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await personasApi.fetchAllPersonas();
-      return response.personas || response;
+      const resp = await personasApi.fetchAllPersonas();
+      const data = resp?.data ?? resp;
+      return data?.personas || data?.items || data;
     } catch (error) {
-      return rejectWithValue(error);
+      return rejectWithValue(error?.response?.data || error.message || error);
     }
   }
 );
@@ -36,7 +51,7 @@ export const fetchPersonaById = createAsyncThunk(
       const response = await personasApi.fetchPersonaById(id);
       return response.persona || response;
     } catch (error) {
-      return rejectWithValue(error);
+      return rejectWithValue(error?.response?.data || error.message || error);
     }
   }
 );
