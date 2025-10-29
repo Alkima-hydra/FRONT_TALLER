@@ -3,10 +3,12 @@ import { useDispatch, useSelector } from 'react-redux';
 import Layout from '../../shared/components/layout/Layout';
 import DuplicatesMergeModal from './components/DuplicatesMergeModal';
 
+
 import {
   fetchParroquias,
   fetchParroquiaById,
   fetchAllParroquias,
+  createParroquia,
 } from './slices/parroquiasThunk';
 
 import {
@@ -57,7 +59,7 @@ export default function Parroquias() {
     e.preventDefault();
     console.log('Formulario a enviar:', formData);
     // Aquí podrías despachar un thunk para crear una parroquia:
-    // dispatch(createParroquia(formData));
+    dispatch(createParroquia(formData));
   };
 
   const handleBuscar = () => {

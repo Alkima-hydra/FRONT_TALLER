@@ -87,7 +87,7 @@ const parroquiasSlice = createSlice({
         state.error = action.payload?.message || 'Error al cargar la parroquia';
       })
 
-      // 🔹 createParroquia
+      //  createParroquia
       .addCase(createParroquia.pending, (state) => {
         state.isSaving = true;
         state.error = null;
