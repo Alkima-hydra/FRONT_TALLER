@@ -6,7 +6,7 @@ import Login from './features/login/Login'
 import Registros from './features/registros/Registros'
 import Personas from './features/personas/Personas'
 import Auditoria from './features/auditoria/Auditoria'
-import Libros from './features/libros/Libros'
+import Sacramentos from './features/sacramentos/Sacramentos'
 import Usuarios from './features/usuarios/Usuarios'
 import Reportes from './features/reportes/Reportes'
 import Certificados from './features/certificados/Certificados'
@@ -20,7 +20,7 @@ export default function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/registros" element={<Registros />} />
         <Route path="/personas" element={<Personas />} />
-        <Route path="/libros" element={<Libros />} />
+        <Route path="/sacramentos" element={<Sacramentos />} />
         <Route path="/usuarios" element={<Usuarios />} />
         <Route path="/reportes" element={<Reportes />} />
         <Route path="/certificados" element={<Certificados />} />
