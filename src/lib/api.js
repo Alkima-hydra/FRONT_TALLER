@@ -72,7 +72,6 @@ export const usuariosApi = {
   deleteUsuario: (id) =>
     api.patch(`/usuarios/${id}`).then((res) => res.data).catch(handleError),
 };
-};
 
 export const parroquiasApi = {
   fetchParroquias: (params = {}) =>
