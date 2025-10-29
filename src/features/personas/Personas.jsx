@@ -114,7 +114,7 @@ export default function Personas() {
   };
 
   const handleResetSearch = () => {
-    const clean = { /* todos en '' */ };
+    const clean = { nombre: '', apellido_paterno: '', apellido_materno: '', carnet_identidad: '', fecha_nacimiento: '', lugar_nacimiento: '', nombre_padre: '', nombre_madre: '', activo: '', estado: '' };
     setFilters(clean);
     dispatch(fetchAllPersonas());
   };
