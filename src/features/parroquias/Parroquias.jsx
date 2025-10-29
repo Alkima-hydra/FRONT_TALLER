@@ -35,6 +35,7 @@ export default function Parroquias() {
 
   // Estados globales de Redux
   const parroquias = useSelector(selectParroquias);
+  const [parroquiasLocal, setParroquiasLocal] = useState([]);
   const isLoading = useSelector(selectIsLoading);
   const error = useSelector(selectError);
   const parroquiaSeleccionada = useSelector(selectParroquiaSeleccionada);
@@ -62,8 +63,20 @@ export default function Parroquias() {
     dispatch(createParroquia(formData));
   };
 
-  const handleBuscar = () => {
-    dispatch(fetchParroquias(filters));
+  const handleBuscar = async () => {
+    
+    const resultAction = await dispatch(fetchParroquias(filters));
+    if (fetchParroquias.fulfilled.match(resultAction)) {
+      const data = resultAction.payload;
+      // 🔹 Si el backend devuelve un array directamente
+      if (Array.isArray(data)) {
+        setParroquiasLocal(data);
+      } 
+      // 🔹 Si devuelve un objeto con "parroquias"
+      else if (data.parroquias) {
+        setParroquiasLocal(data.parroquias);
+      }
+    }
   };
 
   const handleSelectParroquia = (p) => {
@@ -225,10 +238,10 @@ export default function Parroquias() {
                     </tr>
                   </thead>
                   <tbody>
-                    {parroquias.length > 0 ? (
-                      parroquias.map((p) => (
+                    {parroquiasLocal && parroquiasLocal.length > 0 ? (
+                      parroquiasLocal.map((p) => (
                         <tr
-                          key={p.id}
+                          key={p.id_parroquia}
                           onClick={() => handleSelectParroquia(p)}
                           className="cursor-pointer bg-white dark:bg-background-dark/50 border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
                         >
