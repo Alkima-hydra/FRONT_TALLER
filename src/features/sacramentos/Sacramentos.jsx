@@ -399,6 +399,15 @@ export default function Sacramentos() {
                       className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3"
                     />
                   </div>
+                   <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fecha del Sacramento</label>
+                    <input
+                      type="date"
+                      value={form.fecha_sacramento}
+                      onChange={e => handleChange('fecha_sacramento', e.target.value)}
+                      className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3"
+                    />
+                  </div>
                 </div>
               </div>
             )}
