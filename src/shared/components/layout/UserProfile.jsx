@@ -9,7 +9,7 @@ export default function UserProfile() {
     <div className="flex items-center gap-3">
       <div className="hidden sm:block">
         <p className="font-semibold text-sm">{user.name}</p>
-        <p className="text-xs text-muted-light dark:text-muted-dark">{user.role}</p>
+        <p className="text-xs text-muted-light dark:text-muted-dark">{user.rol}</p>
       </div>
     </div>
   );
