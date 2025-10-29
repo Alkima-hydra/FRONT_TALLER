@@ -1,11 +1,37 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Layout from '../../shared/components/layout/Layout';
 
+import { useDispatch, useSelector } from 'react-redux';
+import {
+  fetchUsuarios,
+  fetchUsuarioById,
+  createUsuario,
+  updateUsuario,
+} from './slices/usuariosTrunk';
+import {
+  selectIsLoading,
+  selectUsuarios,
+  selectAllUsuarios,
+  selectUsuarioSeleccionado,
+  selectIsCreating,
+  selectIsUpdating,
+  selectIsDeleting
+} from './slices/usuariosSlice';
+
+
 export default function Usuarios() {
+  const dispatch = useDispatch();
+  const usuarios = useSelector(selectUsuarios);
+  const isLoading = useSelector(selectIsLoading);
+  const isCreating = useSelector(selectIsCreating);
+  const isUpdating = useSelector(selectIsUpdating);
+  const isDeleting = useSelector(selectIsDeleting);
+  const usuarioSeleccionado = useSelector(selectUsuarioSeleccionado);
+  const usuariosError = useSelector(selectUsuariosError);
   const [activeTab, setActiveTab] = useState('agregar')
   const [selectedUser, setSelectedUser] = useState(null)
 
-  // ===== activos para preparar consumo de API (sin endpoints aún) =====
+  // ===== activos par a preparar consumo de API (sin endpoints aún) =====
   const [formAdd, setFormAdd] = useState({
     nombre: '',
     email: '',
@@ -20,23 +46,102 @@ export default function Usuarios() {
     activo: '',
   })
 
-  const [users, setUsers] = useState([]) // lista de resultados
-  const [loading, setLoading] = useState(false)
-  const [saving, setSaving] = useState(false)
+  const [toast, setToast] = useState(null); // { type: 'success'|'error', message }
+  useEffect(() => { if (!toast) return; const t = setTimeout(() => setToast(null), 3000); return () => clearTimeout(t); }, [toast]);
 
-  // ===== Handlers vacíos (listos para cablear luego) =====
-  const handleCreate = (e) => {
-    e.preventDefault()
-    // TODO: conectar POST /usuarios
+  const extractError = (actionOrError) => {
+    try {
+      if (actionOrError && actionOrError.meta !== undefined) {
+        const p = actionOrError.payload;
+        if (p !== undefined) {
+          if (typeof p === 'string') return p;
+          if (p && typeof p === 'object') {
+            if (p.message) return p.message;
+            if (p.error) return typeof p.error === 'string' ? p.error : JSON.stringify(p.error);
+            if (p.errors) return Array.isArray(p.errors) ? p.errors.map(e => e?.message || e).join(' | ') : JSON.stringify(p.errors);
+            if (p.detail) return typeof p.detail === 'string' ? p.detail : JSON.stringify(p.detail);
+            return JSON.stringify(p);
+          }
+        }
+        if (actionOrError.error) {
+          const ae = actionOrError.error;
+          if (typeof ae === 'string') return ae;
+          if (ae?.message) return ae.message;
+        }
+      }
+      const e = actionOrError;
+      if (e && e.response && e.response.data) {
+        const d = e.response.data;
+        if (typeof d === 'string') return d;
+        if (d.message) return d.message;
+        if (d.error) return typeof d.error === 'string' ? d.error : JSON.stringify(d.error);
+        if (d.errors) return Array.isArray(d.errors) ? d.errors.map(x => x?.message || x).join(' | ') : JSON.stringify(d.errors);
+        if (d.detail) return typeof d.detail === 'string' ? d.detail : JSON.stringify(d.detail);
+        return JSON.stringify(d);
+      }
+      if (e && e.message) return e.message;
+      return 'Error desconocido';
+    } catch (ex) {
+      return `Error inesperado: ${ex?.message || ex}`;
+    }
+  };
+
+  useEffect(() => {
+    if (usuarioSeleccionado) setSelectedUser(usuarioSeleccionado);
+  }, [usuarioSeleccionado]);
+
+  useEffect(() => {
+    if (activeTab === 'buscar') {
+      dispatch(fetchUsuarios({}));
+    }
+  }, [activeTab, dispatch]);
+
+  const handleCreate = async (e) => {
+    e.preventDefault();
+    // Normalizar activo: '' | 'true' | 'false'  => 'Activo' | 'Inactivo' | undefined
+    const payload = {
+      nombre: formAdd.nombre?.trim(),
+      email: formAdd.email?.trim(),
+      rol: formAdd.rol || '',
+      activo: formAdd.activo === '' ? undefined : (formAdd.activo ? 'Activo' : 'Inactivo'),
+    };
+    try {
+      const action = await dispatch(createUsuario(payload));
+      console.debug('createUsuario result:', action);
+      if (action.meta.requestStatus === 'fulfilled') {
+        setToast({ type: 'success', message: 'Usuario creado correctamente.' });
+        setFormAdd({ nombre: '', email: '', rol: '', activo: '' });
+        // refrescar lista si estamos en la pestaña buscar
+        if (activeTab === 'buscar') dispatch(fetchUsuarios({}));
+      } else {
+        setToast({ type: 'error', message: extractError(action) });
+      }
+    } catch (err) {
+      console.error('createUsuario threw:', err);
+      setToast({ type: 'error', message: extractError(err) });
+    }
   }
 
-  const handleSearch = (e) => {
-    e.preventDefault()
-    // TODO: conectar GET /usuarios con filtros
-    setLoading(true)
-    // por ahora, no hacemos nada; al integrar, llenar setUsers([...])
-    setLoading(false)
-    setSelectedUser(null)
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    const query = {
+      nombre: filters.nombre?.trim() || undefined,
+      email: filters.email?.trim() || undefined,
+      rol: filters.rol || undefined,
+      activo: filters.activo === '' ? undefined : (filters.activo ? 'Activo' : 'Inactivo'),
+    };
+    try {
+      const action = await dispatch(fetchUsuarios(query));
+      console.debug('fetchUsuarios result:', action);
+      if (action.meta.requestStatus !== 'fulfilled') {
+        setToast({ type: 'error', message: extractError(action) });
+      } else {
+        setSelectedUser(null);
+      }
+    } catch (err) {
+      console.error('fetchUsuarios threw:', err);
+      setToast({ type: 'error', message: extractError(err) });
+    }
   }
 
   const handleResetAdd = () => {
@@ -44,14 +149,43 @@ export default function Usuarios() {
   }
 
   const handleResetSearch = () => {
-    setFilters({ nombre: '', email: '', rol: '', activo: '' })
-    setUsers([])
+    setFilters({ nombre: '', email: '', rol: '', activo: '' });
+    dispatch(fetchUsuarios({}));
+    setSelectedUser(null);
   }
 
-  const handleUpdate = (e) => {
-    e.preventDefault()
-    if (!selectedUser) return
-    // TODO: conectar PUT /usuarios/:id
+  const handleUpdate = async (e) => {
+    e.preventDefault();
+    if (!selectedUser) return;
+    const id = selectedUser.id || selectedUser.id_usuario;
+    if (!id) {
+      setToast({ type: 'error', message: 'No se encontró el ID del usuario.' });
+      return;
+    }
+    const { id_usuario, id: _omit, ...data } = selectedUser;
+    // Normalizar estado a 'Activo'|'Inactivo'
+    if (data.activo === true) data.activo = 'Activo';
+    if (data.activo === false) data.activo = 'Inactivo';
+    try {
+      const action = await dispatch(updateUsuario({ id, data }));
+      console.debug('updateUsuario result:', action);
+      if (action.meta.requestStatus === 'fulfilled') {
+        setToast({ type: 'success', message: 'Cambios guardados correctamente.' });
+        // refrescar lista con filtros vigentes
+        const query = {
+          nombre: filters.nombre?.trim() || undefined,
+          email: filters.email?.trim() || undefined,
+          rol: filters.rol || undefined,
+          activo: filters.activo === '' ? undefined : (filters.activo ? 'Activo' : 'Inactivo'),
+        };
+        dispatch(fetchUsuarios(query));
+      } else {
+        setToast({ type: 'error', message: extractError(action) });
+      }
+    } catch (err) {
+      console.error('updateUsuario threw:', err);
+      setToast({ type: 'error', message: extractError(err) });
+    }
   }
 
   return (
@@ -137,7 +271,9 @@ export default function Usuarios() {
             </select>
                 </div>
                 <div className="md:col-span-2 mt-2 flex gap-3">
-            <button type="submit" className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">Crear Usuario</button>
+            <button type="submit" disabled={isCreating} className={`px-6 py-2 rounded-lg text-white ${isCreating ? 'bg-primary/60 cursor-not-allowed' : 'bg-primary hover:bg-primary/90'}`}>
+              {isCreating ? 'Guardando…' : 'Crear Usuario'}
+            </button>
             <button type="reset" className="px-6 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600" onClick={handleResetAdd}>Limpiar</button>
                 </div>
               </form>
@@ -222,16 +358,25 @@ export default function Usuarios() {
                     </tr>
                   </thead>
                   <tbody>
-                    {loading && (
+                    {isLoading && (
                       <tr><td className="px-6 py-4" colSpan={5}>Cargando...</td></tr>
                     )}
-                    {!loading && users.length === 0 && (
+                    {!isLoading && usuarios.length === 0 && (
                       <tr><td className="px-6 py-4" colSpan={5}>Sin resultados</td></tr>
                     )}
-                    {!loading && users.map((u) => (
+                    {!isLoading && usuarios.map((u) => (
                       <tr
                         key={u.id}
-                        onClick={() => setSelectedUser({ ...u })}
+                        onClick={async () => {
+                          try {
+                            const action = await dispatch(fetchUsuarioById(u.id));
+                            if (action.meta.requestStatus !== 'fulfilled') {
+                              setToast({ type: 'error', message: extractError(action) });
+                            }
+                          } catch (err) {
+                            setToast({ type: 'error', message: extractError(err) });
+                          }
+                        }}
                         className="cursor-pointer bg-white dark:bg-background-dark border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
                       >
                         <td className="px-6 py-4 font-medium text-gray-900 dark:text-white whitespace-nowrap">{u.nombre}</td>
@@ -303,7 +448,9 @@ export default function Usuarios() {
                     </div>
                     <div className="flex justify-end gap-4 pt-2">
                       <button type="button" onClick={() => setSelectedUser(null)} className="px-6 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600">Cancelar</button>
-                      <button type="submit" className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">Guardar Cambios</button>
+                      <button type="submit" disabled={isUpdating} className={`px-6 py-2 rounded-lg text-white ${isUpdating ? 'bg-primary/60 cursor-not-allowed' : 'bg-primary hover:bg-primary/90'}`}>
+                        {isUpdating ? 'Guardando…' : 'Guardar Cambios'}
+                      </button>
                     </div>
                   </form>
                 </div>
@@ -312,6 +459,14 @@ export default function Usuarios() {
           </>
         )}
       </div>
+      {toast && (
+        <div className={`fixed bottom-6 right-6 z-50 max-w-sm rounded-lg shadow-lg px-4 py-3 text-white ${toast.type === 'success' ? 'bg-emerald-600' : 'bg-rose-600'}`}>
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined">{toast.type === 'success' ? 'check_circle' : 'error'}</span>
+            <span className="text-sm font-medium">{toast.message}</span>
+          </div>
+        </div>
+      )}
     </Layout>
   )
 }

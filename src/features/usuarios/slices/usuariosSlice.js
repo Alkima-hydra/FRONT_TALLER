@@ -8,14 +8,15 @@ import {
   deleteUsuario,
 } from './usuariosTrunk';
 
+
 const initialState = {
-  Usuarios: [],
+  usuarios: [],
   totalItems: 0,
   totalPages: 1,
   currentPage: 1,
 
   allUsuarios: [],
-  UsuarioSeleccionada: null,
+  usuarioSeleccionado: null,
 
   isLoading: false,
   isLoadingAll: false,
@@ -34,10 +35,10 @@ const UsuariosSlice = createSlice({
       state.error = null;
     },
     clearUsuarioSeleccionada(state) {
-      state.UsuarioSeleccionada = null;
+      state.usuarioSeleccionado = null;
     },
     resetPagination(state) {
-      state.Usuarios = [];
+      state.usuarios = [];
       state.totalItems = 0;
       state.totalPages = 1;
       state.currentPage = 1;
@@ -83,7 +84,7 @@ const UsuariosSlice = createSlice({
       })
       .addCase(fetchUsuarioById.fulfilled, (state, action) => {
         state.isLoadingById = false;
-        state.UsuarioSeleccionada = action.payload;
+        state.usuarioSeleccionado = action.payload;
       })
       .addCase(fetchUsuarioById.rejected, (state, action) => {
         state.isLoadingById = false;
@@ -99,11 +100,11 @@ const UsuariosSlice = createSlice({
         state.isCreating = false;
         const nueva = action.payload;
         // Si ya hay lista paginada cargada, insertamos al inicio (opcional)
-        if (Array.isArray(state.Usuarios)) {
-          state.Usuarios = [nueva, ...state.Usuarios];
+        if (Array.isArray(state.usuarios)) {
+          state.usuarios = [nueva, ...state.usuarios];
           state.totalItems = (state.totalItems || 0) + 1;
         }
-        state.UsuarioSeleccionada = nueva;
+        state.usuarioSeleccionado = nueva;
       })
       .addCase(createUsuario.rejected, (state, action) => {
         state.isCreating = false;
@@ -136,9 +137,9 @@ const UsuariosSlice = createSlice({
       .addCase(deleteUsuario.fulfilled, (state, action) => {
         state.isDeleting = false;
         const deletedId = action.payload.id;
-        state.Usuarios = state.Usuarios.filter(p => p.id !== deletedId);
-        if (state.UsuarioSeleccionada?.id === deletedId) {
-          state.UsuarioSeleccionada = null;
+        state.usuarios = state.usuarios.filter(p => p.id !== deletedId);
+        if (state.usuarioSeleccionado?.id === deletedId) {
+          state.usuarioSeleccionado = null;
         }
         state.totalItems = Math.max(0, (state.totalItems || 1) - 1);
       })
@@ -153,12 +154,12 @@ const UsuariosSlice = createSlice({
 export const { clearError, clearUsuarioSeleccionada, resetPagination } = UsuariosSlice.actions;
 
 // Selectores
-export const selectUsuarios = (state) => state.Usuarios.Usuarios;
+export const selectUsuarios = (state) => state.Usuarios.usuarios;
 export const selectTotalItems = (state) => state.Usuarios.totalItems;
 export const selectTotalPages = (state) => state.Usuarios.totalPages;
 export const selectCurrentPage = (state) => state.Usuarios.currentPage;
 export const selectAllUsuarios = (state) => state.Usuarios.allUsuarios;
-export const selectUsuarioSeleccionada = (state) => state.Usuarios.UsuarioSeleccionada;
+export const selectUsuarioSeleccionado = (state) => state.Usuarios.usuarioSeleccionado;
 
 // Para loading maybe borrar si no tiene la wea esa que gira al cargar
 export const selectIsLoading = (state) => state.Usuarios.isLoading;
