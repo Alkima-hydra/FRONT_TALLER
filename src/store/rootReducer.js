@@ -6,6 +6,7 @@ import { loginReducer } from '../features/login/slices/loginSlice';
 import { dashboardReducer } from '../features/dashboard/slices/dashboardSlice';
 import { personasReducer } from '../features/personas/slices/personasSlice';
 import { passwordReducer } from '../features/password/slices/passwordSlice';
+import { auditoriaReducer } from '../features/auditoria/slices/auditoriaSlice';
 // Agregar otros reducers aqui sdjalsd
 // Mantener los reducers en sus carpetas pofavo
 
@@ -20,6 +21,7 @@ export const rootReducer = combineReducers({
   dashboard: dashboardReducer,
   personas: personasReducer,
   password: passwordReducer,
+  auditoria: auditoriaReducer,
 });
 
 export default rootReducer;
