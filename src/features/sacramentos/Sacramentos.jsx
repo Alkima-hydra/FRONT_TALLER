@@ -4,11 +4,12 @@ import Layout from '../../shared/components/layout/Layout';
 
 //import de slices y trunk
 import {
-  fetchPersonas,
+  fetchPersonasParaSacramento,
 } from './slices/sacramentosTrunk';
+
 import {
   selectIsLoading,
-  selectPersonas,
+  selectPersonasBusqueda,     // ← usamos el nuevo selector
   selectIsCreating,
   selectIsUpdating,
   selectIsDeleting
@@ -18,7 +19,7 @@ export default function Sacramentos() {
   //para empezar a consumir
   const dispatch = useDispatch();
   const isLoading = useSelector(selectIsLoading);
-  const personas = useSelector(selectPersonas);
+  const personas = useSelector(selectPersonasBusqueda);
   const isCreating = useSelector(selectIsCreating);
   const isUpdating = useSelector(selectIsUpdating);
   const isDeleting = useSelector(selectIsDeleting);
@@ -89,30 +90,30 @@ export default function Sacramentos() {
 
   //para los filtros
   useEffect(() => {
-  if (queryPersona.trim().length < 2) {
-    setListaPersonas([]);
-    return;
-  }
+    if (queryPersona.trim().length < 2) {
+      setListaPersonas([]);
+      return;
+    }
 
-  const delay = setTimeout(() => {
-    dispatch(fetchPersonas({ search: queryPersona }))
-      .unwrap()
-      .then((data) => {
-        console.log(">>> DATA desde thunk:", data);     // <-- 1
-        setListaPersonas(data || []);
-        console.log(">>> LISTA PERSONAS SETEADA:", data); // <-- 2
-        setOpenPersonaList(true);
-      })
-      .catch((e) => {
-        console.error(">>> ERROR buscando:", e);
-        setListaPersonas([]);
-      });
+    const delay = setTimeout(() => {
+      dispatch(fetchPersonasParaSacramento({
+        search: queryPersona,
+        rol: tipoSacramento
+      }))
+        .unwrap()
+        .then((data) => {
+          setListaPersonas(data.personas || []);
+          setOpenPersonaList(true);
+        })
+        .catch((e) => {
+          console.error(">>> ERROR buscando:", e);
+          setListaPersonas([]);
+        });
 
-    console.log(">>> PERSONAS REDUX SELECTOR:", personas); // <-- 3
-  }, 300);
+    }, 300);
 
-  return () => clearTimeout(delay);
-}, [queryPersona, personas]);
+    return () => clearTimeout(delay);
+  }, [queryPersona, tipoSacramento]);
 
   // Construye el payload listo para enviar según el tipo
   const buildPayload = () => {

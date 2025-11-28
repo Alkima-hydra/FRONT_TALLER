@@ -1,17 +1,15 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
-import { personasApi } from '../../../lib/api';
+import { sacramentosApi } from '../../../lib/api';
 
 //rutas que se ponen para cada cosa al momento de buscar
 // en este caso las personas se tienen que buscar, primero en bautizo
 // no tiene que estar dentro de sacramentos
-export const fetchPersonas = createAsyncThunk(
-  'personas/fetchPersonas',
-  async (filters = {}, { rejectWithValue }) => {
+
+export const fetchPersonasParaSacramento = createAsyncThunk(
+  'sacramentos/buscarPersonas',
+  async (params, { rejectWithValue }) => {
     try {
-      console.log('[personasThunk] Enviando filtros:', filters);
-      const response = await personasApi.fetchPersonas(filters);
-      console.log('[personasThunk] Respuesta del servidor:', response);
-      console.log('[personasThunk] Personas obtenidas:', response.personas || response);
+      const response = await sacramentosApi.buscarPersonas(params);
       return response;
     } catch (error) {
       return rejectWithValue(error);

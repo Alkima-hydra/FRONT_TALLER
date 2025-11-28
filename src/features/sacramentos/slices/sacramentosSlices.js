@@ -1,10 +1,11 @@
 import { createSlice } from '@reduxjs/toolkit';
 import {
-  fetchPersonas,
+  fetchPersonasParaSacramento  // búsqueda filtrada por rol sacramento
 } from './sacramentosTrunk';
 
 const initialState = {
-  personas: [],
+  personas: [],          // paginado normal
+  personasBusqueda: [],  // resultados del autocomplete sacramentos
   totalItems: 0,
   totalPages: 1,
   currentPage: 1,
@@ -28,7 +29,6 @@ const sacramentosSlice = createSlice({
     clearError(state) {
       state.error = null;
     },
-    //persona por la parte de buscar al verificar
     clearPersonaSeleccionada(state) {
       state.personaSeleccionada = null;
     },
@@ -39,35 +39,44 @@ const sacramentosSlice = createSlice({
       state.currentPage = 1;
     },
   },
+
   extraReducers: (builder) => {
     builder
-      // fetchPersonas (paginado)
-      .addCase(fetchPersonas.pending, (state) => {
+
+      // ============================================
+      //   BUSCAR PERSONAS PARA SACRAMENTO (SIN PAGINADO)
+      // ============================================
+      .addCase(fetchPersonasParaSacramento.pending, (state) => {
         state.isLoading = true;
         state.error = null;
+        state.personasBusqueda = []; // limpia resultados previos
       })
-      .addCase(fetchPersonas.fulfilled, (state, action) => {
+      .addCase(fetchPersonasParaSacramento.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.personas = action.payload.personas;
-        state.totalItems = action.payload.totalItems;
-        state.totalPages = action.payload.totalPages;
-        state.currentPage = action.payload.currentPage;
+        state.personasBusqueda = action.payload.personas; // lista filtrada por sacramento
       })
-      .addCase(fetchPersonas.rejected, (state, action) => {
+      .addCase(fetchPersonasParaSacramento.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload?.message || 'Error al cargar personas';
-      })
-
+        state.error = action.payload || 'Error al buscar personas';
+      });
   },
 });
 
-// Acciones síncronas
-export const { clearError, clearPersonaSeleccionada, resetPagination } = sacramentosSlice.actions;
+// ============================
+//  EXPORTAR ACCIONES
+// ============================
+export const {
+  clearError,
+  clearPersonaSeleccionada,
+  resetPagination,
+} = sacramentosSlice.actions;
 
-// Selectores
+// ============================
+//  SELECTORES
+// ============================
 export const selectPersonas = (state) => state.personas.personas;
+export const selectPersonasBusqueda = (state) => state.personas.personasBusqueda;
 
-// Para loading maybe borrar si no tiene la wea esa que gira al cargar
 export const selectIsLoading = (state) => state.personas.isLoading;
 export const selectIsLoadingAll = (state) => state.personas.isLoadingAll;
 export const selectIsLoadingById = (state) => state.personas.isLoadingById;
@@ -76,6 +85,8 @@ export const selectIsCreating = (state) => state.personas.isCreating;
 export const selectIsUpdating = (state) => state.personas.isUpdating;
 export const selectIsDeleting = (state) => state.personas.isDeleting;
 
-// Exportar reducer
+// ============================
+//  EXPORTAR REDUCER
+// ============================
 export const sacramentosReducer = sacramentosSlice.reducer;
 export default sacramentosSlice.reducer;
