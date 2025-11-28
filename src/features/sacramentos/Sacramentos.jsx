@@ -306,6 +306,10 @@ useEffect(() => {
 };
 
   // Buscar (simulado)
+  const handleBuscar = (e) => {
+    e.preventDefault();
+    console.log('[SACRAMENTOS] Buscar con filtros:', filters);
+  };
 
   const handleSelectResultado = (row) => {
     setSelectedPerson(row);
