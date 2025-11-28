@@ -82,7 +82,7 @@ export const fetchSacramentoCompleto = createAsyncThunk(
   'sacramentos/fetchSacramentoCompleto',
   async (id, { rejectWithValue }) => {
     try {
-      const response = await sacramentosApi.obtenerSacramentoCompleto(id);
+      const response = await sacramentosApi.fetchSacramentoCompleto(id);
       return response;
     }
     catch (error) {
