@@ -12,7 +12,7 @@ import Sacramentos from './features/sacramentos/Sacramentos'
 import Usuarios from './features/usuarios/Usuarios'
 import Reportes from './features/reportes/Reportes'
 import Certificados from './features/certificados/Certificados'
-import Parroquias from './features/parroquias/parroquias';
+import Parroquias from './features/parroquias/Parroquias';
 import ResetPassword from './features/password/pages/ResetPassword';
 
 export default function App() {

@@ -30,6 +30,9 @@ const parroquiasSlice = createSlice({
     clearError(state) {
       state.error = null;
     },
+    setParroquiaSeleccionada: (state, action) => {
+      state.parroquiaSeleccionada = action.payload;
+    },
     clearParroquiaSeleccionada(state) {
       state.parroquiaSeleccionada = null;
     },
@@ -49,14 +52,17 @@ const parroquiasSlice = createSlice({
       })
       .addCase(fetchParroquias.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.parroquias = action.payload.parroquias;
-        state.totalItems = action.payload.totalItems;
-        state.totalPages = action.payload.totalPages;
-        state.currentPage = action.payload.currentPage;
+        const p = action.payload;
+        const list = Array.isArray(p) ? p : (p?.parroquias || p?.items || []);
+        state.parroquias = list;
+        state.totalItems = p?.totalItems ?? list.length ?? 0;
+        state.totalPages = p?.totalPages ?? 1;
+        state.currentPage = p?.currentPage ?? 1;
       })
       .addCase(fetchParroquias.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload?.message || 'Error al cargar parroquias';
+        state.parroquias = [];
       })
 
       // 🔹 fetchAllParroquias
@@ -80,14 +86,16 @@ const parroquiasSlice = createSlice({
       })
       .addCase(fetchParroquiaById.fulfilled, (state, action) => {
         state.isLoadingById = false;
-        state.parroquiaSeleccionada = action.payload;
+        const p = action.payload;
+        // aceptar {parroquia: {...}}, {data: {...}} o el objeto directo
+        state.parroquiaSeleccionada = p?.parroquia || p?.data || p || null;
       })
       .addCase(fetchParroquiaById.rejected, (state, action) => {
         state.isLoadingById = false;
         state.error = action.payload?.message || 'Error al cargar la parroquia';
       })
 
-      // 🔹 createParroquia
+      //  createParroquia
       .addCase(createParroquia.pending, (state) => {
         state.isSaving = true;
         state.error = null;
@@ -108,8 +116,14 @@ const parroquiasSlice = createSlice({
       })
       .addCase(updateParroquia.fulfilled, (state, action) => {
         state.isSaving = false;
-        const index = state.parroquias.findIndex(p => p.id === action.payload.id);
-        if (index !== -1) state.parroquias[index] = action.payload;
+        const updated = action.payload?.parroquia || action.payload;
+        const getId = (x) => x?.id_parroquia ?? x?.id ?? x?.uuid;
+        const upId = getId(updated);
+        const idx = (state.parroquias || []).findIndex(p => getId(p) === upId);
+        if (idx !== -1) state.parroquias[idx] = updated;
+        if (getId(state.parroquiaSeleccionada) === upId) {
+          state.parroquiaSeleccionada = updated;
+        }
       })
       .addCase(updateParroquia.rejected, (state, action) => {
         state.isSaving = false;
@@ -119,11 +133,10 @@ const parroquiasSlice = createSlice({
 });
 
 // Acciones sincronas
-export const { clearError, clearParroquiaSeleccionada, resetPagination } = parroquiasSlice.actions;
+export const { clearError, clearParroquiaSeleccionada, resetPagination , setParroquiaSeleccionada} = parroquiasSlice.actions;
 
 // Selectores
-//export const selectParroquias = (state) => state.parroquias.parroquias;
-export const selectParroquias = (state) => state.parroquias?.parroquias || [] 
+export const selectParroquias = (state) => state.parroquias?.parroquias || []
 export const selectTotalItems = (state) => state.parroquias.totalItems;
 export const selectTotalPages = (state) => state.parroquias.totalPages;
 export const selectCurrentPage = (state) => state.parroquias.currentPage;

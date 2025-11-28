@@ -5,7 +5,6 @@ export const fetchPersonas = createAsyncThunk(
   'personas/fetchPersonas',
   async (filters = {}, { rejectWithValue }) => {
     try {
-      
       console.log('[personasThunk] Enviando filtros:', filters);
       const response = await personasApi.fetchPersonas(filters);
       console.log('[personasThunk] Respuesta del servidor:', response);
@@ -21,10 +20,11 @@ export const fetchAllPersonas = createAsyncThunk(
   'personas/fetchAllPersonas',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await personasApi.fetchAllPersonas();
-      return response.personas || response;
+      const resp = await personasApi.fetchAllPersonas();
+      const data = resp?.data ?? resp;
+      return data?.personas || data?.items || data;
     } catch (error) {
-      return rejectWithValue(error);
+      return rejectWithValue(error?.response?.data || error.message || error);
     }
   }
 );
@@ -36,7 +36,7 @@ export const fetchPersonaById = createAsyncThunk(
       const response = await personasApi.fetchPersonaById(id);
       return response.persona || response;
     } catch (error) {
-      return rejectWithValue(error);
+      return rejectWithValue(error?.response?.data || error.message || error);
     }
   }
 );

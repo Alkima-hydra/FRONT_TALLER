@@ -8,10 +8,19 @@ export const fetchParroquias = createAsyncThunk(
     try {
       console.log('[parroquiasThunk] Enviando filtros:', filters);
       const response = await parroquiasApi.fetchParroquias(filters);
-      console.log('[parroquiasThunk] Respuesta del servidor:', response);
-      return response;
+      console.log('[parroquiasThunk] Respuesta del servidor:', response.parroquias);
+
+      // 🔸 Si el backend devuelve { parroquias: [...], ok: true, currentPage: 1, ... }
+      // devolvemos solo los campos útiles que usará el slice
+      return {
+        parroquias: response.parroquias || [],
+        totalItems: response.totalItems || response.parroquias?.length || 0,
+        totalPages: response.totalPages || 1,
+        currentPage: response.currentPage || 1,
+      };
     } catch (error) {
-      return rejectWithValue(error);
+      console.error('[parroquiasThunk] Error:', error);
+      return rejectWithValue(error?.response?.data || { message: 'Error en la carga de parroquias' });
     }
   }
 );
@@ -37,7 +46,7 @@ export const fetchParroquiaById = createAsyncThunk(
       const response = await parroquiasApi.fetchParroquiaById(id);
       return response.parroquia || response;
     } catch (error) {
-      return rejectWithValue(error);
+      return rejectWithValue(error?.response?.data || error.message || error);
     }
   }
 );

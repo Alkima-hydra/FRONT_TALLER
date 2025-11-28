@@ -1,85 +1,188 @@
 import { Eye } from 'lucide-react';
+import routeDescriptions from "../data/routeDescriptions.json";
+
+const getStatusColor = (http_status) => {
+  if (http_status >= 200 && http_status < 300)
+    return "bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-200";
+
+  if (http_status >= 400 && http_status < 500)
+    return "bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-200";
+
+  if (http_status >= 500)
+    return "bg-rose-100 text-rose-700 dark:bg-rose-900 dark:text-rose-200";
+
+  return "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
+};
+
+const getMethodColor = (method) => {
+  const colors = {
+    GET: "bg-sky-100 text-sky-700 dark:bg-sky-900 dark:text-sky-200",
+    POST: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200",
+    PUT: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-200",
+    PATCH: "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-200",
+    DELETE: "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200",
+  };
+  return colors[method] || "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200";
+};
+
+const translateMethod = (method) => {
+  const translations = {
+    GET: "Obtiene",
+    POST: "Crea",
+    PUT: "Modifica",
+    PATCH: "Actualiza",
+    DELETE: "Elimina",
+  };
+  return translations[method?.toUpperCase()] || "Acción";
+};
+
+const translateRoute = (method, originalUrl) => {
+  let url = originalUrl.trim();
+
+  // --- Separar path y query ---
+  const [rawPath, rawQuery] = url.split("?");
+  const path = rawPath.replace(/\/$/, "");
+  
+  // Normalizar IDs numéricos → :id
+  const normalizedPath = path.replace(/\/\d+$/, "/:id");
+
+  // Obtener grupo de rutas del JSON
+  const routeGroup = routeDescriptions[normalizedPath] || routeDescriptions[path];
+  if (!routeGroup) {
+    return `${translateMethod(method)} en ${path}`;
+  }
+
+  // --- Si NO hay query params ---
+  if (!rawQuery) {
+    return routeGroup[method] || `${translateMethod(method)} en ${path}`;
+  }
+
+  // --- Parsear query params ---
+  const queryParams = {};
+  rawQuery.split("&").forEach((pair) => {
+    const [key, value] = pair.split("=");
+    queryParams[key] = decodeURIComponent(value || "");
+  });
+
+  // ---- BUSCADOR UNIVERSAL DE PARAMETROS DINÁMICOS ----
+  for (const jsonKey of Object.keys(routeGroup)) {
+
+    // Filtrar claves del JSON que empiezan con el método (GET?, POST?, etc.)
+    if (!jsonKey.startsWith(method + "?")) continue;
+
+    // Obtener la lista de parámetros que espera esta clave
+    const expectedParams = jsonKey.replace(method + "?", "").split("&");
+
+    let allMatch = true;
+    let translatedText = routeGroup[jsonKey];
+
+    for (const ep of expectedParams) {
+      // ep ejemplo: carnet_identidad={value}
+      const [paramName] = ep.split("=");
+
+      if (!queryParams[paramName]) {
+        allMatch = false;
+        break;
+      }
+
+      // Reemplazar {value} por el valor real
+      translatedText = translatedText.replace("{value}", queryParams[paramName]);
+    }
+
+    if (allMatch) return translatedText;
+  }
+
+  // Fallback genérico si no encuentra coincidencia
+  return `${translateMethod(method)} en ${url}`;
+};
 
 export default function AuditTable({ data, onViewDetails }) {
-  const getStatusColor = (http_status) => {
-    if (http_status >= 200 && http_status < 300) return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
-    if (http_status >= 400 && http_status < 500) return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
-    if (http_status >= 500) return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
-    return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
-  };
-
-  const getMethodColor = (http_method) => {
-    const colors = {
-      GET: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-      POST: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-      PUT: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
-      PATCH: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
-      DELETE: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
-    };
-    return colors[http_method] || 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
-  };
-
   return (
     <div className="overflow-hidden rounded-lg border border-border-light bg-card-light dark:border-border-dark dark:bg-card-dark">
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-border-light dark:divide-border-dark">
           <thead className="bg-background-light dark:bg-background-dark">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-light dark:text-muted-dark">
-                Petición HTTP
+              <th className="w-1/3 px-6 py-3 text-left text-xs font-semibold uppercase text-muted-light tracking-wider dark:text-muted-dark">
+                Acción
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-light dark:text-muted-dark">
+              <th className="px-6 py-3 text-left text-xs font-semibold uppercase text-muted-light tracking-wider dark:text-muted-dark">
+                Nombre
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-semibold uppercase text-muted-light tracking-wider dark:text-muted-dark">
                 Correo
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-light dark:text-muted-dark">
+              <th className="px-6 py-3 text-left text-xs font-semibold uppercase text-muted-light tracking-wider dark:text-muted-dark">
                 IP
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-light dark:text-muted-dark">
+              <th className="px-6 py-3 text-left text-xs font-semibold uppercase text-muted-light tracking-wider dark:text-muted-dark">
                 Fecha
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-light dark:text-muted-dark">
+              <th className="px-6 py-3 text-left text-xs font-semibold uppercase text-muted-light tracking-wider dark:text-muted-dark">
                 Acciones
               </th>
             </tr>
           </thead>
+
           <tbody className="divide-y divide-border-light bg-card-light dark:divide-border-dark dark:bg-card-dark">
             {data.length === 0 ? (
               <tr>
-                <td colSpan="5" className="px-6 py-8 text-center text-sm text-muted-light dark:text-muted-dark">
-                  No hay registros de auditoría disponibles
+                <td
+                  colSpan="6"
+                  className="px-6 py-8 text-center text-sm text-muted-light dark:text-muted-dark"
+                >
+                  No hay registros de auditoría.
                 </td>
               </tr>
             ) : (
               data.map((item) => (
                 <tr key={item.id_log} className="hover:bg-background-light dark:hover:bg-background-dark">
                   <td className="px-6 py-4">
-                    <div className="flex flex-col gap-2">
-                      <div className="flex flex-wrap gap-2">
-                        <span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${getStatusColor(item.http_status)}`}>
+                    <div className="flex flex-col gap-1">
+                      <div className="flex gap-2">
+                        <span
+                          className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${getStatusColor(
+                            item.http_status
+                          )}`}
+                        >
                           {item.http_status}
                         </span>
-                        <span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${getMethodColor(item.http_method)}`}>
-                          {item.http_method}
+
+                        <span
+                          className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${getMethodColor(
+                            item.http_method
+                          )}`}
+                        >
+                          {translateMethod(item.http_method)}
                         </span>
                       </div>
+
                       <span className="text-sm text-foreground-light dark:text-foreground-dark">
-                        {item.url}
+                        {translateRoute(item.http_method, item.url)}
                       </span>
                     </div>
                   </td>
-                  <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-foreground-light dark:text-foreground-dark">
+
+                  <td className="whitespace-nowrap px-6 py-4 text-sm font-medium">
+                    {item.nombre_usuario || "Sin nombre"}
+                  </td>
+
+                  <td className="whitespace-nowrap px-6 py-4 text-sm">
                     {item.username}
                   </td>
-                  <td className="whitespace-nowrap px-6 py-4 text-sm text-muted-light dark:text-muted-dark">
-                    {item.ip_address}
+
+                  <td className="whitespace-nowrap px-6 py-4 text-sm">
+                    {item.ip_address || "—"}
                   </td>
-                  <td className="whitespace-nowrap px-6 py-4 text-sm text-muted-light dark:text-muted-dark">
+
+                  <td className="whitespace-nowrap px-6 py-4 text-sm">
                     {new Date(item.created_at).toLocaleString()}
                   </td>
+
                   <td className="whitespace-nowrap px-6 py-4 text-sm">
                     <button
                       onClick={() => onViewDetails(item)}
-                      className="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                      className="inline-flex items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-white hover:bg-primary/90"
                     >
                       <Eye className="h-4 w-4" />
                       Ver Detalle

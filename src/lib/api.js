@@ -103,6 +103,13 @@ export const usuariosApi = {
 
   deleteUsuario: (id) =>
     api.patch(`/usuarios/${id}`).then((res) => res.data).catch(handleError),
+
+  // para restablecer contraseña
+  resetPassword: (email) =>
+    api.post('/password/solicitar', { email }).then((res) => res.data).catch(handleError),
+  //para cambiar la contraseña
+  changePassword: (token, newPassword) =>
+    api.post('/password/cambiar', { token, newPassword }).then((res) => res.data).catch(handleError),
 };
 
 export const parroquiasApi = {
@@ -135,4 +142,19 @@ export const auditoriaApi = {
 export const dashboardApi = {
   fetchStats: (filters = {}) =>
     api.get('/dashboard/summary/', { params: filters }).then(res => res.data).catch(handleError),
+};
+
+// apis para sacramentos
+export const sacramentosApi = {
+  buscarPersonas: (params = {}) =>
+    api
+      .get('/personas/buscar/sacramento', { params })
+      .then((res) => res.data)
+      .catch(handleError),
+  crearSacramentoCompleto: (data) =>
+    api
+      .post('/sacramentos/new-completo', data)
+      .then((res) => res.data)
+      .catch(handleError),
+  
 };

@@ -18,6 +18,7 @@ export const fetchAuditorias = createAsyncThunk(
       if (params.maxDuration) queryParams.max_duration = params.maxDuration;
       
       // Textos de búsqueda
+      if (params.nombre_usuario) queryParams.nombre_usuario= params.nombre_usuario;//Provisional mientras dilan manda nombre en bd
       if (params.username) queryParams.user_name = params.username;
       if (params.appName) queryParams.application_name = params.appName;
       if (params.endpoint) queryParams.url = params.endpoint;
@@ -28,7 +29,9 @@ export const fetchAuditorias = createAsyncThunk(
       if (params.httpStatus) queryParams.http_status_code = params.httpStatus;
       
       // IP y correlación
-      if (params.ipAddress) queryParams.ip_address = params.ipAddress;
+      
+      //if (params.cambio) queryParams.cambio = params.cambio;//Provisional mientras dilan manda nombre en bd
+      if (params.ipAddress) queryParams.ip_address = params.ipAddress; //Deshabilitado temporalmente en ya que no sacamos ip :P
       if (params.correlationId) queryParams.correlation_id = params.correlationId;
       
       // Excepción
