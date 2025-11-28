@@ -1,4 +1,5 @@
 import { Eye } from 'lucide-react';
+import routeDescriptions from "../data/routeDescriptions.json";
 
 export default function AuditTable({ data, onViewDetails }) {
   const getStatusColor = (http_status) => {
@@ -19,6 +20,7 @@ export default function AuditTable({ data, onViewDetails }) {
     return colors[http_method] || 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
   };
 
+  //Traduce el método HTTP al español
   const translateMethod = (method) =>{
     const translations = {
       GET: "Obtiene",
@@ -31,7 +33,38 @@ export default function AuditTable({ data, onViewDetails }) {
     return translations[method?.toUpperCase()] || "Desconocido";
   }
   
-
+  //Traduccion router
+  const translateRoute=(method, originalUrl) => {
+    let url = originalUrl;
+  
+    // Detectar y extraer valor de search
+    let searchValue = null;
+    const searchMatch = url.match(/search=([^&]+)/);
+    if (searchMatch) {
+      searchValue = decodeURIComponent(searchMatch[1]);
+      url = url.replace(/\?.*$/, ""); // elimina la query para buscar en JSON
+    }
+  
+    // Reemplaza cualquier número por :id
+    const urlClean = url.replace(/\/\d+/g, "/:id");
+  
+    const routeObj = routeDescriptions[urlClean];
+  
+    if (routeObj) {
+      // Si existe traducción exacta (method)
+      let translation = routeObj[method];
+  
+      // Caso especial de search
+      if (!translation && searchValue && routeObj["GET?search"]) {
+        translation = routeObj["GET?search"].replace("{search}", searchValue);
+      }
+  
+      if (translation) return translation;
+    }
+  
+    // Fallback cuando no existe en el JSON
+    return `${translateMethod(method)} en ${urlClean}`;
+  };
   return (
     <div className="overflow-hidden rounded-lg border border-border-light bg-card-light dark:border-border-dark dark:bg-card-dark">
       <div className="overflow-x-auto">
@@ -79,7 +112,7 @@ export default function AuditTable({ data, onViewDetails }) {
                         </span>
                       </div>
                       <span className="text-sm text-foreground-light dark:text-foreground-dark">
-                        {item.url}
+                        {translateRoute(item.http_method,item.url)}
                       </span>
                     </div>
                   </td>

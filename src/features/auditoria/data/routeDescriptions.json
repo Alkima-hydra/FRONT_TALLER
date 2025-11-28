@@ -1,0 +1,78 @@
+{
+  "/api/usuarios": {
+    "GET": "Consultó usuarios",
+    "POST": "Creó un usuario"
+  },
+  "/api/usuarios/new": {
+    "POST": "Registró un nuevo usuario"
+  },
+  "/api/personas": {
+    "GET": "Consultó personas",
+    "GET?search": "Buscó una persona ({search})",
+    "POST": "Creó una persona",
+    "PATCH": "Actualizó una persona"
+  },
+  "/api/parroquias": {
+    "GET": "Consultó parroquias",
+    "POST": "Creó una parroquia",
+    "PATCH": "Editó una parroquia"
+  },
+  "/api/password/solicitar": {
+    "POST": "Solicitó reestablecer contraseña"
+  },
+  "/api/password/validar": {
+    "GET": "Validó un token de recuperación"
+  },
+  "/api/password/cambiar": {
+    "POST": "Cambió contraseña"
+  },
+  "/api/auditoria": {
+    "GET": "Consultó auditoría"
+  },
+  "/api/rolsacramentos": {
+    "GET": "Consultó roles sacramentales",
+    "POST": "Registró rol sacramental"
+  },
+  "/api/tiposacramentos": {
+    "GET": "Revisó tipos de sacramento",
+    "POST": "Registró un tipo de sacramento"
+  },
+  "/api/sacramentos": {
+    "GET": "Consultó sacramentos",
+    "POST": "Registró un sacramento",
+    "PATCH": "Actualizó un sacramento"
+  },
+  "/api/matrimoniodetalles": {
+    "GET": "Consultó detalles matrimoniales",
+    "POST": "Registró detalles matrimoniales",
+    "PATCH": "Actualizó detalles matrimoniales"
+  },
+  "/api/personasacramentos": {
+    "GET": "Consultó sacramentos de una persona",
+    "POST": "Registró sacramento a una persona",
+    "PATCH": "Actualizó sacramento de una persona"
+  },
+  "/api/dashboard/summary": {
+    "GET": "Entró al resumen del dashboard"
+  },
+  "/api/comentarios/:id/toggle-publicado": {
+    "PATCH": "Cambió estado de publicación de un comentario"
+  },
+  "/api/documentos": {
+    "GET": "Consultó documentos",
+    "POST": "Subió un documento"
+  },
+  "/api/documentos/:id": {
+    "PATCH": "Actualizó un documento"
+  },
+  "/api/propuestas": {
+    "GET": "Consultó propuestas",
+    "POST": "Registró una propuesta"
+  },
+  "/api/propuestas/:id/toggle-publicado": {
+    "PATCH": "Cambió estado de publicación de una propuesta"
+  },
+  "/api/propuestas/:id/toggle-eliminado": {
+    "PATCH": "Cambió estado de eliminación de una propuesta"
+  }
+}
