@@ -1,12 +1,16 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { ClipLoader } from "react-spinners";
 import Layout from '../../shared/components/layout/Layout';
 
 //import de slices y trunk
 import {
   fetchPersonasParaSacramento,
   fetchParroquias,
-  crearSacramentoCompleto
+  crearSacramentoCompleto,
+  actualizarSacramentoCompleto,
+  buscarSacramentos,
+  fetchSacramentoCompleto,
 } from './slices/sacramentosTrunk';
 
 import {
@@ -14,7 +18,9 @@ import {
   selectPersonasBusqueda,     // ← usamos el nuevo selector
   selectIsCreating,
   selectIsUpdating,
-  selectIsDeleting
+  selectIsDeleting,
+  selectSacramentosEncontrados,
+  selectSacramentoSeleccionado,
 } from './slices/sacramentosSlices';
 
 export default function Sacramentos() {
@@ -42,6 +48,13 @@ export default function Sacramentos() {
   const [queryParroquia, setQueryParroquia] = useState("");
   const [listaParroquias, setListaParroquias] = useState([]);
   const [openParroquiaList, setOpenParroquiaList] = useState(false);
+  // Loading locales para mostrar spinner durante el delay + fetch
+const [loadingPersona, setLoadingPersona] = useState(false);
+const [loadingPadrino, setLoadingPadrino] = useState(false);
+const [loadingMinistro, setLoadingMinistro] = useState(false);
+const [loadingParroquia, setLoadingParroquia] = useState(false);
+  //para busqueda de sacramento y actualizar
+
 
   //diccioinario para roles
   const ROL_IDS = {
@@ -55,9 +68,13 @@ export default function Sacramentos() {
   //diccionario para tipo de sacramento
   const TIPO_SACRAMENTO_IDS = {
   bautizo: 1,
+  matrimonio: 2,
+  comunion: 3,
+};
+  const ROLES_SACRAMENTO_IDS = {
+  bautizo: 1,
+  matrimonio: 3,
   comunion: 10,
-  confirmacion: 10,
-  matrimonio: 11,
 };
   
 
@@ -121,201 +138,308 @@ export default function Sacramentos() {
     setMatrimonio({ esposoId: null, esposaId: null, lugar_ceremonia: '', reg_civil: '', numero_acta: '' });
   };
 
-  //para los filtros de persona
+useEffect(() => {
+  if (queryPersona.trim().length < 2) {
+    setListaPersonas([]);
+    setLoadingPersona(false);
+    return;
+  }
+
+  const delay = setTimeout(() => {
+    dispatch(fetchPersonasParaSacramento({
+      search: queryPersona,
+      rol: tipoSacramento,
+      tipo: "sacramento"
+    }))
+      .unwrap()
+      .then((data) => {
+        setListaPersonas(data.personas || []);
+        setOpenPersonaList(true);
+      })
+      .catch(() => {
+        setListaPersonas([]);
+      })
+      .finally(() => {
+        setLoadingPersona(false);   // 🔵 se apaga el loading
+      });
+  }, 300);
+
+  return () => clearTimeout(delay);
+}, [queryPersona, tipoSacramento]);
+
+  //filtros de padrino
   useEffect(() => {
-    if (queryPersona.trim().length < 2) {
-      setListaPersonas([]);
+    if (queryPadrino.trim().length < 2) {
+      setListaPadrinos([]);
+      setLoadingPadrino(false);
       return;
     }
 
     const delay = setTimeout(() => {
       dispatch(fetchPersonasParaSacramento({
-        search: queryPersona,
-        rol: tipoSacramento,
-        tipo: "sacramento"
+        search: queryPadrino,
+        rol: "padrino",
+        tipo: "rol"
       }))
         .unwrap()
         .then((data) => {
-          setListaPersonas(data.personas || []);
-          setOpenPersonaList(true);
+          setListaPadrinos(data.personas || []);
+          setOpenPadrinoList(true);
         })
-        .catch((e) => {
-          console.error(">>> ERROR buscando:", e);
-          setListaPersonas([]);
-        });
-
+        .catch(() => {
+          setListaPadrinos([]);
+        })
+        .finally(() => setLoadingPadrino(false));
     }, 300);
 
     return () => clearTimeout(delay);
-  }, [queryPersona, tipoSacramento]);
-
-  //filtros de padrino
-  useEffect(() => {
-  if (queryPadrino.trim().length < 2) {
-    setListaPadrinos([]);
-    return;
-  }
-
-  const delay = setTimeout(() => {
-    dispatch(fetchPersonasParaSacramento({
-      search: queryPadrino,
-      rol: "padrino" ,  // mismas reglas que persona
-      tipo: "rol"      // ← CLAVE PARA EL SLICE
-    }))
-      .unwrap()
-      .then((data) => {
-        console.log("PADRINOS:", data.personas);
-        setListaPadrinos(data.personas || []);
-        setOpenPadrinoList(true);
-      })
-      .catch((e) => {
-        console.error(">>> ERROR buscando padrino:", e);
-        setListaPadrinos([]);
-      });
-
-  }, 300);
-  
-
-  return () => clearTimeout(delay);
-}, [queryPadrino, tipoSacramento]);
+  }, [queryPadrino, tipoSacramento]);
 
 // filtro para ministro
   useEffect(() => {
-  if (queryMinistro.trim().length < 2) {
-    setListaMinistros([]);
-    return;
-  }
+    if (queryMinistro.trim().length < 2) {
+      setListaMinistros([]);
+      setLoadingMinistro(false);
+      return;
+    }
 
-  const delay = setTimeout(() => {
-    dispatch(fetchPersonasParaSacramento({
-      search: queryMinistro,
-      rol: "ministro" ,  // mismas reglas que persona
-      tipo: "rol"      // ← CLAVE PARA EL SLICE
-    }))
-      .unwrap()
-      .then((data) => {
-        console.log("MINISTROS:", data.personas);
-        setListaMinistros(data.personas || []);
-        setOpenMinistroList(true);
-      })
-      .catch((e) => {
-        console.error(">>> ERROR buscando ministro:", e);
-        setListaMinistros([]);
-      });
+    const delay = setTimeout(() => {
+      dispatch(fetchPersonasParaSacramento({
+        search: queryMinistro,
+        rol: "ministro",
+        tipo: "rol"
+      }))
+        .unwrap()
+        .then((data) => {
+          setListaMinistros(data.personas || []);
+          setOpenMinistroList(true);
+        })
+        .catch(() => {
+          setListaMinistros([]);
+        })
+        .finally(() => setLoadingMinistro(false));
+    }, 300);
 
-  }, 300);
-  
-
-  return () => clearTimeout(delay);
-}, [queryMinistro, tipoSacramento]);
+    return () => clearTimeout(delay);
+  }, [queryMinistro, tipoSacramento]);
 
 //filtro para parroquias
 useEffect(() => {
   if (queryParroquia.trim().length < 2) {
     setListaParroquias([]);
+    setLoadingParroquia(false);
     return;
   }
 
   const delay = setTimeout(() => {
-    dispatch(fetchParroquias({
-      search: queryParroquia,
-    }))
+    dispatch(fetchParroquias({ search: queryParroquia }))
       .unwrap()
       .then((data) => {
-        console.log("PARROQUIAS:", data.parroquias);
         setListaParroquias(data.parroquias || []);
         setOpenParroquiaList(true);
       })
-      .catch((e) => {
-        console.error(">>> ERROR buscando parroquias:", e);
+      .catch(() => {
         setListaParroquias([]);
-      });
-
+      })
+      .finally(() => setLoadingParroquia(false));
   }, 300);
-    return () => clearTimeout(delay);
+
+  return () => clearTimeout(delay);
 }, [queryParroquia]);
 
 
 
-  // Construye el payload listo para enviar según el tipo
-  const buildPayload = () => {
-  const relacionesArray = [];
+  // Construye el payload para CREAR sacramento
+  const buildPayloadCrear = () => {
+    const relacionesArray = [];
 
-  // Persona que recibe el sacramento
-  if (form.personaId) {
-    relacionesArray.push({
-      persona_id: form.personaId,
-      rol_sacramento_id: TIPO_SACRAMENTO_IDS[tipoSacramento] // BAUTIZADO o COMULGADO
-    });
-  }
+    // Persona que recibe el sacramento
+    if (form.personaId) {
+      relacionesArray.push({
+        persona_id: form.personaId,
+        rol_sacramento_id: TIPO_SACRAMENTO_IDS[tipoSacramento] // BAUTIZADO o COMULGADO
+      });
+    }
 
-  // Padrino (opcional)
-  if (form.padrinoId) {
-    relacionesArray.push({
-      persona_id: form.padrinoId,
-      rol_sacramento_id: ROL_IDS.PADRINO
-    });
-  }
+    // Padrino (opcional)
+    if (form.padrinoId) {
+      relacionesArray.push({
+        persona_id: form.padrinoId,
+        rol_sacramento_id: ROL_IDS.PADRINO
+      });
+    }
 
-  // Ministro (opcional)
-  if (form.ministroId) {
-    relacionesArray.push({
-      persona_id: form.ministroId,
-      rol_sacramento_id: ROL_IDS.MINISTRO
-    });
-  }
+    // Ministro (opcional)
+    if (form.ministroId) {
+      relacionesArray.push({
+        persona_id: form.ministroId,
+        rol_sacramento_id: ROL_IDS.MINISTRO
+      });
+    }
 
-  return {
-    fecha_sacramento: form.fecha_sacramento,
-    foja: form.foja,
-    numero: form.numero,
+    return {
+      fecha_sacramento: form.fecha_sacramento,
+      foja: form.foja,
+      numero: form.numero,
 
-    tipo_sacramento_id_tipo: TIPO_SACRAMENTO_IDS[tipoSacramento],
-    parroquiaId: form.parroquiaId,
+      tipo_sacramento_id_tipo: TIPO_SACRAMENTO_IDS[tipoSacramento],
+      parroquiaId: form.parroquiaId,
 
-    relaciones: relacionesArray
+      relaciones: relacionesArray
+    };
   };
-};
+
+  // Construye el payload para EDITAR sacramento
+  const buildPayloadEditar = () => {
+    const relacionesArray = [];
+
+    if (form.personaId) {
+      relacionesArray.push({
+        persona_id: form.personaId,
+        rol_sacramento_id: TIPO_SACRAMENTO_IDS[tipoSacramento]
+      });
+    }
+
+    if (form.padrinoId) {
+      relacionesArray.push({
+        persona_id: form.padrinoId,
+        rol_sacramento_id: ROL_IDS.PADRINO
+      });
+    }
+
+    if (form.ministroId) {
+      relacionesArray.push({
+        persona_id: form.ministroId,
+        rol_sacramento_id: ROL_IDS.MINISTRO
+      });
+    }
+
+    return {
+      fecha_sacramento: form.fecha_sacramento,
+      foja: form.foja,
+      numero: form.numero,
+      parroquiaId: form.parroquiaId,
+      relaciones: relacionesArray
+    };
+  };
 
   // Envío de Agregar (simulado)
   const handleSubmitAgregar = (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  const payload = buildPayload();
+    const payload = buildPayloadCrear();
+    console.log(payload);
 
-  console.log("===== 📌 PAYLOAD SACRAMENTO A ENVIAR =====");
-  console.log(payload);
+    // 🚀 Integración real con Redux
+    dispatch(crearSacramentoCompleto(payload))
+      .unwrap()
+      .then((res) => {
+        console.log("SACRAMENTO CREADO:", res);
+        setToast({ type: "success", message: "Sacramento registrado correctamente" });
 
-  // 🚀 Integración real con Redux
-  dispatch(crearSacramentoCompleto(payload))
-    .unwrap()
-    .then((res) => {
-      console.log("SACRAMENTO CREADO:", res);
-      setToast({ type: "success", message: "Sacramento registrado correctamente" });
+        resetForm();
+        setQueryPersona("");
+        setQueryPadrino("");
+        setQueryMinistro("");
+        setQueryParroquia("");
+      })
+      .catch((err) => {
+        console.error("ERROR AL CREAR SACRAMENTO:", err);
+        setToast({ type: "error", message: err?.message || "Error al registrar sacramento" });
+      });
+  };
 
-      resetForm();
-      setQueryPersona("");
-      setQueryPadrino("");
-      setQueryMinistro("");
-      setQueryParroquia("");
-    })
-    .catch((err) => {
-      console.error("ERROR AL CREAR SACRAMENTO:", err);
-      setToast({ type: "error", message: err?.message || "Error al registrar sacramento" });
-    });
-};
+  // Buscar sacramentos
+  const handleBuscar = (e) => {
+    e.preventDefault();
 
-  // Buscar (simulado)
+    const payload = {
+      ...filters,
+      tipo_sacramento_id_tipo: TIPO_SACRAMENTO_IDS[tipoSacramento],
+      rol_principal: ROLES_SACRAMENTO_IDS[tipoSacramento],
+    };
+
+    dispatch(buscarSacramentos(payload))
+      .unwrap()
+      .then((res) => {
+        const planos = [];
+
+        res.resultados.forEach((sac) => {
+          sac.personaSacramentos.forEach((rel) => {
+            if (!rel.persona) return;
+
+            planos.push({
+              id_sacramento: sac.id_sacramento,
+              nombre: rel.persona.nombre,
+              apellido_paterno: rel.persona.apellido_paterno,
+              apellido_materno: rel.persona.apellido_materno,
+              carnet_identidad: rel.persona.carnet_identidad,
+              fecha_sacramento: sac.fecha_sacramento,
+              rol_nombre: obtenerNombreRol(rel.rol_sacramento_id_rol_sacra),
+              foja: sac.foja,
+              numero: sac.numero,
+            });
+          });
+        });
+
+        setResults(planos);
+      })
+      .catch((err) => {
+        console.error("ERROR buscando sacramentos:", err);
+        setToast({ type: "error", message: "No se pudo realizar la búsqueda" });
+      });
+  };
 
   const handleSelectResultado = (row) => {
-    setSelectedPerson(row);
-    // TODO: cargar datos específicos del sacramento seleccionado si es necesario
+    dispatch(fetchSacramentoCompleto(row.id_sacramento))
+      .unwrap()
+      .then((data) => {
+        setSelectedPerson(data.sacramento);
+        setForm({
+          personaId: data.sacramento.persona_principal_id,
+          padrinoId: data.sacramento.padrino_id || null,
+          ministroId: data.sacramento.ministro_id || null,
+          parroquiaId: data.sacramento.institucion_parroquia_id,
+          foja: data.sacramento.foja,
+          numero: data.sacramento.numero,
+          fecha_sacramento: data.sacramento.fecha_sacramento,
+          activo: data.sacramento.activo,
+        });
+      })
+      .catch((err) => {
+        console.error("ERROR al cargar sacramento:", err);
+        setToast({ type: "error", message: "Error al cargar los detalles" });
+      });
   };
 
   const handleGuardarEdicion = (e) => {
     e.preventDefault();
-    console.log('[SACRAMENTOS] Guardar edición de', selectedPerson, '→ payload aún por definir según API');
-    // TODO: dispatch thunk updateSacramento(id, data)
+    const payload = buildPayloadEditar();
+    dispatch(actualizarSacramentoCompleto({ id: selectedPerson.id_sacramento, data: payload }))
+      .unwrap()
+      .then(() => {
+        setToast({ type: "success", message: "Sacramento actualizado correctamente" });
+        setSelectedPerson(null);
+        setResults([]);
+      })
+      .catch((err) => {
+        console.error("ERROR actualizando sacramento:", err);
+        setToast({ type: "error", message: "No se pudo actualizar el sacramento" });
+      });
+  };
+
+  // Helper para obtener el nombre del rol
+  const obtenerNombreRol = (id) => {
+    const roles = {
+      1: "Bautizado",
+      5: "Padrino",
+      9: "Ministro",
+      10: "Confirmado",
+      11: "Esposo",
+      21: "Comulgado",
+    };
+
+    return roles[id] || "Otro";
   };
 
   return (
@@ -396,55 +520,74 @@ useEffect(() => {
                     placeholder="Buscar persona (nombre o CI registrado)"
                     value={queryPersona}
                     onChange={(e) => {
-                      setQueryPersona(e.target.value);
-                      if (e.target.value.trim().length >= 2) {
-                        setOpenPersonaList(true);
-                      } else {
-                        setOpenPersonaList(false);
-                      }
-                    }}
+  const value = e.target.value;
+  setQueryPersona(value);
+
+  if (value.trim().length >= 2) {
+    setLoadingPersona(true);     // 🔵 activa loading instantáneo
+    setOpenPersonaList(true);
+  } else {
+    setOpenPersonaList(false);
+    setLoadingPersona(false);
+  }
+}}
                     className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3 pr-10"
                   />
-                  {/* DROPDOWN DE RESULTADOS */}
-                  {openPersonaList && Array.isArray(listaPersonas) && listaPersonas.length > 0 && (
-                    <div
-                      style={{
-                        position: "absolute",
-                        background: "white",
-                        border: "1px solid #dcdcdc",
-                        borderRadius: "8px",
-                        marginTop: "4px",
-                        width: "95%",
-                        maxHeight: "200px",
-                        overflowY: "auto",
-                        zIndex: 9999,
-                        padding: "5px",
-                      }}
-                    >
-                      {listaPersonas.map((p) => (
-                        <div
-                          key={p.id_persona} //ID DE LA PERSONA
-                          style={{
-                            padding: "10px",
-                            borderBottom: "1px solid #eee",
-                            cursor: "pointer",
-                          }}
-                          onClick={() => {
-                            handleChange("personaId", p.id_persona); //IMPORTANTE PARA QUE TOME EL VALOR DEL ID 
-                            setQueryPersona(`${p.nombre} ${p.apellido_paterno} ${p.apellido_materno}`);
-                            setOpenPersonaList(false);
-                          }}
-                        >
-                          <strong>
-                            {p.nombre} {p.apellido_paterno} {p.apellido_materno}
-                          </strong>
-                          <div style={{ fontSize: "13px", color: "#666" }}>
-                            CI: {p.carnet_identidad}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  {/* DROPDOWN PERSONA */}
+{openPersonaList && (
+  <div
+    style={{
+      position: "absolute",
+      background: "white",
+      border: "1px solid #dcdcdc",
+      borderRadius: "8px",
+      marginTop: "4px",
+      width: "95%",
+      maxHeight: "220px",
+      overflowY: "auto",
+      zIndex: 9999,
+      padding: "5px",
+    }}
+  >
+    {/* Loading */}
+    {(loadingPersona || isLoading) && (
+      <div className="flex justify-center items-center py-4">
+        <ClipLoader size={28} color="#4f46e5" />
+      </div>
+    )}
+
+    {/* Sin resultados */}
+    {(!loadingPersona && !isLoading && listaPersonas.length === 0) && (
+      <div className="py-3 text-center text-sm text-gray-500">
+        No se encontraron personas con ese valor.
+      </div>
+    )}
+
+    {/* Resultados */}
+    {!isLoading && listaPersonas.length > 0 && (
+      listaPersonas.map((p) => (
+        <div
+          key={p.id_persona}
+          style={{
+            padding: "10px",
+            borderBottom: "1px solid #eee",
+            cursor: "pointer",
+          }}
+          onClick={() => {
+            handleChange("personaId", p.id_persona);
+            setQueryPersona(`${p.nombre} ${p.apellido_paterno} ${p.apellido_materno}`);
+            setOpenPersonaList(false);
+          }}
+        >
+          <strong>{p.nombre} {p.apellido_paterno} {p.apellido_materno}</strong>
+          <div style={{ fontSize: "13px", color: "#666" }}>
+            CI: {p.carnet_identidad}
+          </div>
+        </div>
+      ))
+    )}
+  </div>
+)}
 
                   <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
                     search
@@ -469,54 +612,71 @@ useEffect(() => {
                           placeholder="Buscar padrino (persona registrada)"
                           value={queryPadrino}
                           onChange={(e) => {
-                            setQueryPadrino(e.target.value);
-                            if (e.target.value.trim().length >= 2) {
+                            const value = e.target.value;
+                            setQueryPadrino(value);
+
+                            if (value.trim().length >= 2) {
+                              setLoadingPadrino(true);
                               setOpenPadrinoList(true);
                             } else {
+                              setLoadingPadrino(false);
                               setOpenPadrinoList(false);
                             }
                           }}
                           className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3 pr-10"
                         />
-                        {openPadrinoList && listaPadrinos.length > 0 && (
-                        <div
-                          style={{
-                            position: "absolute",
-                            background: "white",
-                            border: "1px solid #dcdcdc",
-                            borderRadius: "8px",
-                            marginTop: "4px",
-                            width: "95%",
-                            maxHeight: "200px",
-                            overflowY: "auto",
-                            zIndex: 9999,
-                            padding: "5px"
-                          }}
-                        >
-                          {listaPadrinos.map((p) => (
-                            <div
-                              key={p.id_persona}
-                              style={{
-                                padding: "10px",
-                                borderBottom: "1px solid #eee",
-                                cursor: "pointer",
-                              }}
-                              onClick={() => {
-                                handleChange("padrinoId", p.id_persona);
-                                setQueryPadrino(`${p.nombre} ${p.apellido_paterno} ${p.apellido_materno}`);
-                                setOpenPadrinoList(false);
-                              }}
-                            >
-                              <strong>
-                                {p.nombre} {p.apellido_paterno} {p.apellido_materno}
-                              </strong>
-                              <div style={{ fontSize: "13px", color: "#666" }}>
-                                CI: {p.carnet_identidad}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                        {/* DROPDOWN PADRINO */}
+{openPadrinoList && (
+  <div
+    style={{
+      position: "absolute",
+      background: "white",
+      border: "1px solid #dcdcdc",
+      borderRadius: "8px",
+      marginTop: "4px",
+      width: "95%",
+      maxHeight: "220px",
+      overflowY: "auto",
+      zIndex: 9999,
+      padding: "5px",
+    }}
+  >
+    {(loadingPadrino || isLoading) && (
+      <div className="flex justify-center items-center py-4">
+        <ClipLoader size={28} color="#4f46e5" />
+      </div>
+    )}
+
+    {!loadingPadrino && !isLoading && listaPadrinos.length === 0 && (
+      <div className="py-3 text-center text-sm text-gray-500">
+        No se encontraron padrinos con ese valor.
+      </div>
+    )}
+
+    {!loadingPadrino && !isLoading && listaPadrinos.length > 0 && (
+      listaPadrinos.map((p) => (
+        <div
+          key={p.id_persona}
+          style={{
+            padding: "10px",
+            borderBottom: "1px solid #eee",
+            cursor: "pointer",
+          }}
+          onClick={() => {
+            handleChange("padrinoId", p.id_persona);
+            setQueryPadrino(`${p.nombre} ${p.apellido_paterno} ${p.apellido_materno}`);
+            setOpenPadrinoList(false);
+          }}
+        >
+          <strong>{p.nombre} {p.apellido_paterno} {p.apellido_materno}</strong>
+          <div style={{ fontSize: "13px", color: "#666" }}>
+            CI: {p.carnet_identidad}
+          </div>
+        </div>
+      ))
+    )}
+  </div>
+)}
                       <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">search</span>
                     </div>
                     <p className="text-xs text-gray-500 mt-1">Escriba nombre o CI para buscar en Personas.</p>
@@ -529,54 +689,71 @@ useEffect(() => {
                           placeholder="Buscar ministro (persona registrada)"
                           value={queryMinistro}
                           onChange={(e) => {
-                            setQueryMinistro(e.target.value);
-                            if (e.target.value.trim().length >= 2) {
+                            const value = e.target.value;
+                            setQueryMinistro(value);
+
+                            if (value.trim().length >= 2) {
+                              setLoadingMinistro(true);
                               setOpenMinistroList(true);
                             } else {
+                              setLoadingMinistro(false);
                               setOpenMinistroList(false);
                             }
                           }}
                           className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3 pr-10"
                         />
-                        {openMinistroList && listaMinistros.length > 0 && (
-                        <div
-                          style={{
-                            position: "absolute",
-                            background: "white",
-                            border: "1px solid #dcdcdc",
-                            borderRadius: "8px",
-                            marginTop: "4px",
-                            width: "95%",
-                            maxHeight: "200px",
-                            overflowY: "auto",
-                            zIndex: 9999,
-                            padding: "5px"
-                          }}
-                        >
-                          {listaMinistros.map((p) => (
-                            <div
-                              key={p.id_persona}
-                              style={{
-                                padding: "10px",
-                                borderBottom: "1px solid #eee",
-                                cursor: "pointer",
-                              }}
-                              onClick={() => {
-                                handleChange("ministroId", p.id_persona);
-                                setQueryMinistro(`${p.nombre} ${p.apellido_paterno} ${p.apellido_materno}`);
-                                setOpenMinistroList(false);
-                              }}
-                            >
-                              <strong>
-                                {p.nombre} {p.apellido_paterno} {p.apellido_materno}
-                              </strong>
-                              <div style={{ fontSize: "13px", color: "#666" }}>
-                                CI: {p.carnet_identidad}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                        {/* DROPDOWN MINISTRO */}
+{openMinistroList && (
+  <div
+    style={{
+      position: "absolute",
+      background: "white",
+      border: "1px solid #dcdcdc",
+      borderRadius: "8px",
+      marginTop: "4px",
+      width: "95%",
+      maxHeight: "220px",
+      overflowY: "auto",
+      zIndex: 9999,
+      padding: "5px",
+    }}
+  >
+    {(loadingMinistro || isLoading) && (
+      <div className="flex justify-center items-center py-4">
+        <ClipLoader size={28} color="#4f46e5" />
+      </div>
+    )}
+
+    {!loadingMinistro && !isLoading && listaMinistros.length === 0 && (
+      <div className="py-3 text-center text-sm text-gray-500">
+        No se encontraron ministros con ese valor.
+      </div>
+    )}
+
+    {!loadingMinistro && !isLoading && listaMinistros.length > 0 && (
+      listaMinistros.map((p) => (
+        <div
+          key={p.id_persona}
+          style={{
+            padding: "10px",
+            borderBottom: "1px solid #eee",
+            cursor: "pointer",
+          }}
+          onClick={() => {
+            handleChange("ministroId", p.id_persona);
+            setQueryMinistro(`${p.nombre} ${p.apellido_paterno} ${p.apellido_materno}`);
+            setOpenMinistroList(false);
+          }}
+        >
+          <strong>{p.nombre} {p.apellido_paterno} {p.apellido_materno}</strong>
+          <div style={{ fontSize: "13px", color: "#666" }}>
+            CI: {p.carnet_identidad}
+          </div>
+        </div>
+      ))
+    )}
+  </div>
+)}
                       <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">search</span>
                     </div>
                     <p className="text-xs text-gray-500 mt-1">Escriba nombre o CI para buscar en Personas.</p>
@@ -589,54 +766,71 @@ useEffect(() => {
                           placeholder="Busca parroquia (previamente registrada)"
                           value={queryParroquia}
                           onChange={(e) => {
-                            setQueryParroquia(e.target.value);
-                            if (e.target.value.trim().length >= 2) {
+                            const value = e.target.value;
+                            setQueryParroquia(value);
+
+                            if (value.trim().length >= 2) {
+                              setLoadingParroquia(true);
                               setOpenParroquiaList(true);
                             } else {
+                              setLoadingParroquia(false);
                               setOpenParroquiaList(false);
                             }
                           }}
                           className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3 pr-10"
                         />
-                        {openParroquiaList && listaParroquias.length > 0 && (
-                        <div
-                          style={{
-                            position: "absolute",
-                            background: "white",
-                            border: "1px solid #dcdcdc",
-                            borderRadius: "8px",
-                            marginTop: "4px",
-                            width: "95%",
-                            maxHeight: "200px",
-                            overflowY: "auto",
-                            zIndex: 9999,
-                            padding: "5px"
-                          }}
-                        >
-                          {listaParroquias.map((p) => (
-                            <div
-                              key={p.id_parroquia}
-                              style={{
-                                padding: "10px",
-                                borderBottom: "1px solid #eee",
-                                cursor: "pointer",
-                              }}
-                              onClick={() => {
-                                handleChange("parroquiaId", p.id_parroquia);
-                                setQueryParroquia(`${p.nombre} ${p.email}`);
-                                setOpenParroquiaList(false);
-                              }}
-                            >
-                              <strong>
-                                {p.nombre}  
-                              </strong>
-                              <div style={{ fontSize: "13px", color: "#666" }}>
-                                email: {p.email}  - tel: {p.telefono}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                        {/* DROPDOWN PARROQUIA */}
+{openParroquiaList && (
+  <div
+    style={{
+      position: "absolute",
+      background: "white",
+      border: "1px solid #dcdcdc",
+      borderRadius: "8px",
+      marginTop: "4px",
+      width: "95%",
+      maxHeight: "220px",
+      overflowY: "auto",
+      zIndex: 9999,
+      padding: "5px",
+    }}
+  >
+    {(loadingParroquia || isLoading) && (
+      <div className="flex justify-center items-center py-4">
+        <ClipLoader size={28} color="#4f46e5" />
+      </div>
+    )}
+
+    {!loadingParroquia && !isLoading && listaParroquias.length === 0 && (
+      <div className="py-3 text-center text-sm text-gray-500">
+        No se encontraron parroquias con ese valor.
+      </div>
+    )}
+
+    {!loadingParroquia && !isLoading && listaParroquias.length > 0 && (
+      listaParroquias.map((p) => (
+        <div
+          key={p.id_parroquia}
+          style={{
+            padding: "10px",
+            borderBottom: "1px solid #eee",
+            cursor: "pointer",
+          }}
+          onClick={() => {
+            handleChange("parroquiaId", p.id_parroquia);
+            setQueryParroquia(`${p.nombre}`);
+            setOpenParroquiaList(false);
+          }}
+        >
+          <strong>{p.nombre}</strong>
+          <div style={{ fontSize: "13px", color: "#666" }}>
+            Email: {p.email} – Tel: {p.telefono}
+          </div>
+        </div>
+      ))
+    )}
+  </div>
+)}
                       <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">search</span>
                     </div>
                     <p className="text-xs text-gray-500 mt-1">Escriba nombre o email para buscar en Parroquias.</p>
@@ -925,13 +1119,12 @@ useEffect(() => {
               <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
                 <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700/50 dark:text-gray-400">
                   <tr>
-                    <th className="px-6 py-3" scope="col">Nombre</th>
-                    <th className="px-6 py-3" scope="col">Apellido paterno</th>
-                    <th className="px-6 py-3" scope="col">Apellido materno</th>
+                    <th className="px-6 py-3" scope="col">Nombre completo</th>
                     <th className="px-6 py-3" scope="col">CI</th>
-                    <th className="px-6 py-3" scope="col">Fecha nac.</th>
-                    <th className="px-6 py-3" scope="col">Lugar nac.</th>
-                    <th className="px-6 py-3" scope="col">Estado</th>
+                    <th className="px-6 py-3" scope="col">Fecha del sacramento</th>
+                    <th className="px-6 py-3" scope="col">Rol</th>
+                    <th className="px-6 py-3" scope="col">Foja</th>
+                    <th className="px-6 py-3" scope="col">Número</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -941,19 +1134,14 @@ useEffect(() => {
                       onClick={() => handleSelectResultado(row)}
                       className="cursor-pointer bg-white dark:bg-background-dark/50 border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
                     >
-                      <td className="px-6 py-4">{row.nombre}</td>
-                      <td className="px-6 py-4">{row.apellido_paterno}</td>
-                      <td className="px-6 py-4">{row.apellido_materno}</td>
-                      <td className="px-6 py-4">{row.carnet_identidad}</td>
-                      <td className="px-6 py-4">{row.fecha_nacimiento}</td>
-                      <td className="px-6 py-4">{row.lugar_nacimiento}</td>
                       <td className="px-6 py-4">
-                        {row.activo ? (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">Activo</span>
-                        ) : (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">Inactivo</span>
-                        )}
+                        {row.nombre} {row.apellido_paterno} {row.apellido_materno}
                       </td>
+                      <td className="px-6 py-4">{row.carnet_identidad}</td>
+                      <td className="px-6 py-4">{row.fecha_sacramento}</td>
+                      <td className="px-6 py-4">{row.rol_nombre}</td>
+                      <td className="px-6 py-4">{row.foja}</td>
+                      <td className="px-6 py-4">{row.numero}</td>
                     </tr>
                   ))}
                 </tbody>
