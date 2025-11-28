@@ -20,6 +20,7 @@ export const loginUser = createAsyncThunk(
         email: response.email || response.usuario?.email || '',
         rol: response.rol || response.usuario?.role || 'Usuario',
         token: response.token,
+        expiresAt: Date.now() + response.expiresIn * 1000,
       };
     } catch (error) {
       if (error.response) {

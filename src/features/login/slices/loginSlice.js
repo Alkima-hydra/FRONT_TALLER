@@ -36,14 +36,20 @@ const loginSlice = createSlice({
         state.isLoading = false;
         state.user = action.payload;
         state.error = null;
-      })
-      .addCase(loginUser.rejected, (state, action) => {
-        state.isLoading = false;
-        state.error = action.payload || { 
-          message: 'Error desconocido',
-          type: 'error'
-        };
+    
+        const { expiresAt } = action.payload;
+    
+        // limpiar timeout previo
+        if (state.logoutTimeout) clearTimeout(state.logoutTimeout);
+    
+        const ms = expiresAt - Date.now();
+    
+        // programar logout exacto
+        state.logoutTimeout = setTimeout(() => {
+          store.dispatch({ type: 'login/logout' });
+        }, ms);
       });
+      
   },
 });
 
