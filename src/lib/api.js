@@ -143,3 +143,19 @@ export const dashboardApi = {
   fetchStats: (filters = {}) =>
     api.get('/dashboard/summary/', { params: filters }).then(res => res.data).catch(handleError),
 };
+
+// apis para sacramentos
+// primero para bautizos
+export const bautizosApi = {
+  fetchBautizos: (params = {}) =>
+    api.get('/sacramentos/bautizos/', { params }).then((res) => res.data).catch(handleError),
+
+  fetchBautizoById: (id) =>
+    api.get(`/sacramentos/bautizos/${id}`).then((res) => res.data).catch(handleError),
+
+  createBautizo: (data) =>
+    api.post('/sacramentos/bautizos/new', data).then((res) => res.data).catch(handleError),
+
+  updateBautizo: (id, data) =>
+    api.put(`/sacramentos/bautizos/${id}`, data).then((res) => res.data).catch(handleError),
+};

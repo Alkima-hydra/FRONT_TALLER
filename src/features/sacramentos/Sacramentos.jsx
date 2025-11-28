@@ -1,7 +1,34 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import Layout from '../../shared/components/layout/Layout';
 
+//import de slices y trunk
+import {
+  fetchPersonas,
+} from './slices/sacramentosTrunk';
+import {
+  selectIsLoading,
+  selectPersonas,
+  selectIsCreating,
+  selectIsUpdating,
+  selectIsDeleting
+} from './slices/sacramentosSlices';
+
 export default function Sacramentos() {
+  //para empezar a consumir
+  const dispatch = useDispatch();
+  const isLoading = useSelector(selectIsLoading);
+  const personas = useSelector(selectPersonas);
+  const isCreating = useSelector(selectIsCreating);
+  const isUpdating = useSelector(selectIsUpdating);
+  const isDeleting = useSelector(selectIsDeleting);
+
+  //busqueda inicial de persona
+  const [queryPersona, setQueryPersona] = useState("");
+  const [listaPersonas, setListaPersonas] = useState([]);
+  const [openPersonaList, setOpenPersonaList] = useState(false);
+
+  // --- Estados locales ---
   const [mergeOpen, setMergeOpen] = useState(false)
   const [activeTab, setActiveTab] = useState('agregar') // pestaña activa
   const [selectedPerson, setSelectedPerson] = useState(null)
@@ -12,7 +39,7 @@ export default function Sacramentos() {
     // comunes a todos los sacramentos
     personaId: null,                // persona que recibe el sacramento
     padrinoId: null,                // persona seleccionada como padrino (opcional)
-    ministro: '',                   // ministro en texto por ahora
+    ministroId: null,                   // ministro en texto por ahora
     parroquiaId: null,              // institucion_parroquia_id
     foja: '',
     numero: '',
@@ -40,8 +67,16 @@ export default function Sacramentos() {
     activo: '',
   });
 
-  // Resultados de búsqueda (fake por ahora) y selección
+  // Resultados de búsqueda para la persona
   const [results, setResults] = useState([]);
+
+  // para toast
+  const [toast, setToast] = useState(null); // { type: 'success'|'error', message: string }
+    useEffect(() => {
+      if (!toast) return;
+      const t = setTimeout(() => setToast(null), 3000);
+      return () => clearTimeout(t);
+  }, [toast]);
 
   // --- Helpers ---
   const handleChange = (key, value) => setForm(prev => ({ ...prev, [key]: value }));
@@ -51,6 +86,33 @@ export default function Sacramentos() {
     setForm({ personaId: null, padrinoId: null, ministro: '', parroquiaId: null, foja: '', numero: '', fecha_sacramento: '', activo: true });
     setMatrimonio({ esposoId: null, esposaId: null, lugar_ceremonia: '', reg_civil: '', numero_acta: '' });
   };
+
+  //para los filtros
+  useEffect(() => {
+  if (queryPersona.trim().length < 2) {
+    setListaPersonas([]);
+    return;
+  }
+
+  const delay = setTimeout(() => {
+    dispatch(fetchPersonas({ search: queryPersona }))
+      .unwrap()
+      .then((data) => {
+        console.log(">>> DATA desde thunk:", data);     // <-- 1
+        setListaPersonas(data || []);
+        console.log(">>> LISTA PERSONAS SETEADA:", data); // <-- 2
+        setOpenPersonaList(true);
+      })
+      .catch((e) => {
+        console.error(">>> ERROR buscando:", e);
+        setListaPersonas([]);
+      });
+
+    console.log(">>> PERSONAS REDUX SELECTOR:", personas); // <-- 3
+  }, 300);
+
+  return () => clearTimeout(delay);
+}, [queryPersona, personas]);
 
   // Construye el payload listo para enviar según el tipo
   const buildPayload = () => {
@@ -185,15 +247,66 @@ export default function Sacramentos() {
                 <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3">
                   Persona que recibió el {tipoSacramento === 'comunion' ? 'Primera Comunión' : 'Bautizo'}
                 </h4>
-                <div className="relative">
+                <div className="mb-6 relative">
                   <input
                     type="search"
                     placeholder="Buscar persona (nombre o CI registrado)"
-                    value={form.personaId ? `ID seleccionado: ${form.personaId}` : ''}
-                    onChange={(e) => handleChange('personaId', null)}
+                    value={queryPersona}
+                    onChange={(e) => {
+                      setQueryPersona(e.target.value);
+                      if (e.target.value.trim().length >= 2) {
+                        setOpenPersonaList(true);
+                      } else {
+                        setOpenPersonaList(false);
+                      }
+                    }}
                     className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3 pr-10"
                   />
-                  <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">search</span>
+                  {/* DROPDOWN DE RESULTADOS */}
+                  {openPersonaList && Array.isArray(personas) && personas.length > 0 && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        background: "white",
+                        border: "1px solid #dcdcdc",
+                        borderRadius: "8px",
+                        marginTop: "4px",
+                        width: "95%",
+                        maxHeight: "200px",
+                        overflowY: "auto",
+                        zIndex: 9999,
+                        padding: "5px",
+                      }}
+                    >
+                      {personas.map((p) => (
+                        <div
+                          key={p.id}
+                          style={{
+                            padding: "10px",
+                            borderBottom: "1px solid #eee",
+                            cursor: "pointer",
+                          }}
+                          onClick={() => {
+                            handleChange("personaId", p.id);  
+                            setQueryPersona(`${p.nombre} ${p.apellido_paterno} ${p.apellido_materno}`);
+                            setOpenPersonaList(false);
+                          }}
+                        >
+                          <strong>
+                            {p.nombre} {p.apellido_paterno} {p.apellido_materno}
+                          </strong>
+                          <div style={{ fontSize: "13px", color: "#666" }}>
+                            CI: {p.carnet_identidad}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
+                    search
+                  </span>
+
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
                   Busque la persona registrada en la base de datos que se bautizó o realizó la comunión.
