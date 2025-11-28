@@ -233,7 +233,12 @@ export default function Usuarios() {
       console.error('updateUsuario threw:', err);
       setToast({ type: 'error', message: extractError(err) });
     }
-  }
+  };
+
+  const getFullName = (nombre, apellido_paterno, apellido_materno) => {
+    return `${nombre} ${apellido_paterno} ${apellido_materno}`.trim();
+  };
+  
 
   return (
     <Layout title="Gestión de Usuarios">
@@ -459,7 +464,7 @@ export default function Usuarios() {
                         }}
                         className="cursor-pointer bg-white dark:bg-background-dark border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
                       >
-                        <td className="px-6 py-4 font-medium text-gray-900 dark:text-white whitespace-nowrap">{u.nombre}</td>
+                        <td className="px-6 py-4 font-medium text-gray-900 dark:text-white whitespace-nowrap">{getFullName(u.nombre, u.apellido_paterno, u.apellido_materno)}</td>
                         <td className="px-6 py-4">{u.email}</td>
                         <td className="px-6 py-4"><span className="bg-primary/10 text-primary text-xs font-medium px-2.5 py-0.5 rounded-full">{u.rol}</span></td>
                         <td className="px-6 py-4">

@@ -45,14 +45,36 @@ export const loginApi = {
 
 // pa colocar el header
 api.interceptors.request.use((config) => {
-  const token = store.getState().login.user.token;
-  if (token) {
-    config.headers['x-token'] = token;
+  const { user } = store.getState().login;
+
+  if (user?.token) {
+    // 1. ¿El token expiró?
+    if (user.expiresAt && Date.now() > user.expiresAt) {
+      store.dispatch({ type: 'login/logout' });
+      return Promise.reject({
+        message: 'Sesión expirada',
+        status: 401
+      });
+    }
+
+    // 2. Token válido → lo enviamos
+    config.headers['x-token'] = user.token;
   }
+
   return config;
-}, (error) => {
-  return Promise.reject(error);
 });
+// para manejar el error 401
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.status === 401) {
+      store.dispatch({ type: 'login/logout' });
+    }
+    return Promise.reject(error);
+  }
+);
+
+
 
 //para errores
 

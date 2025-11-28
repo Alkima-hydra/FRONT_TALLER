@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import Layout from '../../shared/components/layout/Layout';
 import DuplicatesMergeModal from './components/DuplicatesMergeModal';
+import Swal from "sweetalert2";
 
 import {
   fetchParroquias,
@@ -41,13 +42,6 @@ export default function Parroquias() {
   const isLoading = useSelector(selectIsLoading);
   const error = useSelector(selectError);
 
-  const [toast, setToast] = useState(null); // { type: 'success'|'error', message: string }
-  useEffect(() => {
-    if (!toast) return;
-    const t = setTimeout(() => setToast(null), 3000);
-    return () => clearTimeout(t);
-  }, [toast]);
-
 
   // ====== EFECTOS ======
   useEffect(() => {
@@ -65,10 +59,35 @@ export default function Parroquias() {
     setFilters({ ...filters, [e.target.id.replace('f-', '')]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    dispatch(createParroquia(formData));
+  
+    const result = await dispatch(createParroquia(formData));
+  
+    if (createParroquia.fulfilled.match(result)) {
+      Swal.fire({
+        icon: "success",
+        title: "Parroquia agregada",
+        text: "La parroquia fue creada exitosamente.",
+        timer: 2000,
+        showConfirmButton: false,
+      });
+  
+      setFormData({
+        nombre: "",
+        direccion: "",
+        telefono: "",
+        email: "",
+      });
+    } else {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Hubo un problema al crear la parroquia.",
+      });
+    }
   };
+  
 
   const handleBuscar = async () => {
     const resultAction = await dispatch(fetchParroquias(filters));
@@ -103,12 +122,33 @@ export default function Parroquias() {
       setBoolSelected(true);
     }
   }, [parroquiaSeleccionada]);
-  const handleEditarParroquia = () => {
-    console.log('Editando parroquia:', parroquiaSeleccionada);
-    if (parroquiaSeleccionada && parroquiaSeleccionada.id_parroquia) {
-      dispatch(updateParroquia({ id: parroquiaSeleccionada.id_parroquia, data: parroquiaSeleccionada }));
+  const handleEditarParroquia = async () => {
+    if (!parroquiaSeleccionada?.id_parroquia) return;
+  
+    const result = await dispatch(
+      updateParroquia({
+        id: parroquiaSeleccionada.id_parroquia,
+        data: parroquiaSeleccionada,
+      })
+    );
+  
+    if (updateParroquia.fulfilled.match(result)) {
+      Swal.fire({
+        icon: "success",
+        title: "Parroquia actualizada",
+        text: "Los cambios se guardaron correctamente.",
+        timer: 2000,
+        showConfirmButton: false,
+      });
+    } else {
+      Swal.fire({
+        icon: "error",
+        title: "Error al actualizar",
+        text: "No se pudieron guardar los cambios.",
+      });
     }
   };
+  
   const handleCancelarEdicion = () => {
     dispatch(clearParroquiaSeleccionada());
     setBoolSelected(false); // 👈 RESETEAMOS LA BANDERA
@@ -117,16 +157,9 @@ export default function Parroquias() {
   // ====== RENDER ======
   return (
     <Layout title="Gestión de Parroquias">
-      {toast && (
-        <div className={`fixed top-5 right-5 z-50 px-4 py-3 rounded-lg shadow-lg text-white ${toast.type === 'success' ? 'bg-green-600' : 'bg-red-600'}`}>
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-white/90">
-              {toast.type === 'success' ? 'check_circle' : 'error'}
-            </span>
-            <span className="text-sm font-medium">{toast.message}</span>
-          </div>
-        </div>
-      )}
+
+
+
       {/* Tabs */}
       <div className="flex gap-1 mb-6 border-b border-gray-200 dark:border-gray-700">
         <button
@@ -261,7 +294,9 @@ export default function Parroquias() {
             </div>
 
             {isLoading ? (
-              <div className="p-6 text-center text-gray-500 dark:text-gray-400">Cargando...</div>
+              <div className="flex justify-center items-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            </div>
             ) : error ? (
               <div className="p-6 text-center text-red-500">{error}</div>
             ) : (
