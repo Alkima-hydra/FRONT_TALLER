@@ -42,6 +42,24 @@ export default function Sacramentos() {
   const [listaParroquias, setListaParroquias] = useState([]);
   const [openParroquiaList, setOpenParroquiaList] = useState(false);
 
+  //diccioinario para roles
+  const ROL_IDS = {
+    BAUTIZADO: 1,
+    COMULGADO: 2,
+    CONFIRMADO: 10,
+    ESPOSO: 11,
+    PADRINO: 5,
+    MINISTRO: 9,
+  };
+  //diccionario para tipo de sacramento
+  const TIPO_SACRAMENTO_IDS = {
+  bautizo: 1,
+  comunion: 2,
+  confirmacion: 3,
+  matrimonio: 4,
+};
+  
+
 
   // --- Estados locales ---
   const [mergeOpen, setMergeOpen] = useState(false)
@@ -162,8 +180,8 @@ export default function Sacramentos() {
 
 // filtro para ministro
   useEffect(() => {
-  if (queryPadrino.trim().length < 2) {
-    setListaPadrinos([]);
+  if (queryMinistro.trim().length < 2) {
+    setListaMinistros([]);
     return;
   }
 
@@ -188,7 +206,7 @@ export default function Sacramentos() {
   
 
   return () => clearTimeout(delay);
-}, [queryPadrino, tipoSacramento]);
+}, [queryMinistro, tipoSacramento]);
 
 //filtro para parroquias
 useEffect(() => {
@@ -220,53 +238,80 @@ useEffect(() => {
 
   // Construye el payload listo para enviar según el tipo
   const buildPayload = () => {
-    const base = {
-      sacramento: {
-        fecha_sacramento: form.fecha_sacramento || null,
-        foja: form.foja || null,
-        numero: form.numero || null,
-        tipo_sacramento_id: tipoSacramento,           // por ahora guardamos la clave tal cual (bautizo/comunion/matrimonio)
-        institucion_parroquia_id: form.parroquiaId || null,
-        activo: !!form.activo,
-      },
-      relaciones: {
-        persona_principal_id: form.personaId,
-        padrino_id: form.padrinoId || null,
-        ministro: form.ministroId || null,
-      },
-    };
-    if (tipoSacramento === 'matrimonio') {
-      base.relaciones.persona_principal_id = null; // en matrimonio usamos esposo/esposa
-      base.matrimonio_detalle = {
-        esposo_id: matrimonio.esposoId,
-        esposa_id: matrimonio.esposaId,
-        lugar_ceremonia: matrimonio.lugar_ceremonia || null,
-        reg_civil: matrimonio.reg_civil || null,
-        numero_acta: matrimonio.numero_acta || null,
-      };
-    }
-    return base;
+  const base = {
+    sacramento: {
+      fecha_sacramento: form.fecha_sacramento || null,
+      foja: form.foja || null,
+      numero: form.numero || null,
+
+      // 🔥 Ahora enviamos el ID real
+      tipo_sacramento_id: TIPO_SACRAMENTO_IDS[tipoSacramento],
+
+      institucion_parroquia_id: form.parroquiaId || null,
+      activo: !!form.activo,
+    },
+
+    // relaciones se eliminará pronto, pero por ahora lo dejamos
+    relaciones: {
+      persona_principal_id: form.personaId,
+      padrino_id: form.padrinoId || null,
+      ministro: form.ministroId || null,
+    },
   };
+
+  // Matrimonio
+  if (tipoSacramento === "matrimonio") {
+    base.relaciones.persona_principal_id = null;
+    base.matrimonio_detalle = {
+      esposo_id: matrimonio.esposoId,
+      esposa_id: matrimonio.esposaId,
+      lugar_ceremonia: matrimonio.lugar_ceremonia || null,
+      reg_civil: matrimonio.reg_civil || null,
+      numero_acta: matrimonio.numero_acta || null,
+    };
+  }
+
+  return base;
+};
 
   // Envío de Agregar (simulado)
   const handleSubmitAgregar = (e) => {
-    e.preventDefault();
-    const payload = buildPayload();
-    console.log('[SACRAMENTOS] Crear payload →', payload);
-    // TODO: dispatch thunk createSacramento(payload)
-  };
+  e.preventDefault();
+
+  const payload = buildPayload();
+
+  console.log("===== 📌 PAYLOAD SACRAMENTO A ENVIAR =====");
+
+  console.log("👉 Tipo sacramento:", tipoSacramento);
+
+  console.log("👉 Datos sacramento:");
+  console.table({
+    fecha_sacramento: payload.sacramento.fecha_sacramento,
+    foja: payload.sacramento.foja,
+    numero: payload.sacramento.numero,
+    tipo_sacramento_id: payload.sacramento.tipo_sacramento_id,
+    parroquiaId: payload.sacramento.institucion_parroquia_id,
+    activo: payload.sacramento.activo,
+  });
+
+  console.log("👉 Relaciones:");
+  console.table({
+    persona_principal_id: payload.relaciones.persona_principal_id,
+    padrino_id: payload.relaciones.padrino_id,
+    ministro_id: payload.relaciones.ministro,
+  });
+
+  if (tipoSacramento === "matrimonio") {
+    console.log("👉 Matrimonio detalle:");
+    console.table(payload.matrimonio_detalle);
+  }
+
+  console.log("===== 📌 FIN PAYLOAD =====");
+
+  // (Aún NO hacemos dispatch createSacramento)
+};
 
   // Buscar (simulado)
-  const handleBuscar = (e) => {
-    e?.preventDefault?.();
-    console.log('[SACRAMENTOS] Buscar con filtros:', filters, 'tipo:', tipoSacramento);
-    // TODO: dispatch thunk fetchSacramentos({ ...filters, tipo: tipoSacramento })
-    // Simulación de resultados
-    setResults([
-      { id: 1, nombre: 'Carlos', apellido_paterno: 'Mendoza', apellido_materno: 'Pérez', carnet_identidad: '6789012 LP', fecha_nacimiento: '1990-01-10', lugar_nacimiento: 'La Paz', activo: true },
-      { id: 2, nombre: 'Ana', apellido_paterno: 'Rodríguez', apellido_materno: 'Guzmán', carnet_identidad: '3456789 CB', fecha_nacimiento: '1995-04-18', lugar_nacimiento: 'Cochabamba', activo: false },
-    ]);
-  };
 
   const handleSelectResultado = (row) => {
     setSelectedPerson(row);
@@ -483,7 +528,7 @@ useEffect(() => {
                     <p className="text-xs text-gray-500 mt-1">Escriba nombre o CI para buscar en Personas.</p>
                   </div>
                    <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Padrino</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ministro</label>
                     <div className="relative">
                       <input
                           type="search"
