@@ -3,6 +3,9 @@ import {
   fetchPersonasParaSacramento,
   fetchParroquias,  // búsqueda filtrada por rol sacramento
   crearSacramentoCompleto, // nuevo sacramento con todas sus relaciones
+  actualizarSacramentoCompleto, // actualizar sacramento completo
+  buscarSacramentos, // buscar sacramentos
+  fetchSacramentoCompleto, // obtener información completa de un sacramento
 } from './sacramentosTrunk';
 
 const initialState = {
@@ -25,6 +28,9 @@ const initialState = {
 
   //todo lo que tenga que ver con parroquias
     parroquias: [],
+  //para buscar sacramentos
+  sacramentosEncontrados: [],
+  sacramentoSeleccionado: null,
 };
 
 const sacramentosSlice = createSlice({
@@ -62,7 +68,7 @@ const sacramentosSlice = createSlice({
       state.error = action.payload || 'Error al buscar personas';
     })
 
-    // 🔵 Buscar parroquias
+    //  Buscar parroquias
     .addCase(fetchParroquias.pending, (state) => {
       state.isLoading = true;
       state.error = null;
@@ -82,7 +88,7 @@ const sacramentosSlice = createSlice({
       state.error = action.payload?.message || 'Error al cargar parroquias';
     })
 
-    // 🔵 Crear sacramento completo
+    // Crear sacramento completo
     .addCase(crearSacramentoCompleto.pending, (state) => {
       state.isCreating = true;
       state.error = null;
@@ -95,7 +101,37 @@ const sacramentosSlice = createSlice({
     .addCase(crearSacramentoCompleto.rejected, (state, action) => {
       state.isCreating = false;
       state.error = action.payload || 'Error al crear sacramento';
-    });
+    })
+
+    // 🔵 Buscar sacramentos
+    .addCase(buscarSacramentos.pending, (state) => {
+      state.isLoading = true;
+      state.error = null;
+    })
+    .addCase(buscarSacramentos.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.sacramentosEncontrados = action.payload.items || [];
+    })
+    .addCase(buscarSacramentos.rejected, (state, action) => {
+      state.isLoading = false;
+      state.error = action.payload || 'Error al buscar sacramentos';
+    })
+
+    // 🔵 Obtener sacramento completo (para editar)
+    .addCase(fetchSacramentoCompleto.pending, (state) => {
+      state.isLoadingById = true;
+      state.error = null;
+    })
+    .addCase(fetchSacramentoCompleto.fulfilled, (state, action) => {
+      state.isLoadingById = false;
+      state.sacramentoSeleccionado = action.payload.sacramento || null;
+    })
+    .addCase(fetchSacramentoCompleto.rejected, (state, action) => {
+      state.isLoadingById = false;
+      state.error = action.payload || 'Error al cargar sacramento';
+    })
+    
+
 }
 });
 
@@ -119,6 +155,8 @@ export const selectError = (state) => state.personas.error;
 export const selectIsCreating = (state) => state.personas.isCreating;
 export const selectIsUpdating = (state) => state.personas.isUpdating;
 export const selectIsDeleting = (state) => state.personas.isDeleting;
+export const selectSacramentosEncontrados = (state) => state.personas.sacramentosEncontrados;
+export const selectSacramentoSeleccionado = (state) => state.personas.sacramentoSeleccionado;
 
 export const sacramentosReducer = sacramentosSlice.reducer;
 export default sacramentosSlice.reducer;

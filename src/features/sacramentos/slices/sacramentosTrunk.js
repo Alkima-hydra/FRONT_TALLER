@@ -34,7 +34,7 @@ export const fetchParroquias = createAsyncThunk(
       const response = await parroquiasApi.fetchParroquias(filters);
       console.log('[parroquiasThunk] Respuesta del servidor:', response.parroquias);
 
-      // 🔸 Si el backend devuelve { parroquias: [...], ok: true, currentPage: 1, ... }
+      // 
       // devolvemos solo los campos útiles que usará el slice
       return {
         parroquias: response.parroquias || [],
@@ -54,6 +54,49 @@ export const crearSacramentoCompleto = createAsyncThunk(
   async (sacramentoData, { rejectWithValue }) => {
     try {
       const response = await sacramentosApi.crearSacramentoCompleto(sacramentoData);
+      return response;
+    }
+    catch (error) {
+      return rejectWithValue(error.response?.data || error.message);
+    }
+  }
+);
+
+
+//para buscar sacramentos
+export const buscarSacramentos = createAsyncThunk(
+  'sacramentos/buscarSacramentos',
+  async (params = {}, { rejectWithValue }) => {
+    try {
+      const response = await sacramentosApi.buscarSacramentos(params);
+      return response;
+    }
+    catch (error) {
+      return rejectWithValue(error.response?.data || error.message);
+    }
+  }
+);
+
+// obtener sacramento completo por id (para editar)
+export const fetchSacramentoCompleto = createAsyncThunk(
+  'sacramentos/fetchSacramentoCompleto',
+  async (id, { rejectWithValue }) => {
+    try {
+      const response = await sacramentosApi.obtenerSacramentoCompleto(id);
+      return response;
+    }
+    catch (error) {
+      return rejectWithValue(error.response?.data || error.message);
+    }
+  }
+);
+
+// actualizar sacramento completo
+export const actualizarSacramentoCompleto = createAsyncThunk(
+  'sacramentos/actualizarSacramentoCompleto',
+  async ({ id, sacramentoData }, { rejectWithValue }) => {
+    try {
+      const response = await sacramentosApi.actualizarSacramentoCompleto(id, sacramentoData);
       return response;
     }
     catch (error) {

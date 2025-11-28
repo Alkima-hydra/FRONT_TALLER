@@ -156,5 +156,27 @@ export const sacramentosApi = {
       .post('/sacramentos/new-completo', data)
       .then((res) => res.data)
       .catch(handleError),
+  //actualizar de sacramentos
+  actualizarSacramentoCompleto: (id, data) =>
+    api
+      .put(`/sacramentos/completo/${id}`, data)
+      .then((res) => res.data)
+      .catch(handleError),
+  //buscar para sacramentos
+  buscarSacramentos: (params = {}) =>
+    api
+      .get('/sacramentos/buscar-persona', { params })
+      .then((res) => res.data)
+      .catch(handleError),
+  //informacion de todo el sacramento
+    fetchSacramentoCompleto: (id) =>
+    api
+      .get(`/sacramentos/completo/${id}`)
+      .then((res) => res.data)
+      .catch(handleError),
+      
+    
+
+
   
 };

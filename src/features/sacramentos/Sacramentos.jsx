@@ -6,7 +6,10 @@ import Layout from '../../shared/components/layout/Layout';
 import {
   fetchPersonasParaSacramento,
   fetchParroquias,
-  crearSacramentoCompleto
+  crearSacramentoCompleto,
+  actualizarSacramentoCompleto,
+  buscarSacramentos,
+  fetchSacramentoCompleto,
 } from './slices/sacramentosTrunk';
 
 import {
@@ -14,7 +17,9 @@ import {
   selectPersonasBusqueda,     // ← usamos el nuevo selector
   selectIsCreating,
   selectIsUpdating,
-  selectIsDeleting
+  selectIsDeleting,
+  selectSacramentosEncontrados,
+  selectSacramentoSeleccionado,
 } from './slices/sacramentosSlices';
 
 export default function Sacramentos() {
@@ -42,6 +47,8 @@ export default function Sacramentos() {
   const [queryParroquia, setQueryParroquia] = useState("");
   const [listaParroquias, setListaParroquias] = useState([]);
   const [openParroquiaList, setOpenParroquiaList] = useState(false);
+  //para busqueda de sacramento y actualizar
+
 
   //diccioinario para roles
   const ROL_IDS = {
@@ -55,9 +62,13 @@ export default function Sacramentos() {
   //diccionario para tipo de sacramento
   const TIPO_SACRAMENTO_IDS = {
   bautizo: 1,
-  comunion: 10,
-  confirmacion: 10,
-  matrimonio: 11,
+  matrimonio: 2,
+  comunion: 3,
+};
+  const ROLES_SACRAMENTO_IDS = {
+  bautizo: 1,
+  matrimonio: 3,
+  comunion: 2,
 };
   
 
@@ -237,89 +248,157 @@ useEffect(() => {
 
 
 
-  // Construye el payload listo para enviar según el tipo
-  const buildPayload = () => {
-  const relacionesArray = [];
+  // Construye el payload para CREAR sacramento
+  const buildPayloadCrear = () => {
+    const relacionesArray = [];
 
-  // Persona que recibe el sacramento
-  if (form.personaId) {
-    relacionesArray.push({
-      persona_id: form.personaId,
-      rol_sacramento_id: TIPO_SACRAMENTO_IDS[tipoSacramento] // BAUTIZADO o COMULGADO
-    });
-  }
+    // Persona que recibe el sacramento
+    if (form.personaId) {
+      relacionesArray.push({
+        persona_id: form.personaId,
+        rol_sacramento_id: TIPO_SACRAMENTO_IDS[tipoSacramento] // BAUTIZADO o COMULGADO
+      });
+    }
 
-  // Padrino (opcional)
-  if (form.padrinoId) {
-    relacionesArray.push({
-      persona_id: form.padrinoId,
-      rol_sacramento_id: ROL_IDS.PADRINO
-    });
-  }
+    // Padrino (opcional)
+    if (form.padrinoId) {
+      relacionesArray.push({
+        persona_id: form.padrinoId,
+        rol_sacramento_id: ROL_IDS.PADRINO
+      });
+    }
 
-  // Ministro (opcional)
-  if (form.ministroId) {
-    relacionesArray.push({
-      persona_id: form.ministroId,
-      rol_sacramento_id: ROL_IDS.MINISTRO
-    });
-  }
+    // Ministro (opcional)
+    if (form.ministroId) {
+      relacionesArray.push({
+        persona_id: form.ministroId,
+        rol_sacramento_id: ROL_IDS.MINISTRO
+      });
+    }
 
-  return {
-    fecha_sacramento: form.fecha_sacramento,
-    foja: form.foja,
-    numero: form.numero,
+    return {
+      fecha_sacramento: form.fecha_sacramento,
+      foja: form.foja,
+      numero: form.numero,
 
-    tipo_sacramento_id_tipo: TIPO_SACRAMENTO_IDS[tipoSacramento],
-    parroquiaId: form.parroquiaId,
+      tipo_sacramento_id_tipo: TIPO_SACRAMENTO_IDS[tipoSacramento],
+      parroquiaId: form.parroquiaId,
 
-    relaciones: relacionesArray
+      relaciones: relacionesArray
+    };
   };
-};
+
+  // Construye el payload para EDITAR sacramento
+  const buildPayloadEditar = () => {
+    const relacionesArray = [];
+
+    if (form.personaId) {
+      relacionesArray.push({
+        persona_id: form.personaId,
+        rol_sacramento_id: TIPO_SACRAMENTO_IDS[tipoSacramento]
+      });
+    }
+
+    if (form.padrinoId) {
+      relacionesArray.push({
+        persona_id: form.padrinoId,
+        rol_sacramento_id: ROL_IDS.PADRINO
+      });
+    }
+
+    if (form.ministroId) {
+      relacionesArray.push({
+        persona_id: form.ministroId,
+        rol_sacramento_id: ROL_IDS.MINISTRO
+      });
+    }
+
+    return {
+      fecha_sacramento: form.fecha_sacramento,
+      foja: form.foja,
+      numero: form.numero,
+      parroquiaId: form.parroquiaId,
+      relaciones: relacionesArray
+    };
+  };
 
   // Envío de Agregar (simulado)
   const handleSubmitAgregar = (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  const payload = buildPayload();
+    const payload = buildPayloadCrear();
+    console.log(payload);
 
-  console.log("===== 📌 PAYLOAD SACRAMENTO A ENVIAR =====");
-  console.log(payload);
+    // 🚀 Integración real con Redux
+    dispatch(crearSacramentoCompleto(payload))
+      .unwrap()
+      .then((res) => {
+        console.log("SACRAMENTO CREADO:", res);
+        setToast({ type: "success", message: "Sacramento registrado correctamente" });
 
-  // 🚀 Integración real con Redux
-  dispatch(crearSacramentoCompleto(payload))
-    .unwrap()
-    .then((res) => {
-      console.log("SACRAMENTO CREADO:", res);
-      setToast({ type: "success", message: "Sacramento registrado correctamente" });
+        resetForm();
+        setQueryPersona("");
+        setQueryPadrino("");
+        setQueryMinistro("");
+        setQueryParroquia("");
+      })
+      .catch((err) => {
+        console.error("ERROR AL CREAR SACRAMENTO:", err);
+        setToast({ type: "error", message: err?.message || "Error al registrar sacramento" });
+      });
+  };
 
-      resetForm();
-      setQueryPersona("");
-      setQueryPadrino("");
-      setQueryMinistro("");
-      setQueryParroquia("");
-    })
-    .catch((err) => {
-      console.error("ERROR AL CREAR SACRAMENTO:", err);
-      setToast({ type: "error", message: err?.message || "Error al registrar sacramento" });
-    });
-};
-
-  // Buscar (simulado)
+  // Buscar sacramentos
   const handleBuscar = (e) => {
     e.preventDefault();
-    console.log('[SACRAMENTOS] Buscar con filtros:', filters);
+    const payload = { ...filters, tipo_sacramento_id_tipo: TIPO_SACRAMENTO_IDS[tipoSacramento],  rol_principal: ROLES_SACRAMENTO_IDS[tipoSacramento] };
+    dispatch(buscarSacramentos(payload))
+      .unwrap()
+      .then((res) => {
+        setResults(res.items || []);
+      })
+      .catch((err) => {
+        console.error("ERROR buscando sacramentos:", err);
+        setToast({ type: "error", message: "No se pudo realizar la búsqueda" });
+      });
   };
 
   const handleSelectResultado = (row) => {
-    setSelectedPerson(row);
-    // TODO: cargar datos específicos del sacramento seleccionado si es necesario
+    dispatch(fetchSacramentoCompleto(row.id_sacramento))
+      .unwrap()
+      .then((data) => {
+        setSelectedPerson(data.sacramento);
+        setForm({
+          personaId: data.sacramento.persona_principal_id,
+          padrinoId: data.sacramento.padrino_id || null,
+          ministroId: data.sacramento.ministro_id || null,
+          parroquiaId: data.sacramento.institucion_parroquia_id,
+          foja: data.sacramento.foja,
+          numero: data.sacramento.numero,
+          fecha_sacramento: data.sacramento.fecha_sacramento,
+          activo: data.sacramento.activo,
+        });
+      })
+      .catch((err) => {
+        console.error("ERROR al cargar sacramento:", err);
+        setToast({ type: "error", message: "Error al cargar los detalles" });
+      });
   };
 
   const handleGuardarEdicion = (e) => {
     e.preventDefault();
-    console.log('[SACRAMENTOS] Guardar edición de', selectedPerson, '→ payload aún por definir según API');
-    // TODO: dispatch thunk updateSacramento(id, data)
+    const payload = buildPayloadEditar();
+    dispatch(actualizarSacramentoCompleto({ id: selectedPerson.id_sacramento, data: payload }))
+      .unwrap()
+      .then(() => {
+        setToast({ type: "success", message: "Sacramento actualizado correctamente" });
+        setSelectedPerson(null);
+        setResults([]);
+      })
+      .catch((err) => {
+        console.error("ERROR actualizando sacramento:", err);
+        setToast({ type: "error", message: "No se pudo actualizar el sacramento" });
+      });
   };
 
   return (
