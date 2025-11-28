@@ -41,6 +41,14 @@ export default function Parroquias() {
   const isLoading = useSelector(selectIsLoading);
   const error = useSelector(selectError);
 
+  const [toast, setToast] = useState(null); // { type: 'success'|'error', message: string }
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 3000);
+    return () => clearTimeout(t);
+  }, [toast]);
+
+
   // ====== EFECTOS ======
   useEffect(() => {
     if (activeTab === 'buscar') {

@@ -143,3 +143,18 @@ export const dashboardApi = {
   fetchStats: (filters = {}) =>
     api.get('/dashboard/summary/', { params: filters }).then(res => res.data).catch(handleError),
 };
+
+// apis para sacramentos
+export const sacramentosApi = {
+  buscarPersonas: (params = {}) =>
+    api
+      .get('/personas/buscar/sacramento', { params })
+      .then((res) => res.data)
+      .catch(handleError),
+  crearSacramentoCompleto: (data) =>
+    api
+      .post('/sacramentos/new-completo', data)
+      .then((res) => res.data)
+      .catch(handleError),
+  
+};
