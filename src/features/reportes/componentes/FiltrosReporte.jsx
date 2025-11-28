@@ -1,4 +1,17 @@
+import { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchParroquias } from '../../parroquias/slices/parroquiasThunk';
+import { selectParroquias, selectIsLoading } from '../../parroquias/slices/parroquiasSlice';
+
 function FiltrosReporte({ filtros, setFiltros }) {
+  const dispatch = useDispatch();
+  const parroquias = useSelector(selectParroquias);
+  const isLoadingParroquias = useSelector(selectIsLoading);
+
+  useEffect(() => {
+    dispatch(fetchParroquias());
+  }, [dispatch]);
+
   const handleChange = (field, value) => {
     setFiltros(prev => ({ ...prev, [field]: value }));
   };
@@ -73,11 +86,21 @@ function FiltrosReporte({ filtros, setFiltros }) {
               value={filtros.institucion_parroquia_id_parroquia}
               onChange={(e) => handleChange('institucion_parroquia_id_parroquia', e.target.value)}
               className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-2.5 text-sm"
+              disabled={isLoadingParroquias}
             >
               <option value="">Todas</option>
-              <option value="1">San Pedro</option>
-              <option value="2">San Juan</option>
-              <option value="3">Santa María</option>
+              {parroquias && parroquias.length > 0 ? (
+                parroquias.map((parroquia) => (
+                  <option 
+                    key={parroquia.id_parroquia} 
+                    value={parroquia.id_parroquia}
+                  >
+                    {parroquia.nombre}
+                  </option>
+                ))
+              ) : (
+                !isLoadingParroquias && <option disabled>No hay parroquias disponibles</option>
+              )}
             </select>
           </div>
 
