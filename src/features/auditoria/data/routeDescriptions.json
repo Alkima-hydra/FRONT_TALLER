@@ -1,78 +1,145 @@
 {
   "/api/usuarios": {
-    "GET": "Consultó usuarios",
-    "POST": "Creó un usuario"
+    "GET": "Consultó la lista completa de usuarios",
+    "GET/:id": "Consultó los datos del usuario con ID {value}",
+    "POST": "Inició sesión en el sistema",
+    "PATCH/:id": "Deshabilitó o modificó el estado del usuario con ID {value}"
   },
+
   "/api/usuarios/new": {
-    "POST": "Registró un nuevo usuario"
+    "POST": "Registró un nuevo usuario en el sistema"
   },
+
+  "/api/usuarios/all": {
+    "GET": "Consultó todos los usuarios registrados"
+  },
+
+  "/api/usuarios/renew": {
+    "GET": "Renovó su token de autenticación"
+  },
+
   "/api/personas": {
-    "GET": "Consultó personas",
-    "GET?search": "Buscó una persona ({search})",
-    "POST": "Creó una persona",
-    "PATCH": "Actualizó una persona"
+    "GET": "Consultó la lista de personas",
+    "GET/:id": "Consultó los datos de la persona con ID {value}",
+    "POST": "Registró una nueva persona",
+    "PATCH/:id": "Actualizó los datos de la persona con ID {value}",
+    "DELETE/:id": "Eliminó a la persona con ID {value}",
+
+    "GET?search={value}": "Buscó personas por nombre o apellido: {value}",
+    "GET?nombre={value}": "Buscó personas por nombre: {value}",
+    "GET?apellido_paterno={value}": "Buscó personas por apellido paterno: {value}",
+    "GET?apellido_materno={value}": "Buscó personas por apellido materno: {value}",
+    "GET?carnet_identidad={value}": "Buscó una persona por carnet de identidad: {value}"
   },
+
+  "/api/personas/all": {
+    "GET": "Consultó la lista completa de personas"
+  },
+
+  "/api/personas/buscar/sacramento": {
+    "GET": "Buscó personas asociadas a sacramentos",
+    "GET?search={value}": "Buscó personas para sacramentos con criterio general: {value}",
+    "GET?tipo={value}": "Filtró personas por tipo de sacramento: {value}",
+    "GET?rol={value}": "Filtró personas según rol sacramental: {value}",
+    "GET?search={value}&tipo={value2}": "Buscó personas por texto: {value} y por tipo de sacramento: {value2}",
+    "GET?search={value}&tipo={value2}&rol={value3}": "Buscó personas para sacramentos con texto: {value}, tipo: {value2}, rol: {value3}"
+  },
+
   "/api/parroquias": {
-    "GET": "Consultó parroquias",
-    "POST": "Creó una parroquia",
-    "PATCH": "Editó una parroquia"
+    "GET": "Consultó la lista de parroquias",
+    "POST": "Registró una nueva parroquia",
+    "PATCH/:id": "Actualizó la información de la parroquia con ID {value}",
+
+    "GET?search={value}": "Buscó parroquias que coincidan con: {value}"
   },
-  "/api/password/solicitar": {
-    "POST": "Solicitó reestablecer contraseña"
+
+  "/api/parroquias/:id": {
+    "GET": "Consultó los datos de la parroquia con ID {value}"
   },
-  "/api/password/validar": {
-    "GET": "Validó un token de recuperación"
-  },
-  "/api/password/cambiar": {
-    "POST": "Cambió contraseña"
-  },
-  "/api/auditoria": {
-    "GET": "Consultó auditoría"
-  },
-  "/api/rolsacramentos": {
-    "GET": "Consultó roles sacramentales",
-    "POST": "Registró rol sacramental"
-  },
-  "/api/tiposacramentos": {
-    "GET": "Revisó tipos de sacramento",
-    "POST": "Registró un tipo de sacramento"
-  },
+
   "/api/sacramentos": {
-    "GET": "Consultó sacramentos",
-    "POST": "Registró un sacramento",
-    "PATCH": "Actualizó un sacramento"
+    "GET": "Consultó la lista de sacramentos",
+    "GET/:id": "Consultó el sacramento con ID {value}",
+    "POST": "Registró un nuevo sacramento",
+    "PATCH/:id": "Actualizó un sacramento con ID {value}"
   },
+
+  "/api/sacramentos/new-completo": {
+    "POST": "Registró un sacramento completo con todos los datos asociados"
+  },
+
   "/api/matrimoniodetalles": {
-    "GET": "Consultó detalles matrimoniales",
+    "GET": "Consultó los detalles matrimoniales",
+    "GET/:id": "Consultó los detalles matrimoniales con ID {value}",
     "POST": "Registró detalles matrimoniales",
-    "PATCH": "Actualizó detalles matrimoniales"
+    "PATCH/:id": "Actualizó los detalles matrimoniales con ID {value}"
   },
+
   "/api/personasacramentos": {
-    "GET": "Consultó sacramentos de una persona",
-    "POST": "Registró sacramento a una persona",
-    "PATCH": "Actualizó sacramento de una persona"
+    "GET": "Consultó los sacramentos de personas",
+    "GET/:id": "Consultó los sacramentos de la persona con ID {value}",
+    "POST": "Registró un sacramento para una persona",
+    "PATCH/:id": "Actualizó un sacramento asignado a una persona"
   },
+
+  "/api/tiposacramentos": {
+    "GET": "Consultó la lista de tipos de sacramento"
+  },
+
+  "/api/tiposacramentos/new": {
+    "POST": "Registró un nuevo tipo de sacramento"
+  },
+
+  "/api/tiposacramentos/all": {
+    "GET": "Consultó todos los tipos de sacramento"
+  },
+
+  "/api/tiposacramentos/:id": {
+    "GET": "Consultó el tipo de sacramento con ID {value}",
+    "PUT": "Actualizó el tipo de sacramento con ID {value}"
+  },
+
+  "/api/rolsacramentos": {
+    "GET": "Consultó los roles sacramentales",
+    "POST": "Registró un nuevo rol sacramental"
+  },
+
+  "/api/rolsacramentos/:id": {
+    "PATCH": "Actualizó el rol sacramental con ID {value}"
+  },
+
+  "/api/certificados": {
+    "GET": "Consultó la lista de certificados",
+    "GET/:id": "Consultó el certificado con ID {value}",
+    "POST": "Generó un certificado",
+    "PATCH/:id": "Actualizó un certificado",
+
+    "GET?tipo={value}": "Filtró certificados por tipo: {value}"
+  },
+
+  "/api/auditoria": {
+    "GET": "Consultó la auditoría",
+    "GET?fecha_inicio={value}&fecha_fin={value2}": "Filtró auditorías por rango de fechas",
+    "GET?user_name={value}": "Filtró auditorías por usuario: {value}",
+    "GET?http_method={value}": "Filtró auditorías por método HTTP: {value}",
+    "GET?ip_address={value}": "Filtró auditorías por IP: {value}",
+    "GET?url={value}": "Filtró auditorías por ruta o endpoint",
+    "GET?has_exception=true": "Consultó auditorías con errores"
+  },
+
   "/api/dashboard/summary": {
-    "GET": "Entró al resumen del dashboard"
+    "GET": "Consultó el resumen general del dashboard"
   },
-  "/api/comentarios/:id/toggle-publicado": {
-    "PATCH": "Cambió estado de publicación de un comentario"
+
+  "/api/password/solicitar": {
+    "POST": "Solicitó restablecer su contraseña"
   },
-  "/api/documentos": {
-    "GET": "Consultó documentos",
-    "POST": "Subió un documento"
+
+  "/api/password/validar": {
+    "GET": "Validó un token de recuperación de contraseña"
   },
-  "/api/documentos/:id": {
-    "PATCH": "Actualizó un documento"
-  },
-  "/api/propuestas": {
-    "GET": "Consultó propuestas",
-    "POST": "Registró una propuesta"
-  },
-  "/api/propuestas/:id/toggle-publicado": {
-    "PATCH": "Cambió estado de publicación de una propuesta"
-  },
-  "/api/propuestas/:id/toggle-eliminado": {
-    "PATCH": "Cambió estado de eliminación de una propuesta"
+
+  "/api/password/cambiar": {
+    "POST": "Cambió su contraseña"
   }
 }
