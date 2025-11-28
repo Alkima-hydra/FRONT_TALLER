@@ -22,6 +22,8 @@ export default function AuditTable({ data, onViewDetails }) {
 
   //Traduce el método HTTP al español
   const translateMethod = (method) =>{
+    console.log(data[0]);
+
     const translations = {
       GET: "Obtiene",
       POST: "Crea",
@@ -120,13 +122,13 @@ export default function AuditTable({ data, onViewDetails }) {
                     </div>
                   </td>
                   <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-foreground-light dark:text-foreground-dark">
-                    {item.name || "Nombre desconocido"}
+                    {item.nombre_usuario || "Nombre desconocido"}
                   </td>
                   <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-foreground-light dark:text-foreground-dark">
                     {item.username}
                   </td>
                   <td className="whitespace-nowrap px-6 py-4 text-sm text-muted-light dark:text-muted-dark">
-                    {item.cambio || "xx"}
+                    {item.ip_address || "xx"}
                   </td>
                   <td className="whitespace-nowrap px-6 py-4 text-sm text-muted-light dark:text-muted-dark">
                     {new Date(item.created_at).toLocaleString()}
