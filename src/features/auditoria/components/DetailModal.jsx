@@ -37,6 +37,16 @@ export default function DetailModal({ isOpen, onClose, data }) {
   const translateRoute = (method, originalUrl) => {
   let url = originalUrl.trim();
 
+  // --- LIMPIEZA UNIVERSAL DE URL ANTES DE PROCESAR ---
+  url = url
+    .replace(/\/\?/, "?")          // quitar barra antes del ?
+    .replace(/&&+/g, "&")          // evitar && duplicados
+    .replace(/\?&/, "?")           // quitar ?&
+    .replace(/=&/g, "&")           // nombre=&direccion= → nombre&direccion=
+    .replace(/=$/, "")             // quitar "=" final
+    .replace(/\/+$/, "")           // quitar barras finales
+    .replace(/\?$/, "");           // quitar ? al final si está vacío
+
   // --- Separar path y query ---
   const [rawPath, rawQuery] = url.split("?");
   const path = rawPath.replace(/\/$/, "");

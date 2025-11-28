@@ -6,6 +6,17 @@
     "PUT/:id": "Actualizó los datos del usuario con ID {value}",
     "PATCH/:id": "Deshabilitó o modificó el estado del usuario con ID {value}"
   },
+  "/api/usuarios?*": {
+    "GET": "Consultó usuarios aplicando filtros"
+  },
+  "/api/usuarios/?*": {
+    "GET": "Consultó usuarios aplicando filtros (URL corregida)"
+  },
+  "/api/usuarios/*?*": {
+    "GET": "Consultó usuarios con parámetros avanzados",
+    "PUT": "Modificó datos de usuario mediante parámetros avanzados",
+    "PATCH": "Actualizó usuario mediante parámetros avanzados"
+  },
 
   "/api/usuarios/login": {
     "POST": "Inició sesión en el sistema"
@@ -26,13 +37,30 @@
   "/api/personas": {
     "GET": "Consultó la lista de personas",
     "GET/:id": "Consultó los datos de la persona con ID {value}",
-    "PUT/:id": "Actualizó los datos de la persona con ID {value}",
-    "PATCH/:id": "Marcó como eliminada a la persona con ID {value}",
+    "POST": "Registró una nueva persona",
+    "PUT/:id": "Modificó los datos de la persona con ID {value}",
+    "PATCH/:id": "Actualizó parcialmente los datos de la persona con ID {value}",
     "GET?search={value}": "Buscó personas por nombre o apellido que coincidan con: {value}",
     "GET?nombre={value}": "Buscó personas por nombre: {value}",
     "GET?apellido_paterno={value}": "Buscó personas por apellido paterno: {value}",
     "GET?apellido_materno={value}": "Buscó personas por apellido materno: {value}",
     "GET?carnet_identidad={value}": "Buscó una persona por carnet de identidad: {value}"
+  },
+  "/api/personas/*": {
+    "GET": "Consultó los datos de la persona con ID {value}",
+    "PUT": "Modificó los datos de la persona con ID {value}",
+    "PATCH": "Actualizó parcialmente los datos de la persona con ID {value}"
+  },
+  "/api/personas/?*": {
+    "GET": "Consultó la lista de personas usando filtros dinámicos"
+  },
+  "/api/personas?*": {
+    "GET": "Consultó la lista de personas aplicando filtros avanzados"
+  },
+  "/api/personas/*?*": {
+    "GET": "Consultó personas aplicando filtros avanzados",
+    "PUT": "Modificó datos de una persona con filtros avanzados",
+    "PATCH": "Actualizó una persona mediante filtros avanzados"
   },
 
   "/api/personas/new": {
@@ -41,6 +69,9 @@
 
   "/api/personas/all": {
     "GET": "Consultó la lista completa de personas"
+  },
+  "/api/personas/all?*": {
+    "GET": "Consultó la lista completa de personas (variantes URL)"
   },
 
   "/api/personas/buscar/sacramento": {
@@ -73,12 +104,45 @@
     "GET?nombre={v1}&apellido_paterno={v2}&apellido_materno={v3}&carnet_identidad={v4}&tipo_sacramento={v5}":
       "Realizó una búsqueda avanzada para sacramentos"
   },
+  "/api/sacramentos/buscar-persona?*": {
+    "GET": "Realizó una búsqueda avanzada de personas para sacramentos"
+  },
+  "/api/sacramentos/buscar-persona/?*": {
+    "GET": "Realizó una búsqueda avanzada de personas (URL corregida)"
+  },
 
   "/api/parroquias": {
     "GET": "Consultó la lista de parroquias",
     "POST": "Registró una nueva parroquia",
     "PUT/:id": "Actualizó la información de la parroquia con ID {value}",
     "GET?search={value}": "Buscó parroquias que coincidan con: {value}"
+  },
+
+  "/api/parroquias?*": {
+    "GET": "Consultó parroquias aplicando filtros"
+  },
+
+  "/api/parroquias/?*": {
+    "GET": "Consultó parroquias aplicando filtros (URL corregida)"
+  },
+
+  "/api/parroquias?nombre={value}": {
+    "GET": "Consultó parroquias — filtros: nombre: {value}"
+  },
+  "/api/parroquias/?nombre={value}": {
+    "GET": "Consultó parroquias — filtros: nombre: {value}"
+  },
+
+  "/api/parroquias?nombre={value}&*": {
+    "GET": "Consultó parroquias — filtros avanzados incluyendo nombre: {value}"
+  },
+
+  "/api/parroquias?*nombre={value}*": {
+    "GET": "Consultó parroquias — filtros: nombre: {value}"
+  },
+
+  "/api/parroquias*?*": {
+    "GET": "Consultó parroquias usando filtros diversos"
   },
 
   "/api/parroquias/:id": {
