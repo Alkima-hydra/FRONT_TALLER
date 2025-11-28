@@ -74,7 +74,7 @@ const [loadingParroquia, setLoadingParroquia] = useState(false);
   const ROLES_SACRAMENTO_IDS = {
   bautizo: 1,
   matrimonio: 3,
-  comunion: 2,
+  comunion: 10,
 };
   
 
@@ -352,11 +352,37 @@ useEffect(() => {
   // Buscar sacramentos
   const handleBuscar = (e) => {
     e.preventDefault();
-    const payload = { ...filters, tipo_sacramento_id_tipo: TIPO_SACRAMENTO_IDS[tipoSacramento],  rol_principal: ROLES_SACRAMENTO_IDS[tipoSacramento] };
+
+    const payload = {
+      ...filters,
+      tipo_sacramento_id_tipo: TIPO_SACRAMENTO_IDS[tipoSacramento],
+      rol_principal: ROLES_SACRAMENTO_IDS[tipoSacramento],
+    };
+
     dispatch(buscarSacramentos(payload))
       .unwrap()
       .then((res) => {
-        setResults(res.items || []);
+        const planos = [];
+
+        res.resultados.forEach((sac) => {
+          sac.personaSacramentos.forEach((rel) => {
+            if (!rel.persona) return;
+
+            planos.push({
+              id_sacramento: sac.id_sacramento,
+              nombre: rel.persona.nombre,
+              apellido_paterno: rel.persona.apellido_paterno,
+              apellido_materno: rel.persona.apellido_materno,
+              carnet_identidad: rel.persona.carnet_identidad,
+              fecha_sacramento: sac.fecha_sacramento,
+              rol_nombre: obtenerNombreRol(rel.rol_sacramento_id_rol_sacra),
+              foja: sac.foja,
+              numero: sac.numero,
+            });
+          });
+        });
+
+        setResults(planos);
       })
       .catch((err) => {
         console.error("ERROR buscando sacramentos:", err);
@@ -400,6 +426,20 @@ useEffect(() => {
         console.error("ERROR actualizando sacramento:", err);
         setToast({ type: "error", message: "No se pudo actualizar el sacramento" });
       });
+  };
+
+  // Helper para obtener el nombre del rol
+  const obtenerNombreRol = (id) => {
+    const roles = {
+      1: "Bautizado",
+      5: "Padrino",
+      9: "Ministro",
+      10: "Confirmado",
+      11: "Esposo",
+      21: "Comulgado",
+    };
+
+    return roles[id] || "Otro";
   };
 
   return (
@@ -1079,13 +1119,12 @@ useEffect(() => {
               <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
                 <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700/50 dark:text-gray-400">
                   <tr>
-                    <th className="px-6 py-3" scope="col">Nombre</th>
-                    <th className="px-6 py-3" scope="col">Apellido paterno</th>
-                    <th className="px-6 py-3" scope="col">Apellido materno</th>
+                    <th className="px-6 py-3" scope="col">Nombre completo</th>
                     <th className="px-6 py-3" scope="col">CI</th>
-                    <th className="px-6 py-3" scope="col">Fecha nac.</th>
-                    <th className="px-6 py-3" scope="col">Lugar nac.</th>
-                    <th className="px-6 py-3" scope="col">Estado</th>
+                    <th className="px-6 py-3" scope="col">Fecha del sacramento</th>
+                    <th className="px-6 py-3" scope="col">Rol</th>
+                    <th className="px-6 py-3" scope="col">Foja</th>
+                    <th className="px-6 py-3" scope="col">Número</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1095,19 +1134,14 @@ useEffect(() => {
                       onClick={() => handleSelectResultado(row)}
                       className="cursor-pointer bg-white dark:bg-background-dark/50 border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
                     >
-                      <td className="px-6 py-4">{row.nombre}</td>
-                      <td className="px-6 py-4">{row.apellido_paterno}</td>
-                      <td className="px-6 py-4">{row.apellido_materno}</td>
-                      <td className="px-6 py-4">{row.carnet_identidad}</td>
-                      <td className="px-6 py-4">{row.fecha_nacimiento}</td>
-                      <td className="px-6 py-4">{row.lugar_nacimiento}</td>
                       <td className="px-6 py-4">
-                        {row.activo ? (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">Activo</span>
-                        ) : (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">Inactivo</span>
-                        )}
+                        {row.nombre} {row.apellido_paterno} {row.apellido_materno}
                       </td>
+                      <td className="px-6 py-4">{row.carnet_identidad}</td>
+                      <td className="px-6 py-4">{row.fecha_sacramento}</td>
+                      <td className="px-6 py-4">{row.rol_nombre}</td>
+                      <td className="px-6 py-4">{row.foja}</td>
+                      <td className="px-6 py-4">{row.numero}</td>
                     </tr>
                   ))}
                 </tbody>
