@@ -32,6 +32,10 @@ export default function Sacramentos() {
   const [queryPadrino, setQueryPadrino] = useState("");
   const [listaPadrinos, setListaPadrinos] = useState([]);
   const [openPadrinoList, setOpenPadrinoList] = useState(false);
+  //busqueda de ministro
+  const [queryMinistro, setQueryMinistro] = useState("");
+  const [listaMinistros, setListaMinistros] = useState([]);
+  const [openMinistroList, setOpenMinistroList] = useState(false);
 
   // --- Estados locales ---
   const [mergeOpen, setMergeOpen] = useState(false)
@@ -145,6 +149,37 @@ export default function Sacramentos() {
       });
 
   }, 300);
+  
+
+  return () => clearTimeout(delay);
+}, [queryPadrino, tipoSacramento]);
+
+// filtro para ministro
+  useEffect(() => {
+  if (queryPadrino.trim().length < 2) {
+    setListaPadrinos([]);
+    return;
+  }
+
+  const delay = setTimeout(() => {
+    dispatch(fetchPersonasParaSacramento({
+      search: queryMinistro,
+      rol: "ministro" ,  // mismas reglas que persona
+      tipo: "rol"      // ← CLAVE PARA EL SLICE
+    }))
+      .unwrap()
+      .then((data) => {
+        console.log("MINISTROS:", data.personas);
+        setListaMinistros(data.personas || []);
+        setOpenMinistroList(true);
+      })
+      .catch((e) => {
+        console.error(">>> ERROR buscando ministro:", e);
+        setListaMinistros([]);
+      });
+
+  }, 300);
+  
 
   return () => clearTimeout(delay);
 }, [queryPadrino, tipoSacramento]);
@@ -163,7 +198,7 @@ export default function Sacramentos() {
       relaciones: {
         persona_principal_id: form.personaId,
         padrino_id: form.padrinoId || null,
-        ministro: form.ministro || null,
+        ministro: form.ministroId || null,
       },
     };
     if (tipoSacramento === 'matrimonio') {
@@ -413,15 +448,65 @@ export default function Sacramentos() {
                     </div>
                     <p className="text-xs text-gray-500 mt-1">Escriba nombre o CI para buscar en Personas.</p>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ministro</label>
-                    <input
-                      type="text"
-                      placeholder="Nombre del ministro"
-                      value={form.ministro}
-                      onChange={e => handleChange('ministro', e.target.value)}
-                      className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3"
-                    />
+                   <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Padrino</label>
+                    <div className="relative">
+                      <input
+                          type="search"
+                          placeholder="Buscar ministro (persona registrada)"
+                          value={queryMinistro}
+                          onChange={(e) => {
+                            setQueryMinistro(e.target.value);
+                            if (e.target.value.trim().length >= 2) {
+                              setOpenMinistroList(true);
+                            } else {
+                              setOpenMinistroList(false);
+                            }
+                          }}
+                          className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3 pr-10"
+                        />
+                        {openMinistroList && listaMinistros.length > 0 && (
+                        <div
+                          style={{
+                            position: "absolute",
+                            background: "white",
+                            border: "1px solid #dcdcdc",
+                            borderRadius: "8px",
+                            marginTop: "4px",
+                            width: "95%",
+                            maxHeight: "200px",
+                            overflowY: "auto",
+                            zIndex: 9999,
+                            padding: "5px"
+                          }}
+                        >
+                          {listaMinistros.map((p) => (
+                            <div
+                              key={p.id_persona}
+                              style={{
+                                padding: "10px",
+                                borderBottom: "1px solid #eee",
+                                cursor: "pointer",
+                              }}
+                              onClick={() => {
+                                handleChange("ministroId", p.id_persona);
+                                setQueryMinistro(`${p.nombre} ${p.apellido_paterno} ${p.apellido_materno}`);
+                                setOpenMinistroList(false);
+                              }}
+                            >
+                              <strong>
+                                {p.nombre} {p.apellido_paterno} {p.apellido_materno}
+                              </strong>
+                              <div style={{ fontSize: "13px", color: "#666" }}>
+                                CI: {p.carnet_identidad}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">search</span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">Escriba nombre o CI para buscar en Personas.</p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Parroquia</label>
