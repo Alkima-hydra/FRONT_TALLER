@@ -1,7 +1,15 @@
-import { navItems } from '../../config/navConfig';
+// src/components/Sidebar.jsx
+import { useSelector } from 'react-redux';
+import { navItems } from '../../config/navConfig'
+import { selectUser } from '../../../features/login/slices/loginSelectors';
+import { getFilteredNavItems } from '../../config/roleConfig';
 import NavItem from './NavItem';
 
 export default function Sidebar({ isOpen, onClose }) {
+  const user = useSelector(selectUser);
+
+  const filteredNavItems = getFilteredNavItems(navItems, user?.rol);
+
   return (
     <>
       {/* Overlay para mobile */}
@@ -32,7 +40,7 @@ export default function Sidebar({ isOpen, onClose }) {
             </div>
             <h1 className="text-lg font-bold">Sacramentos</h1>
           </div>
-          {/* Boton cerrar en movil */}
+
           <button
             onClick={onClose}
             className="lg:hidden text-muted-light dark:text-muted-dark hover:text-foreground-light dark:hover:text-foreground-dark"
@@ -42,10 +50,30 @@ export default function Sidebar({ isOpen, onClose }) {
           </button>
         </div>
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-          {navItems.map((item) => (
-            <NavItem key={item.label} item={item} onClick={onClose} />
-          ))}
+          {filteredNavItems.length > 0 ? (
+            filteredNavItems.map((item) => (
+              <NavItem key={item.label} item={item} onClick={onClose} />
+            ))
+          ) : (
+            <div className="text-center text-muted-light dark:text-muted-dark py-4">
+              No hay opciones disponibles
+            </div>
+          )}
         </nav>
+        {/*  usuario pa celu */}
+        <div className="border-t border-border-light dark:border-border-dark p-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+              <span className="material-symbols-outlined text-primary">person</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate">{user?.name || 'Usuario'}</p>
+              <p className="text-xs text-muted-light dark:text-muted-dark truncate">
+                {user?.rol || 'Sin rol'}
+              </p>
+            </div>
+          </div>
+        </div>
       </aside>
     </>
   );
