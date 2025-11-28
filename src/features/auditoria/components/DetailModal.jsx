@@ -1,4 +1,5 @@
 import { X } from 'lucide-react';
+import routeDescriptions from "../data/routeDescriptions.json";
 
 export default function DetailModal({ isOpen, onClose, data }) {
   if (!isOpen || !data) return null;
@@ -28,6 +29,58 @@ export default function DetailModal({ isOpen, onClose, data }) {
       </dd>
     </div>
   );
+  
+  //Traduce el método HTTP al español
+  const translateMethod = (method) =>{
+    console.log(data[0]);
+
+    const translations = {
+      GET: "Obtiene",
+      POST: "Crea",
+      PUT: "Modifica",
+      PATCH: "Actualiza parcialmente",
+      DELETE: "Elimina",
+    };
+  
+    return translations[method?.toUpperCase()] || "Desconocido";
+  }
+  
+  //Traduccion router
+  const translateRoute=(method, originalUrl) => {
+    let url = originalUrl;
+
+    // Detectar y extraer valor de search
+    let searchValue = null;
+    const searchMatch = url.match(/search=([^&]+)/);
+    if (searchMatch) {
+      searchValue = decodeURIComponent(searchMatch[1].replace(/\+/g, " "));
+      url = url.replace(/\?.*$/, ""); // elimina query para buscar en JSON
+    }
+
+    // Quitar slash final
+    url = url.replace(/\/$/, "");
+
+    // Reemplaza cualquier número por :id
+    const urlClean = url.replace(/\/\d+/g, "/:id");
+
+    const routeObj = routeDescriptions[urlClean];
+    console.log("Translating route:", { method, originalUrl, urlClean, routeObj });
+
+    if (routeObj) {
+      let translation = routeObj[method];
+
+      // Caso especial de búsqueda
+      if (!translation && searchValue && routeObj["GET?search"]) {
+        translation = routeObj["GET?search"].replace("{search}", searchValue);
+      }
+
+      if (translation) return translation;
+    }
+
+    // Fallback cuando no existe en el JSON
+    return `${translateMethod(method)} en ${urlClean}`;
+  };
+  
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black bg-opacity-50 p-4">
@@ -47,31 +100,65 @@ export default function DetailModal({ isOpen, onClose, data }) {
 
         {/* Content */}
         <div className="max-h-[calc(100vh-200px)] overflow-y-auto px-6 py-4">
-          <dl className="divide-y divide-border-light dark:divide-border-dark">
-            <DetailRow 
-              label="Nombre de la Aplicación" 
-              value={data.application_name} 
-            />
-            
-            <DetailRow 
-              label="Fecha de Inicio" 
-              value={data.fecha_inicio ? new Date(data.fecha_inicio).toLocaleString() : 'N/A'} 
-            />
-            
-            <DetailRow 
-              label="Fecha de Fin" 
-              value={data.fecha_fin ? new Date(data.fecha_fin).toLocaleString() : 'N/A'} 
-            />
-            
-            <DetailRow 
-              label="Duración" 
-              value={data.duracion_ms ? `${data.duracion_ms} ms` : 'N/A'} 
-            />
-            
-            <DetailRow 
-              label="Correo" 
-              value={data.username} 
-            />
+          
+          <div className="mb-6 pb-4 border-b border-border-light dark:border-border-dark">
+            <div className="text-sm font-semibold text-blue-600 dark:text-blue-400 mb-1">
+              {data.application_name}
+            </div>
+          </div>
+
+          {/* Primary Section - Action */}
+          <div className="mb-6">
+            <div className="text-2xl font-semibold text-foreground-light dark:text-foreground-dark mb-1">
+              {translateRoute(data.http_method, data.url)}
+            </div>
+          </div>
+
+          {/* Secondary Section - User Info */}
+          <div className="mb-6 pb-6 border-b border-border-light dark:border-border-dark">
+            <div className="text-base font-medium text-foreground-light dark:text-foreground-dark mb-1">
+              {data.nombre_usuario}
+            </div>
+            <div className="text-sm text-muted-light dark:text-muted-dark">
+              {data.username}
+            </div>
+          </div>
+
+            <div className="py-3">
+              <dt className="text-sm font-medium text-muted-light dark:text-muted-dark mb-2">
+                Información Temporal
+              </dt>
+              <dd className="mt-1">
+                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="flex flex-col">
+                      <span className="text-xs font-medium text-blue-600 dark:text-blue-400 mb-1">
+                        Inicio
+                      </span>
+                      <span className="text-sm font-semibold text-foreground-light dark:text-foreground-dark">
+                        {data.fecha_inicio ? new Date(data.fecha_inicio).toLocaleString() : 'N/A'}
+                      </span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-xs font-medium text-blue-600 dark:text-blue-400 mb-1">
+                        Fin
+                      </span>
+                      <span className="text-sm font-semibold text-foreground-light dark:text-foreground-dark">
+                        {data.fecha_fin ? new Date(data.fecha_fin).toLocaleString() : 'N/A'}
+                      </span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-xs font-medium text-blue-600 dark:text-blue-400 mb-1">
+                        Duración
+                      </span>
+                      <span className="text-sm font-bold text-indigo-600 dark:text-indigo-400">
+                        {data.duracion_ms ? `${data.duracion_ms} ms` : 'N/A'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </dd>
+            </div>
             
             <DetailRow 
               label="Método HTTP" 
@@ -130,8 +217,8 @@ export default function DetailModal({ isOpen, onClose, data }) {
                 </pre>
               </dd>
             </div>
-          </dl>
         </div>
+        
 
         {/* Footer */}
         <div className="flex justify-end border-t border-border-light px-6 py-4 dark:border-border-dark">
