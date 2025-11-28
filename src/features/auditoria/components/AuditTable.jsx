@@ -90,7 +90,7 @@ export default function AuditTable({ data, onViewDetails }) {
                     {item.username}
                   </td>
                   <td className="whitespace-nowrap px-6 py-4 text-sm text-muted-light dark:text-muted-dark">
-                    {item.ip_address}
+                    {item.ip_address || "xx"}
                   </td>
                   <td className="whitespace-nowrap px-6 py-4 text-sm text-muted-light dark:text-muted-dark">
                     {new Date(item.created_at).toLocaleString()}
