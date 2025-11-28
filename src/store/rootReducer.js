@@ -8,6 +8,7 @@ import { personasReducer } from '../features/personas/slices/personasSlice';
 import { passwordReducer } from '../features/password/slices/passwordSlice';
 import { auditoriaReducer } from '../features/auditoria/slices/auditoriaSlice';
 import { usuariosReducer } from '../features/usuarios/slices/usuariosSlice';
+import { parroquiasReducer } from '../features/parroquias/slices/parroquiasSlice';
 // Agregar otros reducers aqui sdjalsd
 // Mantener los reducers en sus carpetas pofavo
 
@@ -24,6 +25,7 @@ export const rootReducer = combineReducers({
   password: passwordReducer,
   auditoria: auditoriaReducer,
   usuarios: usuariosReducer,
+  parroquias: parroquiasReducer,
 });
 
 export default rootReducer;
