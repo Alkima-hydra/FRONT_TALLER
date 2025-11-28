@@ -55,6 +55,8 @@ const [loadingMinistro, setLoadingMinistro] = useState(false);
 const [loadingParroquia, setLoadingParroquia] = useState(false);
 const [loadingSacramento, setLoadingSacramento] = useState(false);
   //para busqueda de sacramento y actualizar
+  const [padrinoActual, setPadrinoActual] = useState("");
+const [ministroActual, setMinistroActual] = useState("");
 
 
   //diccioinario para roles
@@ -292,37 +294,65 @@ useEffect(() => {
 
   // Construye el payload para EDITAR sacramento
   const buildPayloadEditar = () => {
-    const relacionesArray = [];
+  const relacionesArray = [];
 
-    if (form.personaId) {
-      relacionesArray.push({
-        persona_id: form.personaId,
-        rol_sacramento_id: TIPO_SACRAMENTO_IDS[tipoSacramento]
-      });
-    }
+  // --- Persona Bautizada (siempre obligatoria) ---
+  if (form.personaId) {
+    relacionesArray.push({
+      persona_id: form.personaId,
+      rol_sacramento_id: ROL_IDS.BAUTIZADO  // ← CORREGIDO
+    });
+  }
 
-    if (form.padrinoId) {
-      relacionesArray.push({
-        persona_id: form.padrinoId,
-        rol_sacramento_id: ROL_IDS.PADRINO
-      });
-    }
+  // Relaciones originales para mantener si no cambian
+  const relacionesOriginales = selectedPerson?.todasRelaciones || [];
 
-    if (form.ministroId) {
-      relacionesArray.push({
-        persona_id: form.ministroId,
-        rol_sacramento_id: ROL_IDS.MINISTRO
-      });
-    }
+  const relOriginalPadrino = relacionesOriginales.find(
+    r => r.rolSacramento?.id_rol_sacra === ROL_IDS.PADRINO
+  );
 
-    return {
-      fecha_sacramento: form.fecha_sacramento,
-      foja: form.foja,
-      numero: form.numero,
-      parroquiaId: form.parroquiaId,
-      relaciones: relacionesArray
-    };
+  const relOriginalMinistro = relacionesOriginales.find(
+    r => r.rolSacramento?.id_rol_sacra === ROL_IDS.MINISTRO
+  );
+
+  // --- Padrino ---
+  if (form.padrinoId) {
+    relacionesArray.push({
+      persona_id: form.padrinoId,
+      rol_sacramento_id: ROL_IDS.PADRINO
+    });
+  } else if (relOriginalPadrino) {
+    relacionesArray.push({
+      persona_id: relOriginalPadrino.persona_id_persona,
+      rol_sacramento_id: ROL_IDS.PADRINO
+    });
+  }
+
+  // --- Ministro ---
+  if (form.ministroId) {
+    relacionesArray.push({
+      persona_id: form.ministroId,
+      rol_sacramento_id: ROL_IDS.MINISTRO
+    });
+  } else if (relOriginalMinistro) {
+    relacionesArray.push({
+      persona_id: relOriginalMinistro.persona_id_persona,
+      rol_sacramento_id: ROL_IDS.MINISTRO
+    });
+  }
+
+  const safe = (v) => (v && String(v).trim() !== "" ? v : undefined);
+
+  return {
+    fecha_sacramento: safe(form.fecha_sacramento),
+    foja: safe(form.foja),
+    numero: safe(form.numero),
+    tipo_sacramento_id_tipo: selectedPerson.tipoSacramento.id_tipo,
+    parroquiaId: safe(form.parroquiaId),
+    relaciones: relacionesArray,
+    
   };
+};
 
   // Envío de Agregar (simulado)
   const handleSubmitAgregar = (e) => {
@@ -367,7 +397,6 @@ useEffect(() => {
           sac.personaSacramentos.forEach((rel) => {
             if (!rel.persona) return;
             planos.push({
-              // datos planos para mostrar en la tabla
               id_sacramento: sac.id_sacramento,
               nombre: rel.persona.nombre,
               apellido_paterno: rel.persona.apellido_paterno,
@@ -377,10 +406,14 @@ useEffect(() => {
               rol_nombre: obtenerNombreRol(rel.rol_sacramento_id_rol_sacra),
               foja: sac.foja,
               numero: sac.numero,
-              // datos adicionales para edición
+
+              // datos para edición
               persona_id: rel.persona.id_persona,
               persona: rel.persona,
-              personaSacramentos: sac.personaSacramentos,
+
+              // AHORA GUARDAMOS TODAS LAS RELACIONES
+              todasRelaciones: sac.todasRelaciones,
+
               parroquia: sac.parroquia,
               tipoSacramento: sac.tipoSacramento,
             });
@@ -399,7 +432,7 @@ useEffect(() => {
     setSelectedPerson(row);
 
     // Buscar relaciones por rol dentro del sacramento completo
-    const relaciones = row.personaSacramentos || [];
+    const relaciones = row.todasRelaciones || [];
 
     // Persona principal (quien recibió el sacramento)
     const relPrincipal = relaciones.find(
@@ -439,20 +472,30 @@ useEffect(() => {
       setQueryPersona(`${row.nombre} ${row.apellido_paterno} ${row.apellido_materno}`);
     }
 
-    // Query de padrino
+    // Padrino actual
     if (relPadrino?.persona) {
       const p = relPadrino.persona;
-      setQueryPadrino(`${p.nombre} ${p.apellido_paterno} ${p.apellido_materno}`);
+      const nombre = `${p.nombre} ${p.apellido_paterno} ${p.apellido_materno}`;
+      setPadrinoActual(nombre);
+      setQueryPadrino(nombre);
+      setOpenPadrinoList(false);
     } else {
+      setPadrinoActual("");
       setQueryPadrino("");
+      setOpenPadrinoList(false);
     }
 
-    // Query de ministro
+    // Ministro actual
     if (relMinistro?.persona) {
       const p = relMinistro.persona;
-      setQueryMinistro(`${p.nombre} ${p.apellido_paterno} ${p.apellido_materno}`);
+      const nombre = `${p.nombre} ${p.apellido_paterno} ${p.apellido_materno}`;
+      setMinistroActual(nombre);
+      setQueryMinistro(nombre);
+      setOpenMinistroList(false);
     } else {
+      setMinistroActual("");
       setQueryMinistro("");
+      setOpenMinistroList(false);
     }
 
     // Query de parroquia
@@ -466,18 +509,39 @@ useEffect(() => {
   const handleGuardarEdicion = (e) => {
     e.preventDefault();
     const payload = buildPayloadEditar();
-    dispatch(actualizarSacramentoCompleto({ id: selectedPerson.id_sacramento, data: payload }))
+     console.log("📤 Payload enviado al backend (EDITAR):", JSON.stringify(payload, null, 2));
+    
+    dispatch(
+      actualizarSacramentoCompleto({
+        id: selectedPerson.id_sacramento,
+        sacramentoData: payload
+      })
+    )
       .unwrap()
       .then(() => {
-        setToast({ type: "success", message: "Sacramento actualizado correctamente" });
+        setToast({
+          type: "success",
+          message: "Sacramento actualizado correctamente"
+        });
+
+        // limpiar campos
+        setQueryPersona("");
+        setQueryPadrino("");
+        setQueryMinistro("");
+        setQueryParroquia("");
+
+        // cerrar editor
         setSelectedPerson(null);
         setResults([]);
       })
       .catch((err) => {
-        console.error("ERROR actualizando sacramento:", err);
-        setToast({ type: "error", message: "No se pudo actualizar el sacramento" });
+        console.error("❌ Error actualizando sacramento:", err);
+        setToast({
+          type: "error",
+          message: "No se pudo actualizar el sacramento"
+        });
       });
-  };
+      };
 
   // Helper para obtener el nombre del rol
   const obtenerNombreRol = (id) => {
@@ -698,7 +762,7 @@ useEffect(() => {
       </div>
     )}
 
-    {!loadingPadrino && !isLoading && listaPadrinos.length === 0 && (
+    {openPadrinoList && !loadingPadrino && !isLoading && listaPadrinos.length === 0 && queryPadrino.trim().length >= 2 && (
       <div className="py-3 text-center text-sm text-gray-500">
         No se encontraron padrinos con ese valor.
       </div>
@@ -775,7 +839,7 @@ useEffect(() => {
       </div>
     )}
 
-    {!loadingMinistro && !isLoading && listaMinistros.length === 0 && (
+    {openMinistroList && !loadingMinistro && !isLoading && listaMinistros.length === 0 && queryMinistro.trim().length >= 2 && (
       <div className="py-3 text-center text-sm text-gray-500">
         No se encontraron ministros con ese valor.
       </div>
@@ -852,7 +916,7 @@ useEffect(() => {
       </div>
     )}
 
-    {!loadingParroquia && !isLoading && listaParroquias.length === 0 && (
+    {openParroquiaList && !loadingParroquia && !isLoading && listaParroquias.length === 0 && queryParroquia.trim().length >= 2 && (
       <div className="py-3 text-center text-sm text-gray-500">
         No se encontraron parroquias con ese valor.
       </div>
@@ -1233,9 +1297,17 @@ useEffect(() => {
               )}
             </div>
             {selectedPerson && (
-              <div className="mt-8 bg-white dark:bg-background-dark/50 rounded-xl shadow-sm p-6">
+              <div className="mt-8 bg-white dark:bg-background-dark/50 rounded-xl shadow-sm p-6 relative">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Editar Sacramento</h3>
-                <form className="p-6" onSubmit={handleGuardarEdicion}>
+                {isUpdating && (
+                  <div className="absolute inset-0 bg-white/60 dark:bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+                    <ClipLoader size={45} color="#4f46e5" />
+                  </div>
+                )}
+                <form
+                    className={`relative p-6 ${isUpdating ? "pointer-events-none opacity-50" : ""}`}
+                    onSubmit={handleGuardarEdicion}
+                  >
                   {/* Persona */}
                   <div className="mt-2 mb-6">
                     <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3">
@@ -1252,10 +1324,10 @@ useEffect(() => {
                     {/* Padrino */}
                     <div>
                       <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                        Padrino actual: {queryPadrino}
+                        Padrino actual: {padrinoActual}
                       </div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Padrino
+                        Nuevo padrino (opcional)
                       </label>
                       <div className="relative">
                         <input
@@ -1296,7 +1368,7 @@ useEffect(() => {
                                 <ClipLoader size={28} color="#4f46e5" />
                               </div>
                             )}
-                            {!loadingPadrino && !isLoading && listaPadrinos.length === 0 && (
+                           {openPadrinoList && !loadingPadrino && !isLoading && listaPadrinos.length === 0 && queryPadrino.trim().length >= 2 && (
                               <div className="py-3 text-center text-sm text-gray-500">
                                 No se encontraron padrinos con ese valor.
                               </div>
@@ -1331,7 +1403,7 @@ useEffect(() => {
                     {/* Ministro */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Ministro
+                        Ministro actual: {ministroActual}
                       </label>
                       <div className="relative">
                         <input
@@ -1372,7 +1444,7 @@ useEffect(() => {
                                 <ClipLoader size={28} color="#4f46e5" />
                               </div>
                             )}
-                            {!loadingMinistro && !isLoading && listaMinistros.length === 0 && (
+                            {!loadingMinistro && !isLoading && listaMinistros.length === 0 && queryMinistro.trim().length >= 2 && (
                               <div className="py-3 text-center text-sm text-gray-500">
                                 No se encontraron ministros con ese valor.
                               </div>
@@ -1448,7 +1520,7 @@ useEffect(() => {
                                 <ClipLoader size={28} color="#4f46e5" />
                               </div>
                             )}
-                            {!loadingParroquia && !isLoading && listaParroquias.length === 0 && (
+                            {!loadingParroquia && !isLoading && listaParroquias.length === 0 && queryParroquia.trim().length >= 2 && (
                               <div className="py-3 text-center text-sm text-gray-500">
                                 No se encontraron parroquias con ese valor.
                               </div>
