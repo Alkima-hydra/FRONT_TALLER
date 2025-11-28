@@ -5,6 +5,6 @@ export const navItems = [
   { to: '/certificados', label: 'Certificados', icon: 'workspace_premium' },
   { to: '/auditoria', label: 'Auditoría', icon: 'history' },
   { to: '/usuarios', label: 'Usuarios', icon: 'manage_accounts' },
-  { to: '/reportes', label: 'Reportes', icon: 'bar_chart' , disabled: true },
+  { to: '/reportes', label: 'Reportes', icon: 'bar_chart' },
   { to: '/parroquias', label: 'Parroquias', icon: 'church' },
 ];
