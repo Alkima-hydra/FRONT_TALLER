@@ -19,20 +19,36 @@ export default function AuditTable({ data, onViewDetails }) {
     return colors[http_method] || 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
   };
 
+  const translateMethod = (method) =>{
+    const translations = {
+      GET: "Obtiene",
+      POST: "Crea",
+      PUT: "Modifica",
+      PATCH: "Actualiza parcialmente",
+      DELETE: "Elimina",
+    };
+  
+    return translations[method?.toUpperCase()] || "Desconocido";
+  }
+  
+
   return (
     <div className="overflow-hidden rounded-lg border border-border-light bg-card-light dark:border-border-dark dark:bg-card-dark">
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-border-light dark:divide-border-dark">
           <thead className="bg-background-light dark:bg-background-dark">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-light dark:text-muted-dark">
+              <th className="w-1/3 px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-light dark:text-muted-dark">
                 Petición HTTP
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-light dark:text-muted-dark">
+                Nombre
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-light dark:text-muted-dark">
                 Correo
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-light dark:text-muted-dark">
-                IP
+                Cambio 
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-light dark:text-muted-dark">
                 Fecha
@@ -59,13 +75,16 @@ export default function AuditTable({ data, onViewDetails }) {
                           {item.http_status}
                         </span>
                         <span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${getMethodColor(item.http_method)}`}>
-                          {item.http_method}
+                          {translateMethod(item.http_method)}
                         </span>
                       </div>
                       <span className="text-sm text-foreground-light dark:text-foreground-dark">
                         {item.url}
                       </span>
                     </div>
+                  </td>
+                  <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-foreground-light dark:text-foreground-dark">
+                    {item.name || "Nombre desconocido"}
                   </td>
                   <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-foreground-light dark:text-foreground-dark">
                     {item.username}
