@@ -5,7 +5,8 @@ import Layout from '../../shared/components/layout/Layout';
 //import de slices y trunk
 import {
   fetchPersonasParaSacramento,
-  fetchParroquias
+  fetchParroquias,
+  crearSacramentoCompleto
 } from './slices/sacramentosTrunk';
 
 import {
@@ -54,9 +55,9 @@ export default function Sacramentos() {
   //diccionario para tipo de sacramento
   const TIPO_SACRAMENTO_IDS = {
   bautizo: 1,
-  comunion: 2,
-  confirmacion: 3,
-  matrimonio: 4,
+  comunion: 10,
+  confirmacion: 10,
+  matrimonio: 11,
 };
   
 
@@ -238,40 +239,42 @@ useEffect(() => {
 
   // Construye el payload listo para enviar según el tipo
   const buildPayload = () => {
-  const base = {
-    sacramento: {
-      fecha_sacramento: form.fecha_sacramento || null,
-      foja: form.foja || null,
-      numero: form.numero || null,
+  const relacionesArray = [];
 
-      // 🔥 Ahora enviamos el ID real
-      tipo_sacramento_id: TIPO_SACRAMENTO_IDS[tipoSacramento],
-
-      institucion_parroquia_id: form.parroquiaId || null,
-      activo: !!form.activo,
-    },
-
-    // relaciones se eliminará pronto, pero por ahora lo dejamos
-    relaciones: {
-      persona_principal_id: form.personaId,
-      padrino_id: form.padrinoId || null,
-      ministro: form.ministroId || null,
-    },
-  };
-
-  // Matrimonio
-  if (tipoSacramento === "matrimonio") {
-    base.relaciones.persona_principal_id = null;
-    base.matrimonio_detalle = {
-      esposo_id: matrimonio.esposoId,
-      esposa_id: matrimonio.esposaId,
-      lugar_ceremonia: matrimonio.lugar_ceremonia || null,
-      reg_civil: matrimonio.reg_civil || null,
-      numero_acta: matrimonio.numero_acta || null,
-    };
+  // Persona que recibe el sacramento
+  if (form.personaId) {
+    relacionesArray.push({
+      persona_id: form.personaId,
+      rol_sacramento_id: TIPO_SACRAMENTO_IDS[tipoSacramento] // BAUTIZADO o COMULGADO
+    });
   }
 
-  return base;
+  // Padrino (opcional)
+  if (form.padrinoId) {
+    relacionesArray.push({
+      persona_id: form.padrinoId,
+      rol_sacramento_id: ROL_IDS.PADRINO
+    });
+  }
+
+  // Ministro (opcional)
+  if (form.ministroId) {
+    relacionesArray.push({
+      persona_id: form.ministroId,
+      rol_sacramento_id: ROL_IDS.MINISTRO
+    });
+  }
+
+  return {
+    fecha_sacramento: form.fecha_sacramento,
+    foja: form.foja,
+    numero: form.numero,
+
+    tipo_sacramento_id_tipo: TIPO_SACRAMENTO_IDS[tipoSacramento],
+    parroquiaId: form.parroquiaId,
+
+    relaciones: relacionesArray
+  };
 };
 
   // Envío de Agregar (simulado)
@@ -281,34 +284,25 @@ useEffect(() => {
   const payload = buildPayload();
 
   console.log("===== 📌 PAYLOAD SACRAMENTO A ENVIAR =====");
+  console.log(payload);
 
-  console.log("👉 Tipo sacramento:", tipoSacramento);
+  // 🚀 Integración real con Redux
+  dispatch(crearSacramentoCompleto(payload))
+    .unwrap()
+    .then((res) => {
+      console.log("SACRAMENTO CREADO:", res);
+      setToast({ type: "success", message: "Sacramento registrado correctamente" });
 
-  console.log("👉 Datos sacramento:");
-  console.table({
-    fecha_sacramento: payload.sacramento.fecha_sacramento,
-    foja: payload.sacramento.foja,
-    numero: payload.sacramento.numero,
-    tipo_sacramento_id: payload.sacramento.tipo_sacramento_id,
-    parroquiaId: payload.sacramento.institucion_parroquia_id,
-    activo: payload.sacramento.activo,
-  });
-
-  console.log("👉 Relaciones:");
-  console.table({
-    persona_principal_id: payload.relaciones.persona_principal_id,
-    padrino_id: payload.relaciones.padrino_id,
-    ministro_id: payload.relaciones.ministro,
-  });
-
-  if (tipoSacramento === "matrimonio") {
-    console.log("👉 Matrimonio detalle:");
-    console.table(payload.matrimonio_detalle);
-  }
-
-  console.log("===== 📌 FIN PAYLOAD =====");
-
-  // (Aún NO hacemos dispatch createSacramento)
+      resetForm();
+      setQueryPersona("");
+      setQueryPadrino("");
+      setQueryMinistro("");
+      setQueryParroquia("");
+    })
+    .catch((err) => {
+      console.error("ERROR AL CREAR SACRAMENTO:", err);
+      setToast({ type: "error", message: err?.message || "Error al registrar sacramento" });
+    });
 };
 
   // Buscar (simulado)

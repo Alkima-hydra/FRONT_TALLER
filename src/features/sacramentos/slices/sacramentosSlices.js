@@ -2,6 +2,7 @@ import { createSlice } from '@reduxjs/toolkit';
 import {
   fetchPersonasParaSacramento,
   fetchParroquias,  // búsqueda filtrada por rol sacramento
+  crearSacramentoCompleto, // nuevo sacramento con todas sus relaciones
 } from './sacramentosTrunk';
 
 const initialState = {
@@ -45,45 +46,57 @@ const sacramentosSlice = createSlice({
   },
 
   extraReducers: (builder) => {
-    builder
-      .addCase(fetchPersonasParaSacramento.pending, (state) => {
-        state.isLoading = true;
-        state.error = null;
-        state.personasBusqueda = []; // limpia resultados previos
-      })
-      .addCase(fetchPersonasParaSacramento.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.personasBusqueda = action.payload.personas; // lista filtrada por sacramento
-      })
-      .addCase(fetchPersonasParaSacramento.rejected, (state, action) => {
-        state.isLoading = false;
-        state.error = action.payload || 'Error al buscar personas';
-      });
-  },
-  //para las parroquias
-   extraReducers: (builder) => {
-      builder
-        // fetchParroquias (paginado)
-        .addCase(fetchParroquias.pending, (state) => {
-          state.isLoading = true;
-          state.error = null;
-        })
-        .addCase(fetchParroquias.fulfilled, (state, action) => {
-          state.isLoading = false;
-          const p = action.payload;
-          const list = Array.isArray(p) ? p : (p?.parroquias || p?.items || []);
-          state.parroquias = list;
-          state.totalItems = p?.totalItems ?? list.length ?? 0;
-          state.totalPages = p?.totalPages ?? 1;
-          state.currentPage = p?.currentPage ?? 1;
-        })
-        .addCase(fetchParroquias.rejected, (state, action) => {
-          state.isLoading = false;
-          state.error = action.payload?.message || 'Error al cargar parroquias';
-          state.parroquias = [];
-        })
-    ;
-    },
+  builder
+    // 🔵 Buscar personas para sacramento
+    .addCase(fetchPersonasParaSacramento.pending, (state) => {
+      state.isLoading = true;
+      state.error = null;
+      state.personasBusqueda = [];
+    })
+    .addCase(fetchPersonasParaSacramento.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.personasBusqueda = action.payload.personas;
+    })
+    .addCase(fetchPersonasParaSacramento.rejected, (state, action) => {
+      state.isLoading = false;
+      state.error = action.payload || 'Error al buscar personas';
+    })
+
+    // 🔵 Buscar parroquias
+    .addCase(fetchParroquias.pending, (state) => {
+      state.isLoading = true;
+      state.error = null;
+    })
+    .addCase(fetchParroquias.fulfilled, (state, action) => {
+      state.isLoading = false;
+      const p = action.payload;
+      const list = Array.isArray(p) ? p : (p?.parroquias || p?.items || []);
+      state.parroquias = list;
+      state.totalItems = p?.totalItems ?? list.length ?? 0;
+      state.totalPages = p?.totalPages ?? 1;
+      state.currentPage = p?.currentPage ?? 1;
+    })
+    .addCase(fetchParroquias.rejected, (state, action) => {
+      state.isLoading = false;
+      state.parroquias = [];
+      state.error = action.payload?.message || 'Error al cargar parroquias';
+    })
+
+    // 🔵 Crear sacramento completo
+    .addCase(crearSacramentoCompleto.pending, (state) => {
+      state.isCreating = true;
+      state.error = null;
+    })
+    .addCase(crearSacramentoCompleto.fulfilled, (state, action) => {
+      state.isCreating = false;
+      // podrías guardar el sacramento creado si quieres
+      state.lastCreated = action.payload.sacramento;
+    })
+    .addCase(crearSacramentoCompleto.rejected, (state, action) => {
+      state.isCreating = false;
+      state.error = action.payload || 'Error al crear sacramento';
+    });
+}
 });
 
 

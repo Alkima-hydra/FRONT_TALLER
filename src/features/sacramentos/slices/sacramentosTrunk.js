@@ -3,6 +3,7 @@ import { sacramentosApi } from '../../../lib/api';
 import { parroquiasApi } from '../../../lib/api';
 
 
+
 //rutas que se ponen para cada cosa al momento de buscar
 // en este caso las personas se tienen que buscar, primero en bautizo
 // no tiene que estar dentro de sacramentos
@@ -44,6 +45,19 @@ export const fetchParroquias = createAsyncThunk(
     } catch (error) {
       console.error('[parroquiasThunk] Error:', error);
       return rejectWithValue(error?.response?.data || { message: 'Error en la carga de parroquias' });
+    }
+  }
+);
+// para el sacramento completo con todas sus relaciones
+export const crearSacramentoCompleto = createAsyncThunk(
+  'sacramentos/crearSacramentoCompleto',
+  async (sacramentoData, { rejectWithValue }) => {
+    try {
+      const response = await sacramentosApi.crearSacramentoCompleto(sacramentoData);
+      return response;
+    }
+    catch (error) {
+      return rejectWithValue(error.response?.data || error.message);
     }
   }
 );

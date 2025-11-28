@@ -151,4 +151,10 @@ export const sacramentosApi = {
       .get('/personas/buscar/sacramento', { params })
       .then((res) => res.data)
       .catch(handleError),
+  crearSacramentoCompleto: (data) =>
+    api
+      .post('/sacramentos/new-completo', data)
+      .then((res) => res.data)
+      .catch(handleError),
+  
 };
