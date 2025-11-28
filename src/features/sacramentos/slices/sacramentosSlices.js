@@ -1,6 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit';
 import {
-  fetchPersonasParaSacramento  // búsqueda filtrada por rol sacramento
+  fetchPersonasParaSacramento,
+  fetchParroquias,  // búsqueda filtrada por rol sacramento
 } from './sacramentosTrunk';
 
 const initialState = {
@@ -20,6 +21,9 @@ const initialState = {
   isUpdating: false,
   isDeleting: false,
   error: null,
+
+  //todo lo que tenga que ver con parroquias
+    parroquias: [],
 };
 
 const sacramentosSlice = createSlice({
@@ -56,6 +60,30 @@ const sacramentosSlice = createSlice({
         state.error = action.payload || 'Error al buscar personas';
       });
   },
+  //para las parroquias
+   extraReducers: (builder) => {
+      builder
+        // fetchParroquias (paginado)
+        .addCase(fetchParroquias.pending, (state) => {
+          state.isLoading = true;
+          state.error = null;
+        })
+        .addCase(fetchParroquias.fulfilled, (state, action) => {
+          state.isLoading = false;
+          const p = action.payload;
+          const list = Array.isArray(p) ? p : (p?.parroquias || p?.items || []);
+          state.parroquias = list;
+          state.totalItems = p?.totalItems ?? list.length ?? 0;
+          state.totalPages = p?.totalPages ?? 1;
+          state.currentPage = p?.currentPage ?? 1;
+        })
+        .addCase(fetchParroquias.rejected, (state, action) => {
+          state.isLoading = false;
+          state.error = action.payload?.message || 'Error al cargar parroquias';
+          state.parroquias = [];
+        })
+    ;
+    },
 });
 
 
@@ -67,6 +95,8 @@ export const {
 
 export const selectPersonas = (state) => state.personas.personas;
 export const selectPersonasBusqueda = (state) => state.personas.personasBusqueda;
+export const selectParroquias = (state) => state.personas.parroquias;
+
 
 
 export const selectIsLoading = (state) => state.personas.isLoading;

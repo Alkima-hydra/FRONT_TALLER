@@ -5,6 +5,7 @@ import Layout from '../../shared/components/layout/Layout';
 //import de slices y trunk
 import {
   fetchPersonasParaSacramento,
+  fetchParroquias
 } from './slices/sacramentosTrunk';
 
 import {
@@ -36,6 +37,11 @@ export default function Sacramentos() {
   const [queryMinistro, setQueryMinistro] = useState("");
   const [listaMinistros, setListaMinistros] = useState([]);
   const [openMinistroList, setOpenMinistroList] = useState(false);
+  //busqueda de parroquia
+  const [queryParroquia, setQueryParroquia] = useState("");
+  const [listaParroquias, setListaParroquias] = useState([]);
+  const [openParroquiaList, setOpenParroquiaList] = useState(false);
+
 
   // --- Estados locales ---
   const [mergeOpen, setMergeOpen] = useState(false)
@@ -183,6 +189,34 @@ export default function Sacramentos() {
 
   return () => clearTimeout(delay);
 }, [queryPadrino, tipoSacramento]);
+
+//filtro para parroquias
+useEffect(() => {
+  if (queryParroquia.trim().length < 2) {
+    setListaParroquias([]);
+    return;
+  }
+
+  const delay = setTimeout(() => {
+    dispatch(fetchParroquias({
+      search: queryParroquia,
+    }))
+      .unwrap()
+      .then((data) => {
+        console.log("PARROQUIAS:", data.parroquias);
+        setListaParroquias(data.parroquias || []);
+        setOpenParroquiaList(true);
+      })
+      .catch((e) => {
+        console.error(">>> ERROR buscando parroquias:", e);
+        setListaParroquias([]);
+      });
+
+  }, 300);
+    return () => clearTimeout(delay);
+}, [queryParroquia]);
+
+
 
   // Construye el payload listo para enviar según el tipo
   const buildPayload = () => {
@@ -508,19 +542,65 @@ export default function Sacramentos() {
                     </div>
                     <p className="text-xs text-gray-500 mt-1">Escriba nombre o CI para buscar en Personas.</p>
                   </div>
-                  <div>
+                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Parroquia</label>
                     <div className="relative">
                       <input
-                        type="search"
-                        placeholder="Buscar parroquia (nombre registrada)"
-                        value={form.parroquiaId ? `ID seleccionado: ${form.parroquiaId}` : ''}
-                        onChange={() => handleChange('parroquiaId', null)}
-                        className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3 pr-10"
-                      />
+                          type="search"
+                          placeholder="Busca parroquia (previamente registrada)"
+                          value={queryParroquia}
+                          onChange={(e) => {
+                            setQueryParroquia(e.target.value);
+                            if (e.target.value.trim().length >= 2) {
+                              setOpenParroquiaList(true);
+                            } else {
+                              setOpenParroquiaList(false);
+                            }
+                          }}
+                          className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3 pr-10"
+                        />
+                        {openParroquiaList && listaParroquias.length > 0 && (
+                        <div
+                          style={{
+                            position: "absolute",
+                            background: "white",
+                            border: "1px solid #dcdcdc",
+                            borderRadius: "8px",
+                            marginTop: "4px",
+                            width: "95%",
+                            maxHeight: "200px",
+                            overflowY: "auto",
+                            zIndex: 9999,
+                            padding: "5px"
+                          }}
+                        >
+                          {listaParroquias.map((p) => (
+                            <div
+                              key={p.id_parroquia}
+                              style={{
+                                padding: "10px",
+                                borderBottom: "1px solid #eee",
+                                cursor: "pointer",
+                              }}
+                              onClick={() => {
+                                handleChange("parroquiaId", p.id_parroquia);
+                                setQueryParroquia(`${p.nombre} ${p.email}`);
+                                setOpenParroquiaList(false);
+                              }}
+                            >
+                              <strong>
+                                {p.nombre}  
+                              </strong>
+                              <div style={{ fontSize: "13px", color: "#666" }}>
+                                email: {p.email}  - tel: {p.telefono}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                       <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">search</span>
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">Escriba el nombre para buscar en Parroquias registradas.</p>
+                    <p className="text-xs text-gray-500 mt-1">Escriba nombre o email para buscar en Parroquias.</p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Foja</label>
