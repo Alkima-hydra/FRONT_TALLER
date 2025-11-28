@@ -28,6 +28,10 @@ export default function Sacramentos() {
   const [queryPersona, setQueryPersona] = useState("");
   const [listaPersonas, setListaPersonas] = useState([]);
   const [openPersonaList, setOpenPersonaList] = useState(false);
+  //busqueda de padrino
+  const [queryPadrino, setQueryPadrino] = useState("");
+  const [listaPadrinos, setListaPadrinos] = useState([]);
+  const [openPadrinoList, setOpenPadrinoList] = useState(false);
 
   // --- Estados locales ---
   const [mergeOpen, setMergeOpen] = useState(false)
@@ -88,7 +92,7 @@ export default function Sacramentos() {
     setMatrimonio({ esposoId: null, esposaId: null, lugar_ceremonia: '', reg_civil: '', numero_acta: '' });
   };
 
-  //para los filtros
+  //para los filtros de persona
   useEffect(() => {
     if (queryPersona.trim().length < 2) {
       setListaPersonas([]);
@@ -98,7 +102,8 @@ export default function Sacramentos() {
     const delay = setTimeout(() => {
       dispatch(fetchPersonasParaSacramento({
         search: queryPersona,
-        rol: tipoSacramento
+        rol: tipoSacramento,
+        tipo: "sacramento"
       }))
         .unwrap()
         .then((data) => {
@@ -114,6 +119,35 @@ export default function Sacramentos() {
 
     return () => clearTimeout(delay);
   }, [queryPersona, tipoSacramento]);
+
+  //filtros de padrino
+  useEffect(() => {
+  if (queryPadrino.trim().length < 2) {
+    setListaPadrinos([]);
+    return;
+  }
+
+  const delay = setTimeout(() => {
+    dispatch(fetchPersonasParaSacramento({
+      search: queryPadrino,
+      rol: "padrino" ,  // mismas reglas que persona
+      tipo: "rol"      // ← CLAVE PARA EL SLICE
+    }))
+      .unwrap()
+      .then((data) => {
+        console.log("PADRINOS:", data.personas);
+        setListaPadrinos(data.personas || []);
+        setOpenPadrinoList(true);
+      })
+      .catch((e) => {
+        console.error(">>> ERROR buscando padrino:", e);
+        setListaPadrinos([]);
+      });
+
+  }, 300);
+
+  return () => clearTimeout(delay);
+}, [queryPadrino, tipoSacramento]);
 
   // Construye el payload listo para enviar según el tipo
   const buildPayload = () => {
@@ -281,7 +315,7 @@ export default function Sacramentos() {
                     >
                       {listaPersonas.map((p) => (
                         <div
-                          key={p.id}
+                          key={p.id_persona} //ID DE LA PERSONA
                           style={{
                             padding: "10px",
                             borderBottom: "1px solid #eee",
@@ -297,7 +331,7 @@ export default function Sacramentos() {
                             {p.nombre} {p.apellido_paterno} {p.apellido_materno}
                           </strong>
                           <div style={{ fontSize: "13px", color: "#666" }}>
-                            CI: {p.carnet_identidad} {p.id_persona}
+                            CI: {p.carnet_identidad}
                           </div>
                         </div>
                       ))}
@@ -323,12 +357,58 @@ export default function Sacramentos() {
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Padrino</label>
                     <div className="relative">
                       <input
-                        type="search"
-                        placeholder="Buscar padrino (persona registrada)"
-                        value={form.padrinoId ? `ID seleccionado: ${form.padrinoId}` : ''}
-                        onChange={() => handleChange('padrinoId', null)}
-                        className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3 pr-10"
-                      />
+                          type="search"
+                          placeholder="Buscar padrino (persona registrada)"
+                          value={queryPadrino}
+                          onChange={(e) => {
+                            setQueryPadrino(e.target.value);
+                            if (e.target.value.trim().length >= 2) {
+                              setOpenPadrinoList(true);
+                            } else {
+                              setOpenPadrinoList(false);
+                            }
+                          }}
+                          className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3 pr-10"
+                        />
+                        {openPadrinoList && listaPadrinos.length > 0 && (
+                        <div
+                          style={{
+                            position: "absolute",
+                            background: "white",
+                            border: "1px solid #dcdcdc",
+                            borderRadius: "8px",
+                            marginTop: "4px",
+                            width: "95%",
+                            maxHeight: "200px",
+                            overflowY: "auto",
+                            zIndex: 9999,
+                            padding: "5px"
+                          }}
+                        >
+                          {listaPadrinos.map((p) => (
+                            <div
+                              key={p.id_persona}
+                              style={{
+                                padding: "10px",
+                                borderBottom: "1px solid #eee",
+                                cursor: "pointer",
+                              }}
+                              onClick={() => {
+                                handleChange("padrinoId", p.id_persona);
+                                setQueryPadrino(`${p.nombre} ${p.apellido_paterno} ${p.apellido_materno}`);
+                                setOpenPadrinoList(false);
+                              }}
+                            >
+                              <strong>
+                                {p.nombre} {p.apellido_paterno} {p.apellido_materno}
+                              </strong>
+                              <div style={{ fontSize: "13px", color: "#666" }}>
+                                CI: {p.carnet_identidad}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                       <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">search</span>
                     </div>
                     <p className="text-xs text-gray-500 mt-1">Escriba nombre o CI para buscar en Personas.</p>

@@ -42,10 +42,6 @@ const sacramentosSlice = createSlice({
 
   extraReducers: (builder) => {
     builder
-
-      // ============================================
-      //   BUSCAR PERSONAS PARA SACRAMENTO (SIN PAGINADO)
-      // ============================================
       .addCase(fetchPersonasParaSacramento.pending, (state) => {
         state.isLoading = true;
         state.error = null;
@@ -62,20 +58,16 @@ const sacramentosSlice = createSlice({
   },
 });
 
-// ============================
-//  EXPORTAR ACCIONES
-// ============================
+
 export const {
   clearError,
   clearPersonaSeleccionada,
   resetPagination,
 } = sacramentosSlice.actions;
 
-// ============================
-//  SELECTORES
-// ============================
 export const selectPersonas = (state) => state.personas.personas;
 export const selectPersonasBusqueda = (state) => state.personas.personasBusqueda;
+
 
 export const selectIsLoading = (state) => state.personas.isLoading;
 export const selectIsLoadingAll = (state) => state.personas.isLoadingAll;
@@ -85,8 +77,5 @@ export const selectIsCreating = (state) => state.personas.isCreating;
 export const selectIsUpdating = (state) => state.personas.isUpdating;
 export const selectIsDeleting = (state) => state.personas.isDeleting;
 
-// ============================
-//  EXPORTAR REDUCER
-// ============================
 export const sacramentosReducer = sacramentosSlice.reducer;
 export default sacramentosSlice.reducer;

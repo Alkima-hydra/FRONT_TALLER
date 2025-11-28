@@ -7,12 +7,17 @@ import { sacramentosApi } from '../../../lib/api';
 
 export const fetchPersonasParaSacramento = createAsyncThunk(
   'sacramentos/buscarPersonas',
-  async (params, { rejectWithValue }) => {
+  async ({ search, tipo, rol }, { rejectWithValue }) => {
     try {
-      const response = await sacramentosApi.buscarPersonas(params);
+      const response = await sacramentosApi.buscarPersonas({
+        search,
+        tipo,
+        rol,
+      });
+
       return response;
     } catch (error) {
-      return rejectWithValue(error);
+      return rejectWithValue(error.response?.data || error.message);
     }
   }
 );
