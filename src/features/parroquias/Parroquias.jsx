@@ -294,7 +294,9 @@ export default function Parroquias() {
             </div>
 
             {isLoading ? (
-              <div className="p-6 text-center text-gray-500 dark:text-gray-400">Cargando...</div>
+              <div className="flex justify-center items-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            </div>
             ) : error ? (
               <div className="p-6 text-center text-red-500">{error}</div>
             ) : (
