@@ -264,7 +264,7 @@ export default function Sacramentos() {
                     className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3 pr-10"
                   />
                   {/* DROPDOWN DE RESULTADOS */}
-                  {openPersonaList && Array.isArray(personas) && personas.length > 0 && (
+                  {openPersonaList && Array.isArray(listaPersonas) && listaPersonas.length > 0 && (
                     <div
                       style={{
                         position: "absolute",
@@ -279,7 +279,7 @@ export default function Sacramentos() {
                         padding: "5px",
                       }}
                     >
-                      {personas.map((p) => (
+                      {listaPersonas.map((p) => (
                         <div
                           key={p.id}
                           style={{
@@ -288,7 +288,7 @@ export default function Sacramentos() {
                             cursor: "pointer",
                           }}
                           onClick={() => {
-                            handleChange("personaId", p.id);  
+                            handleChange("personaId", p.id_persona); //IMPORTANTE PARA QUE TOME EL VALOR DEL ID 
                             setQueryPersona(`${p.nombre} ${p.apellido_paterno} ${p.apellido_materno}`);
                             setOpenPersonaList(false);
                           }}
@@ -297,7 +297,7 @@ export default function Sacramentos() {
                             {p.nombre} {p.apellido_paterno} {p.apellido_materno}
                           </strong>
                           <div style={{ fontSize: "13px", color: "#666" }}>
-                            CI: {p.carnet_identidad}
+                            CI: {p.carnet_identidad} {p.id_persona}
                           </div>
                         </div>
                       ))}
