@@ -37,47 +37,57 @@ const translateMethod = (method) => {
 };
 
 const translateRoute = (method, originalUrl) => {
-  let url = originalUrl.trim();
+  // --- LIMPIEZA CONTROLADA (solo basura, NO valores) ---
+  let url = originalUrl
+    .trim()
+    .replace(/\+/g, " ")     // evitar La+Paz
+    .replace(/\/\?/, "?")    
+    .replace(/&&+/g, "&")
+    .replace(/\/+$/, "")
+    .replace(/\?$/, "");
 
-  // --- Separar path y query ---
+  // Separar ruta y query
   const [rawPath, rawQuery] = url.split("?");
   const path = rawPath.replace(/\/$/, "");
-  
-  // Normalizar IDs numéricos → :id
   const normalizedPath = path.replace(/\/\d+$/, "/:id");
 
-  // Obtener grupo de rutas del JSON
-  const routeGroup = routeDescriptions[normalizedPath] || routeDescriptions[path];
+  // Identificar grupo del JSON
+  const routeGroup =
+    routeDescriptions[normalizedPath] ||
+    routeDescriptions[path];
+
   if (!routeGroup) {
     return `${translateMethod(method)} en ${path}`;
   }
 
-  // --- Si NO hay query params ---
+  // Si no hay query → usar traducción simple
   if (!rawQuery) {
     return routeGroup[method] || `${translateMethod(method)} en ${path}`;
   }
 
-  // --- Parsear query params ---
+  // --- Parseo REAL de valores ---
   const queryParams = {};
   rawQuery.split("&").forEach((pair) => {
+    if (!pair.includes("=")) return;
+
     const [key, value] = pair.split("=");
-    queryParams[key] = decodeURIComponent(value || "");
+
+    // ignorar parámetros vacíos, pero NO borrar el key si hay valor
+    if (!key || value === undefined || value === "") return;
+
+    queryParams[key] = decodeURIComponent(value.trim());
   });
 
-  // ---- BUSCADOR UNIVERSAL DE PARAMETROS DINÁMICOS ----
+  // --- Buscar coincidencia dinámica ---
   for (const jsonKey of Object.keys(routeGroup)) {
-
-    // Filtrar claves del JSON que empiezan con el método (GET?, POST?, etc.)
     if (!jsonKey.startsWith(method + "?")) continue;
 
-    // Obtener la lista de parámetros que espera esta clave
     const expectedParams = jsonKey.replace(method + "?", "").split("&");
 
     let allMatch = true;
     let translatedText = routeGroup[jsonKey];
 
     for (const ep of expectedParams) {
-      // ep ejemplo: carnet_identidad={value}
       const [paramName] = ep.split("=");
 
       if (!queryParams[paramName]) {
@@ -85,17 +95,22 @@ const translateRoute = (method, originalUrl) => {
         break;
       }
 
-      // Reemplazar {value} por el valor real
+      // Insertar valor real
       translatedText = translatedText.replace("{value}", queryParams[paramName]);
     }
 
     if (allMatch) return translatedText;
   }
 
-  // Fallback genérico si no encuentra coincidencia
-  return `${translateMethod(method)} en ${url}`;
-};
+  // --- Si no match, armar texto básico pero con valores ---
+  const readableFilters = Object.entries(queryParams)
+    .map(([k, v]) => `${k}: ${v}`)
+    .join(", ");
 
+  return readableFilters
+    ? `${translateMethod(method)} en ${path} — filtros: ${readableFilters}`
+    : `${translateMethod(method)} en ${path}`;
+};
 export default function AuditTable({ data, onViewDetails }) {
   return (
     <div className="overflow-hidden rounded-lg border border-border-light bg-card-light dark:border-border-dark dark:bg-card-dark">
