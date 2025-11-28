@@ -1,98 +1,359 @@
+import { useState } from 'react';
+import { gql } from 'graphql-request';
+import getGraphQLClient from '../../lib/client';
+import Swal from 'sweetalert2';
 import Layout from '../../shared/components/layout/Layout';
+import FiltrosReporte from './componentes/FiltrosReporte';
+import SeleccionCampos from './componentes/SeleccionCampos';
+import ConfiguracionReporte from './componentes/ConfiguracionReporte';
+
+const ESTADISTICAS_SACRAMENTOS = gql`
+  query EstadisticasSacramentos($filter: SacramentoFilter) {
+    estadisticasSacramentos(filter: $filter) {
+      total
+      por_tipo {
+        tipo_sacramento
+        cantidad
+      }
+      por_parroquia {
+        parroquia
+        cantidad
+      }
+      por_mes {
+        periodo
+        cantidad
+      }
+      activos
+      inactivos
+    }
+  }
+`;
+
+const GENERAR_REPORTE_PDF = gql`
+  mutation GenerarReportePDF(
+    $filter: SacramentoFilter
+    $fields: [String]
+    $titulo: String
+    $incluirEstadisticas: Boolean
+  ) {
+    generarReportePDF(
+      filter: $filter
+      fields: $fields
+      titulo: $titulo
+      incluirEstadisticas: $incluirEstadisticas
+    ) {
+      fileName
+      downloadUrl
+      totalRegistros
+      filtrosAplicados
+    }
+  }
+`;
 
 export default function Reportes() {
+  const [filtros, setFiltros] = useState({
+    tipo_sacramento_id_tipo: null,
+    institucion_parroquia_id_parroquia: null,
+    usuario_id_usuario: null,
+    activo: null,
+    foja: '',
+    numero_desde: null,
+    numero_hasta: null,
+    anio_sacramento: null,
+    mes_sacramento: null,
+    fecha_sacramento_desde: '',
+    fecha_sacramento_hasta: '',
+    fecha_registro_desde: '',
+    fecha_registro_hasta: '',
+    search: ''
+  });
+
+  const [campos, setCampos] = useState([
+    'fecha_sacramento',
+    'foja',
+    'numero',
+    'tipo_sacramento',
+    'activo'
+  ]);
+
+  const [config, setConfig] = useState({
+    titulo: 'Reporte de Sacramentos',
+    incluirEstadisticas: true
+  });
+
+  const [estadisticas, setEstadisticas] = useState(null);
+  const [generando, setGenerando] = useState(false);
+  const [downloadUrl, setDownloadUrl] = useState(null);
+
+  const construirFiltros = () => {
+    const filtrosLimpios = {};
+    
+    Object.entries(filtros).forEach(([key, value]) => {
+      if (value !== null && value !== '' && value !== undefined) {
+
+        // Int a numerico
+        if (['tipo_sacramento_id_tipo', 'institucion_parroquia_id_parroquia', 'usuario_id_usuario', 
+             'numero_desde', 'numero_hasta', 'anio_sacramento', 'mes_sacramento', 'numero', 
+             'anio_registro', 'limit', 'offset'].includes(key)) {
+          const numValue = parseInt(value);
+          if (!isNaN(numValue)) {
+            filtrosLimpios[key] = numValue;
+          }
+        }
+        // Booleano a numerico
+        else if (key === 'activo') {
+          filtrosLimpios[key] = value === true || value === 'true';
+        }
+        // Para strings 
+        else {
+          filtrosLimpios[key] = value;
+        }
+      }
+    });
+
+    return filtrosLimpios;
+  };
+
+  const cargarEstadisticas = async () => {
+    try {
+      const client = getGraphQLClient();
+      const filtrosLimpios = construirFiltros();
+      
+      const data = await client.request(ESTADISTICAS_SACRAMENTOS, {
+        filter: Object.keys(filtrosLimpios).length > 0 ? filtrosLimpios : undefined
+      });
+      
+      setEstadisticas(data.estadisticasSacramentos);
+    } catch (error) {
+      console.error('Error al cargar estadísticas:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'No se pudieron cargar las estadísticas.'
+      });
+    }
+  };
+
+  const generarReporte = async () => {
+    if (campos.length === 0) {
+      return Swal.fire({
+        icon: 'warning',
+        title: 'Campos requeridos',
+        text: 'Debes seleccionar al menos un campo para incluir en el reporte.'
+      });
+    }
+
+    if (!config.titulo.trim()) {
+      return Swal.fire({
+        icon: 'warning',
+        title: 'Título requerido',
+        text: 'Por favor ingresa un título para el reporte.'
+      });
+    }
+
+    try {
+      setGenerando(true);
+      const client = getGraphQLClient();
+      const filtrosLimpios = construirFiltros();
+
+      const variables = {
+        filter: Object.keys(filtrosLimpios).length > 0 ? filtrosLimpios : undefined,
+        fields: campos,
+        titulo: config.titulo,
+        incluirEstadisticas: config.incluirEstadisticas
+      };
+
+      const data = await client.request(GENERAR_REPORTE_PDF, variables);
+
+      if (data?.generarReportePDF?.downloadUrl) {
+        const url = `http://localhost:4001${data.generarReportePDF.downloadUrl}`;
+        setDownloadUrl(url);
+        
+        Swal.fire({
+          icon: 'success',
+          title: '¡Reporte generado!',
+          html: `
+            <p>Se generaron <strong>${data.generarReportePDF.totalRegistros}</strong> registros</p>
+            <p class="text-sm text-gray-600 mt-2">${data.generarReportePDF.fileName}</p>
+          `,
+          confirmButtonText: 'Descargar PDF',
+          showCancelButton: true,
+          cancelButtonText: 'Cerrar'
+        }).then((result) => {
+          if (result.isConfirmed) {
+            window.open(url, '_blank');
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error al generar PDF:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error al generar el PDF',
+        text: error.response?.errors?.[0]?.message || 'Revisa los datos ingresados o intenta nuevamente más tarde.'
+      });
+    } finally {
+      setGenerando(false);
+    }
+  };
+
+  const contarFiltrosActivos = () => {
+    return Object.values(filtros).filter(v => v !== null && v !== '').length;
+  };
+
   return (
-    <Layout title="Reportes">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="rounded-xl bg-white dark:bg-gray-800/50 p-6 shadow-sm">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Sacramentos por Año</h3>
-          <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">12,345</p>
-          <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-            <span>2023</span>
-            <span className="text-green-500 font-medium">+12%</span>
-          </div>
-          <div className="mt-4 h-48">
-            <div className="grid h-full grid-flow-col items-end gap-4">
-              <div className="w-full rounded-t-lg bg-primary/20" style={{ height: '60%' }} />
-              <div className="w-full rounded-t-lg bg-primary/20" style={{ height: '70%' }} />
-              <div className="w-full rounded-t-lg bg-primary/20" style={{ height: '40%' }} />
-              <div className="w-full rounded-t-lg bg-primary/20" style={{ height: '20%' }} />
-              <div className="w-full rounded-t-lg bg-primary/20" style={{ height: '50%' }} />
-              <div className="w-full rounded-t-lg bg-primary" style={{ height: '80%' }} />
+    <Layout title="Generación de Reportes">
+      {/* filtros*/}
+      <div className="mb-6">
+        <FiltrosReporte filtros={filtros} setFiltros={setFiltros} />
+      </div>
+
+      {/* campos y configuración */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <SeleccionCampos campos={campos} setCampos={setCampos} />
+        <ConfiguracionReporte config={config} setConfig={setConfig} />
+      </div>
+
+      {/* resumen y accion */}
+      <div className="bg-white dark:bg-background-dark/50 rounded-xl shadow-sm">
+        <div className="p-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Resumen del Reporte</h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div className="p-4 rounded-lg bg-gray-50 dark:bg-gray-800/40">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <span className="material-symbols-outlined text-primary">filter_alt</span>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Filtros Aplicados</p>
+                  <p className="text-xl font-bold text-gray-900 dark:text-white">{contarFiltrosActivos()}</p>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
 
-        <div className="rounded-xl bg-white dark:bg-gray-800/50 p-6 shadow-sm">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Productividad de Digitadores</h3>
-          <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">8,765</p>
-          <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-            <span>2023</span>
-            <span className="text-green-500 font-medium">+8%</span>
-          </div>
-          <div className="mt-4 h-48">
-            <svg className="h-full w-full" viewBox="0 0 472 150" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
-              <defs>
-                <linearGradient id="line-chart-gradient" x1="0" y1="0" x2="0" y2="150" gradientUnits="userSpaceOnUse">
-                  <stop stopColor="#0f49bd" stopOpacity="0.3" />
-                  <stop offset="1" stopColor="#0f49bd" stopOpacity="0" />
-                </linearGradient>
-              </defs>
-              <path d="M0 109C18.15 109 18.15 21 36.3 21C54.46 21 54.46 41 72.61 41C90.77 41 90.77 93 108.92 93C127.08 93 127.08 33 145.23 33C163.38 33 163.38 101 181.54 101C199.69 101 199.69 61 217.85 61C236 61 236 45 254.15 45C272.31 45 272.31 121 290.46 121C308.62 121 308.62 149 326.77 149C344.92 149 344.92 1 363.08 1C381.23 1 381.23 81 399.38 81C417.54 81 417.54 129 435.69 129C453.85 129 453.85 25 472 25V150H0V109Z" fill="url(#line-chart-gradient)" />
-              <path d="M0 109C18.15 109 18.15 21 36.3 21C54.46 21 54.46 41 72.61 41C90.77 41 90.77 93 108.92 93C127.08 93 127.08 33 145.23 33C163.38 33 163.38 101 181.54 101C199.69 101 199.69 61 217.85 61C236 61 236 45 254.15 45C272.31 45 272.31 121 290.46 121C308.62 121 308.62 149 326.77 149C344.92 149 344.92 1 363.08 1C381.23 1 381.23 81 399.38 81C417.54 81 417.54 129 435.69 129C453.85 129 453.85 25 472 25" stroke="#0f49bd" strokeWidth="3" strokeLinecap="round" />
-            </svg>
-          </div>
-        </div>
+            <div className="p-4 rounded-lg bg-gray-50 dark:bg-gray-800/40">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <span className="material-symbols-outlined text-primary">table_chart</span>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Campos Seleccionados</p>
+                  <p className="text-xl font-bold text-gray-900 dark:text-white">{campos.length}</p>
+                </div>
+              </div>
+            </div>
 
-        <div className="rounded-xl bg-white dark:bg-gray-800/50 p-6 shadow-sm">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Duplicados Detectados</h3>
-          <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">234</p>
-          <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-            <span>2023</span>
-            <span className="text-red-500 font-medium">-5%</span>
-          </div>
-          <div className="mt-4 h-48 flex items-center justify-center">
-            <div className="relative size-40">
-              <svg className="size-full" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="18" cy="18" r="15.915" fill="none" strokeWidth="3" className="stroke-gray-200 dark:stroke-gray-700" />
-                <circle cx="18" cy="18" r="15.915" fill="none" strokeWidth="3" strokeDasharray="60, 40" strokeDashoffset="25" strokeLinecap="round" className="stroke-primary" />
-                <circle cx="18" cy="18" r="15.915" fill="none" strokeWidth="3" strokeDasharray="30, 70" strokeDashoffset="-15" strokeLinecap="round" className="stroke-yellow-400" />
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-2xl font-bold text-gray-900 dark:text-white">35%</span>
-                <span className="text-sm text-gray-500 dark:text-gray-400">Resueltos</span>
+            <div className="p-4 rounded-lg bg-gray-50 dark:bg-gray-800/40">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <span className="material-symbols-outlined text-primary">analytics</span>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Estadísticas</p>
+                  <p className="text-xl font-bold text-gray-900 dark:text-white">
+                    {config.incluirEstadisticas ? 'Sí' : 'No'}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <div className="rounded-xl bg-white dark:bg-gray-800/50 p-6 shadow-sm">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Errores Más Comunes</h3>
-          <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">150</p>
-          <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-            <span>2023</span>
-            <span className="text-green-500 font-medium">+3%</span>
-          </div>
-          <div className="mt-4 space-y-4">
-            {[
-              { label: 'Fecha Inválida', pct: 45 },
-              { label: 'Nombre Incorrecto', pct: 30 },
-              { label: 'Lugar Inconsistente', pct: 15 },
-              { label: 'Otros', pct: 10 },
-            ].map((row) => (
-              <div key={row.label}>
-                <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400 mb-1">
-                  <span>{row.label}</span>
-                  <span>{row.pct}%</span>
+          {/* vista previa de estadísticas */}
+          {config.incluirEstadisticas && (
+            <div className="mb-4">
+              <button
+                onClick={cargarEstadisticas}
+                className="text-sm px-4 py-2 rounded-lg border border-primary text-primary hover:bg-primary/10"
+              >
+                <span className="material-symbols-outlined text-sm align-middle mr-1">preview</span>
+                Vista Previa de Estadísticas
+              </button>
+            </div>
+          )}
+
+          {/* Mostrar estadísticas */}
+          {estadisticas && (
+            <div className="mb-6 p-4 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+              <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-300 mb-3">
+                Vista Previa de Estadísticas
+              </h4>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                <div>
+                  <p className="text-blue-600 dark:text-blue-400">Total:</p>
+                  <p className="font-bold text-blue-900 dark:text-blue-200">{estadisticas.total}</p>
                 </div>
-                <div className="h-2 w-full rounded-full bg-gray-200 dark:bg-gray-700">
-                  <div className="h-2 rounded-full bg-primary" style={{ width: `${row.pct}%` }} />
+                <div>
+                  <p className="text-green-600 dark:text-green-400">Activos:</p>
+                  <p className="font-bold text-green-900 dark:text-green-200">{estadisticas.activos}</p>
+                </div>
+                <div>
+                  <p className="text-red-600 dark:text-red-400">Inactivos:</p>
+                  <p className="font-bold text-red-900 dark:text-red-200">{estadisticas.inactivos}</p>
+                </div>
+                <div>
+                  <p className="text-purple-600 dark:text-purple-400">Tipos:</p>
+                  <p className="font-bold text-purple-900 dark:text-purple-200">
+                    {estadisticas.por_tipo?.length || 0}
+                  </p>
                 </div>
               </div>
-            ))}
+            </div>
+          )}
+
+          {/* Botones */}
+          <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-800">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              El reporte se generará en formato PDF con los filtros y campos seleccionados
+            </p>
+            <button
+              onClick={generarReporte}
+              disabled={generando || campos.length === 0}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-primary text-white font-medium hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+              {generando ? (
+                <>
+                  <span className="material-symbols-outlined animate-spin">progress_activity</span>
+                  Generando...
+                </>
+              ) : (
+                <>
+                  <span className="material-symbols-outlined">picture_as_pdf</span>
+                  Generar Reporte PDF
+                </>
+              )}
+            </button>
           </div>
+
+          {/* mostrar enlace de descarga */}
+          {downloadUrl && !generando && (
+            <div className="mt-4 p-4 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="material-symbols-outlined text-green-600">check_circle</span>
+                  <div>
+                    <p className="text-sm font-semibold text-green-900 dark:text-green-300">
+                      Reporte disponible para descarga
+                    </p>
+                    <p className="text-xs text-green-700 dark:text-green-400">
+                      El archivo estará disponible por 24 horas
+                    </p>
+                  </div>
+                </div>
+                <a
+                  href={downloadUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors"
+                >
+                  <span className="material-symbols-outlined text-sm">download</span>
+                  Descargar
+                </a>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </Layout>
-  )
-}
+  );
+} 
