@@ -48,11 +48,12 @@ export default function Sacramentos() {
   const [queryParroquia, setQueryParroquia] = useState("");
   const [listaParroquias, setListaParroquias] = useState([]);
   const [openParroquiaList, setOpenParroquiaList] = useState(false);
-  // Loading locales para mostrar spinner durante el delay + fetch
+// Loading locales para mostrar spinner durante el delay + fetch
 const [loadingPersona, setLoadingPersona] = useState(false);
 const [loadingPadrino, setLoadingPadrino] = useState(false);
 const [loadingMinistro, setLoadingMinistro] = useState(false);
 const [loadingParroquia, setLoadingParroquia] = useState(false);
+const [loadingSacramento, setLoadingSacramento] = useState(false);
   //para busqueda de sacramento y actualizar
 
 
@@ -352,22 +353,19 @@ useEffect(() => {
   // Buscar sacramentos
   const handleBuscar = (e) => {
     e.preventDefault();
-
+    setLoadingSacramento(true);
     const payload = {
       ...filters,
       tipo_sacramento_id_tipo: TIPO_SACRAMENTO_IDS[tipoSacramento],
       rol_principal: ROLES_SACRAMENTO_IDS[tipoSacramento],
     };
-
     dispatch(buscarSacramentos(payload))
       .unwrap()
       .then((res) => {
         const planos = [];
-
         res.resultados.forEach((sac) => {
           sac.personaSacramentos.forEach((rel) => {
             if (!rel.persona) return;
-
             planos.push({
               id_sacramento: sac.id_sacramento,
               nombre: rel.persona.nombre,
@@ -381,13 +379,13 @@ useEffect(() => {
             });
           });
         });
-
         setResults(planos);
       })
       .catch((err) => {
         console.error("ERROR buscando sacramentos:", err);
         setToast({ type: "error", message: "No se pudo realizar la búsqueda" });
-      });
+      })
+      .finally(() => setLoadingSacramento(false));
   };
 
   const handleSelectResultado = (row) => {
@@ -1105,7 +1103,24 @@ useEffect(() => {
               </div>
               <div className="mt-6 flex items-center gap-3">
                 <button type="button" onClick={handleBuscar} className="inline-flex items-center px-5 py-2.5 rounded-lg bg-primary text-white font-medium hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">Buscar</button>
-                <button type="reset" className="px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/40">Limpiar</button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFilters({
+                      nombre: '',
+                      apellido_paterno: '',
+                      apellido_materno: '',
+                      carnet_identidad: '',
+                      fecha_nacimiento: '',
+                      lugar_nacimiento: '',
+                      activo: '',
+                    });
+                    setResults([]);
+                  }}
+                  className="px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/40"
+                >
+                  Limpiar
+                </button>
               </div>
             </form>
           </div>
@@ -1116,36 +1131,53 @@ useEffect(() => {
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Mostrando resultados de <strong>{tipoSacramento === 'comunion' ? 'Primera Comunión' : tipoSacramento}</strong>. Seleccione una fila para editar.</p>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-                <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700/50 dark:text-gray-400">
-                  <tr>
-                    <th className="px-6 py-3" scope="col">Nombre completo</th>
-                    <th className="px-6 py-3" scope="col">CI</th>
-                    <th className="px-6 py-3" scope="col">Fecha del sacramento</th>
-                    <th className="px-6 py-3" scope="col">Rol</th>
-                    <th className="px-6 py-3" scope="col">Foja</th>
-                    <th className="px-6 py-3" scope="col">Número</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {results.map(row => (
-                    <tr
-                      key={row.id}
-                      onClick={() => handleSelectResultado(row)}
-                      className="cursor-pointer bg-white dark:bg-background-dark/50 border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
-                    >
-                      <td className="px-6 py-4">
-                        {row.nombre} {row.apellido_paterno} {row.apellido_materno}
-                      </td>
-                      <td className="px-6 py-4">{row.carnet_identidad}</td>
-                      <td className="px-6 py-4">{row.fecha_sacramento}</td>
-                      <td className="px-6 py-4">{row.rol_nombre}</td>
-                      <td className="px-6 py-4">{row.foja}</td>
-                      <td className="px-6 py-4">{row.numero}</td>
+              {/* Loading Spinner */}
+              {loadingSacramento && (
+                <div className="flex justify-center items-center py-10">
+                  <ClipLoader size={40} color="#4f46e5" />
+                </div>
+              )}
+
+              {/* No results */}
+              {!loadingSacramento && results.length === 0 && (
+                <div className="py-10 text-center text-gray-500 dark:text-gray-400">
+                  No se encontraron resultados para esta búsqueda.
+                </div>
+              )}
+
+              {/* Table */}
+              {!loadingSacramento && results.length > 0 && (
+                <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400 animate__animated animate__fadeIn">
+                  <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700/50 dark:text-gray-400">
+                    <tr>
+                      <th className="px-6 py-3">Nombre completo</th>
+                      <th className="px-6 py-3">CI</th>
+                      <th className="px-6 py-3">Fecha del sacramento</th>
+                      <th className="px-6 py-3">Rol</th>
+                      <th className="px-6 py-3">Foja</th>
+                      <th className="px-6 py-3">Número</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {results.map((row) => (
+                      <tr
+                        key={row.id_sacramento + '-' + row.carnet_identidad}
+                        onClick={() => handleSelectResultado(row)}
+                        className="cursor-pointer bg-white dark:bg-background-dark/50 border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                      >
+                        <td className="px-6 py-4">
+                          {row.nombre} {row.apellido_paterno} {row.apellido_materno}
+                        </td>
+                        <td className="px-6 py-4">{row.carnet_identidad}</td>
+                        <td className="px-6 py-4">{row.fecha_sacramento}</td>
+                        <td className="px-6 py-4">{row.rol_nombre}</td>
+                        <td className="px-6 py-4">{row.foja}</td>
+                        <td className="px-6 py-4">{row.numero}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </div>
             {selectedPerson && (
               <div className="mt-8 bg-white dark:bg-background-dark/50 rounded-xl shadow-sm p-6">
