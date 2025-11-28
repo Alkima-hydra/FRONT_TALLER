@@ -36,32 +36,35 @@ export default function AuditTable({ data, onViewDetails }) {
   //Traduccion router
   const translateRoute=(method, originalUrl) => {
     let url = originalUrl;
-  
+
     // Detectar y extraer valor de search
     let searchValue = null;
     const searchMatch = url.match(/search=([^&]+)/);
     if (searchMatch) {
-      searchValue = decodeURIComponent(searchMatch[1]);
-      url = url.replace(/\?.*$/, ""); // elimina la query para buscar en JSON
+      searchValue = decodeURIComponent(searchMatch[1].replace(/\+/g, " "));
+      url = url.replace(/\?.*$/, ""); // elimina query para buscar en JSON
     }
-  
+
+    // Quitar slash final
+    url = url.replace(/\/$/, "");
+
     // Reemplaza cualquier número por :id
     const urlClean = url.replace(/\/\d+/g, "/:id");
-  
+
     const routeObj = routeDescriptions[urlClean];
-  
+    console.log("Translating route:", { method, originalUrl, urlClean, routeObj });
+
     if (routeObj) {
-      // Si existe traducción exacta (method)
       let translation = routeObj[method];
-  
-      // Caso especial de search
+
+      // Caso especial de búsqueda
       if (!translation && searchValue && routeObj["GET?search"]) {
         translation = routeObj["GET?search"].replace("{search}", searchValue);
       }
-  
+
       if (translation) return translation;
     }
-  
+
     // Fallback cuando no existe en el JSON
     return `${translateMethod(method)} en ${urlClean}`;
   };
