@@ -71,16 +71,12 @@ const [loadingSacramento, setLoadingSacramento] = useState(false);
   const [padrinoActual, setPadrinoActual] = useState("");
 const [ministroActual, setMinistroActual] = useState("");
   // Loading locales para mostrar spinner durante el delay + fetch
-  const [loadingPersona, setLoadingPersona] = useState(false);
+
   const [loadingEsposo, setLoadingEsposo] = useState(false);
   const [loadingEsposa, setLoadingEsposa] = useState(false);
-  const [loadingPadrino, setLoadingPadrino] = useState(false);
-  const [loadingMinistro, setLoadingMinistro] = useState(false);
-  const [loadingParroquia, setLoadingParroquia] = useState(false);
-  const [loadingSacramento, setLoadingSacramento] = useState(false);
+
     //para busqueda de sacramento y actualizar
-    const [padrinoActual, setPadrinoActual] = useState("");
-  const [ministroActual, setMinistroActual] = useState("");
+
   // === MATRIMONIO ===
   const [esposoData, setEsposoData] = useState(null);
   const [esposaData, setEsposaData] = useState(null);
