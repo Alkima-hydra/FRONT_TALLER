@@ -393,7 +393,7 @@ useEffect(() => {
       parroquiaId: form.parroquiaId,
 
       //en el caso de matrimonio, enviamos detalles adicionales
-      matrimonio_detalle: tipoSacramento === 'matrimonio' ? {
+      matrimonioDetalle: tipoSacramento === 'matrimonio' ? {
         lugar_ceremonia: matrimonio.lugar_ceremonia,
         reg_civil: matrimonio.reg_civil,
         numero_acta: matrimonio.numero_acta,
@@ -471,10 +471,6 @@ useEffect(() => {
 
     const payload = buildPayloadCrear();
     // 🛑 SOLO VERIFICAR MATRIMONIO — NO ENVIAR AL BACK
-    if (tipoSacramento === 'matrimonio') {
-      console.log("Payload MATRIMONIO (solo verificación):", payload);
-      return; // Detener aquí, no enviar al backend
-    }
     console.log(payload);
 
     // 🚀 Integración real con Redux
@@ -710,6 +706,14 @@ useEffect(() => {
         setQueryPadrino("");
         setQueryMinistro("");
         setQueryParroquia("");
+        resetForm();
+        setMatrimonio({
+          esposoId: null,
+          esposaId: null,
+          lugar_ceremonia: "",
+          reg_civil: "",
+          numero_acta: "",
+        });
 
         // cerrar editor
         setSelectedPerson(null);
@@ -732,8 +736,8 @@ useEffect(() => {
       5: "Padrino",
       9: "Ministro",
       10: "Confirmado",
-      11: "Esposo",
-      12: "Esposa",
+      2: "Esposo",
+      3: "Esposa",
       21: "Comulgado",
     };
 

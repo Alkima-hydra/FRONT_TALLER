@@ -232,6 +232,7 @@ useEffect(() => {
       })
       .finally(() => setLoadingEncargado(false));
   }, 300);
+  console.log("Búsqueda de encargado con query:", listaEncargados);
 
   return () => clearTimeout(delay);
 }, [queryEncargado, activeTab]);
@@ -261,19 +262,6 @@ useEffect(() => {
           }`}
         >
           Buscar Persona
-        </button>
-        <button
-          onClick={() => {
-            setActiveTab('encargado');
-            dispatch(buscarPersonasConTodosLosSacramentos({ sacerdote: false }));
-          }}
-          className={`px-5 py-2 text-sm font-medium rounded-t-lg border transition-colors focus:outline-none ${
-            activeTab === 'encargado'
-              ? 'bg-white dark:bg-background-dark text-primary border-gray-200 dark:border-gray-700 border-b-transparent -mb-px'
-              : 'bg-gray-50 dark:bg-gray-800/40 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white border-transparent'
-          }`}
-        >
-          Agregar personal de la iglesia
         </button>
       </div>
 
@@ -787,6 +775,7 @@ useEffect(() => {
                           onChange={e => {
                             setQueryEncargado(e.target.value);
                             setEncargadoSelected(false);
+                            setOpenEncargadoList(true);
                             setListaEncargados([]);
                           }}
                           className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3 pr-10"
