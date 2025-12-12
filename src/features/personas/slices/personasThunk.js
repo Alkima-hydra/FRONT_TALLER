@@ -1,6 +1,6 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { personasApi } from '../../../lib/api';
-
+import { sacramentosApi } from '../../../lib/api';
 export const fetchPersonas = createAsyncThunk(
   'personas/fetchPersonas',
   async (filters = {}, { rejectWithValue }) => {
@@ -86,3 +86,20 @@ export const deletePersona = createAsyncThunk(
     }
   }
 );  
+
+export const fetchPersonasParaSacramento = createAsyncThunk(
+  'sacramentos/buscarPersonas',
+  async ({ search, tipo, rol }, { rejectWithValue }) => {
+    try {
+      const response = await sacramentosApi.buscarPersonas({
+        search,
+        tipo,
+        rol,
+      });
+
+      return response;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || error.message);
+    }
+  }
+);
