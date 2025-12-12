@@ -40,7 +40,7 @@ export default function Parroquias() {
     direccion: '',
     telefono: '',
     email: '',
-    encargado_id: null, // 👈 sacerdote encargado
+    id_persona: null, // 👈 sacerdote encargado
   });
   // ====== BUSCADOR ENCARGADO (SACERDOTE) ======
   const [queryEncargado, setQueryEncargado] = useState("");
@@ -307,7 +307,7 @@ export default function Parroquias() {
                           onClick={() => {
                             setFormData({
                               ...formData,
-                              encargado_id: p.id_persona,
+                              id_persona: p.id_persona,
                             });
                             setQueryEncargado(
                               `${p.nombre} ${p.apellido_paterno} ${p.apellido_materno}`
