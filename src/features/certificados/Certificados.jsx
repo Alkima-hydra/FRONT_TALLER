@@ -77,7 +77,7 @@ export default function Certificados() {
   };
   
   // === FUNCIÓN PARA DESCARGAR CERTIFICADO ===
-  const descargarCertificado = async (nombre_certificado, nombre_estudiante) => {
+  const descargarCertificado = async (sacramento_nombre, sacramento_fecha) => {
     try {
       setLoading(true);
       const response = await fetch(
@@ -86,8 +86,8 @@ export default function Certificados() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            nombre_certificado,
-            nombre_estudiante,
+            sacramento_nombre,
+            sacramento_fecha,
           }),
         }
       );
@@ -212,11 +212,6 @@ export default function Certificados() {
     
     const url = await previsualizarCertificado(sacramentoSeleccionado.nombre_completo, sacramentoSeleccionado.fecha);
     if (url) setPdfUrl(url);
-    // Simulamos delay
-    setTimeout(() => {
-        setLoadingPdf(false);
-        alert("Aquí se llamaría a la API de Python con los datos del sacramento seleccionado.");
-    }, 1000);
   };
 
   
