@@ -42,6 +42,8 @@ export default function Personas() {
   const isDeleting = useSelector(selectIsDeleting);
   const personasConTodos = useSelector(selectPersonasConTodos);
 
+  const [queryPersonas, setQueryPersonas] = useState("");
+
   const [openPersonaList, setOpenPersonaList] = useState(false);
   const [mergeOpen, setMergeOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('agregar');
