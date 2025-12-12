@@ -793,7 +793,7 @@ useEffect(() => {
     )}
 
     {/* Sin resultados */}
-    {!personaSelected && listaPersonas.length === 0 && queryPersona.length > 0 && (
+    {!personaSelected && listaPersonas.length === 0 && queryPersona.length > 0 && personaId.id_persona == null && (
       <div className="py-3 text-center text-sm text-gray-500">
         No se encontraron personas con ese valor.
       </div>
