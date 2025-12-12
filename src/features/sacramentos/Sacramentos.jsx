@@ -1761,6 +1761,76 @@ useEffect(() => {
                       </div>
                     </div>
                   </div>
+
+                  {/* Matrimonio: datos adicionales */}
+                  {tipoSacramento === 'matrimonio' && (
+                    <div className="mt-6">
+                      <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3">
+                        Datos del Matrimonio
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* ESPOSO */}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Esposo
+                          </label>
+                          <input
+                            type="search"
+                            value={queryEsposo}
+                            onChange={(e) => setQueryEsposo(e.target.value)}
+                            placeholder="Buscar esposo"
+                            className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 p-3"
+                          />
+                        </div>
+                        {/* ESPOSA */}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Esposa
+                          </label>
+                          <input
+                            type="search"
+                            value={queryEsposa}
+                            onChange={(e) => setQueryEsposa(e.target.value)}
+                            placeholder="Buscar esposa"
+                            className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 p-3"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Lugar de la ceremonia
+                          </label>
+                          <input
+                            type="text"
+                            value={matrimonio.lugar_ceremonia}
+                            onChange={(e) => handleMatChange('lugar_ceremonia', e.target.value)}
+                            className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 p-3"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Registro civil
+                          </label>
+                          <input
+                            type="text"
+                            value={matrimonio.reg_civil}
+                            onChange={(e) => handleMatChange('reg_civil', e.target.value)}
+                            className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 p-3"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Número de acta
+                          </label>
+                          <input
+                            type="text"
+                            value={matrimonio.numero_acta}
+                            onChange={(e) => handleMatChange('numero_acta', e.target.value)}
+                            className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 p-3"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
                   {/* Padrino, Ministro, Parroquia, Foja, Numero, Fecha */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Padrino */}
