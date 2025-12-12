@@ -376,7 +376,7 @@ export default function Certificados() {
                             </div>
                         </div>
 
-                        {/* CONFIGURACIÓN DE PLANTILLA */}
+                        {/* CONFIGURACIÓN DE PLANTILLA como falta perfeccionar platilla
                         <div>
                              <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Seleccionar Diseño / Plantilla</label>
                              <div className="grid grid-cols-2 gap-4">
@@ -395,6 +395,23 @@ export default function Certificados() {
                                     
                                 </div>
                              </div>
+                        </div>
+                        */}
+                        
+                        <div className="rounded-lg border border-dashed border-border-light dark:border-border-dark p-6 bg-background-light dark:bg-background-dark">
+                          {pdfUrl ? (
+                            <iframe
+                              src={pdfUrl}
+                              title="Vista previa del certificado"
+                              width="100%"
+                              height="300px"
+                              className="rounded-lg border"
+                            />
+                          ) : (
+                            <p className="text-center text-muted-foreground-light dark:text-muted-foreground-dark">
+                              No hay certificado cargado. Completa los campos y haz clic en <strong>Previsualizar</strong>.
+                            </p>
+                          )}
                         </div>
                     </div>
                 )}
