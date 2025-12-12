@@ -40,13 +40,19 @@ export default function Parroquias() {
     direccion: '',
     telefono: '',
     email: '',
-    encargado_id: null, // 👈 sacerdote encargado
+    id_persona: null, // 👈 sacerdote encargado
   });
   // ====== BUSCADOR ENCARGADO (SACERDOTE) ======
   const [queryEncargado, setQueryEncargado] = useState("");
   const [listaEncargados, setListaEncargados] = useState([]);
   const [openEncargadoList, setOpenEncargadoList] = useState(false);
   const [loadingEncargado, setLoadingEncargado] = useState(false);
+
+  // ====== BUSCADOR ENCARGADO (EDICIÓN) ======
+  const [queryEncargadoEdit, setQueryEncargadoEdit] = useState("");
+  const [listaEncargadosEdit, setListaEncargadosEdit] = useState([]);
+  const [openEncargadoEdit, setOpenEncargadoEdit] = useState(false);
+  const [loadingEncargadoEdit, setLoadingEncargadoEdit] = useState(false);
   useEffect(() => {
     if (activeTab !== 'agregar') return;
 
@@ -79,6 +85,64 @@ export default function Parroquias() {
     return () => clearTimeout(delay);
   }, [queryEncargado, activeTab, dispatch]);
   const [filters, setFilters] = useState({ nombre: '', direccion: '' });
+  useEffect(() => {
+    if (!boolSelected || !queryEncargadoEdit || queryEncargadoEdit.trim().length < 2) {
+      setListaEncargadosEdit([]);
+      setOpenEncargadoEdit(false);
+      return;
+    }
+
+    setLoadingEncargadoEdit(true);
+
+    const delay = setTimeout(() => {
+      dispatch(
+        buscarPersonasConTodosLosSacramentos({
+          sacerdote: true,
+          search: queryEncargadoEdit,
+        })
+      )
+        .unwrap()
+        .then((data) => {
+          setListaEncargadosEdit(data.personas || []);
+          setOpenEncargadoEdit(true);
+        })
+        .catch(() => {
+          setListaEncargadosEdit([]);
+        })
+        .finally(() => setLoadingEncargadoEdit(false));
+    }, 300);
+
+    return () => clearTimeout(delay);
+  }, [queryEncargadoEdit, boolSelected, dispatch]);
+
+  // Precargar encargado actual en edición (buscar por id_persona)
+  useEffect(() => {
+    if (!parroquiaSeleccionada?.id_persona) return;
+
+    dispatch(
+      buscarPersonasConTodosLosSacramentos({
+        sacerdote: true,
+        search: String(parroquiaSeleccionada.id_persona),
+      })
+    )
+      .unwrap()
+      .then((data) => {
+        const persona = data.personas?.find(
+          (p) => p.id_persona === parroquiaSeleccionada.id_persona
+        );
+
+        if (persona) {
+          setQueryEncargadoEdit(
+            `${persona.nombre} ${persona.apellido_paterno} ${persona.apellido_materno}`
+          );
+
+          setParroquiaSeleccionada((prev) => ({
+            ...prev,
+            id_persona: persona.id_persona,
+          }));
+        }
+      });
+  }, [parroquiaSeleccionada?.id_persona, dispatch]);
   const [parroquiasLocal, setParroquiasLocal] = useState([]);
 
   //const parroquiaSeleccionada = useSelector(selectParroquiaSeleccionada);
@@ -201,9 +265,6 @@ export default function Parroquias() {
   // ====== RENDER ======
   return (
     <Layout title="Gestión de Parroquias">
-
-
-
       {/* Tabs */}
       <div className="flex gap-1 mb-6 border-b border-gray-200 dark:border-gray-700">
         <button
@@ -261,70 +322,98 @@ export default function Parroquias() {
                   Encargado de la Parroquia (Sacerdote)
                 </label>
 
-                <input
-                  type="search"
-                  placeholder="Buscar sacerdote por nombre o CI"
-                  value={queryEncargado}
-                  onChange={(e) => {
-                    setQueryEncargado(e.target.value);
-                    setOpenEncargadoList(true);
-                  }}
-                  className="w-full h-11 rounded-lg bg-background-light dark:bg-background-dark 
-    border border-gray-300 dark:border-gray-700 
-    focus:outline-none focus:ring-2 focus:ring-primary 
-    px-4 pr-10 shadow-sm"
-                />
+                <div className="mb-6 relative">
+                  <input
+                    type="search"
+                    placeholder="Buscar sacerdote (nombre o CI)"
+                    value={queryEncargado}
+                    onChange={(e) => {
+                      setQueryEncargado(e.target.value);
+                      setOpenEncargadoList(true);
+                      setListaEncargados([]);
+                    }}
+                    className="w-full rounded-lg bg-background-light dark:bg-background-dark 
+        border border-gray-300 dark:border-gray-700 
+        focus:outline-none focus:ring-2 focus:ring-primary 
+        p-3 pr-10"
+                  />
 
-                <span className="material-symbols-outlined absolute right-3 top-9 text-gray-500">
-                  search
-                </span>
-
-                {openEncargadoList && (
-                  <div className="absolute left-0 right-0 mt-2 bg-white dark:bg-background-dark 
-    border border-gray-300 dark:border-gray-700 
-    rounded-lg shadow-xl 
-    max-h-64 overflow-y-auto z-[9999]">
-
-                    {loadingEncargado && (
-                      <div className="flex justify-center py-4">
-                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-                      </div>
-                    )}
-
-                    {!loadingEncargado && listaEncargados.length === 0 && (
-                      <div className="py-3 text-center text-sm text-gray-500">
-                        No se encontraron sacerdotes
-                      </div>
-                    )}
-
-                    {!loadingEncargado &&
-                      listaEncargados.map((p) => (
-                        <div
-                          key={p.id_persona}
-                          className="px-4 py-2 cursor-pointer 
-            hover:bg-primary/5 dark:hover:bg-primary/20 
-            border-b border-gray-100 dark:border-gray-700"
-                          onClick={() => {
-                            setFormData({
-                              ...formData,
-                              encargado_id: p.id_persona,
-                            });
-                            setQueryEncargado(
-                              `${p.nombre} ${p.apellido_paterno} ${p.apellido_materno}`
-                            );
-                            setOpenEncargadoList(false);
-                          }}
-                        >
-                          <div className="font-medium">
-                            {p.nombre} {p.apellido_paterno} {p.apellido_materno}
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            CI: {p.carnet_identidad}
-                          </div>
+                  {/* DROPDOWN ENCARGADO */}
+                  {openEncargadoList && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        background: "white",
+                        border: "1px solid #dcdcdc",
+                        borderRadius: "8px",
+                        marginTop: "4px",
+                        width: "95%",
+                        maxHeight: "220px",
+                        overflowY: "auto",
+                        zIndex: 40,
+                        boxShadow: "0 8px 20px rgba(0,0,0,0.08)",
+                        padding: "5px",
+                      }}
+                    >
+                      {/* Loading */}
+                      {loadingEncargado && (
+                        <div className="flex justify-center items-center py-4">
+                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
                         </div>
-                      ))}
-                  </div>
-                )}
+                      )}
+
+                      {/* Sin resultados */}
+                      {!loadingEncargado &&
+                        listaEncargados.length === 0 &&
+                        queryEncargado.length > 0 &&
+                        formData.id_persona == null && (
+                          <div className="py-3 text-center text-sm text-gray-500">
+                            No se encontraron sacerdotes.
+                          </div>
+                        )}
+
+                      {/* Resultados */}
+                      {!loadingEncargado &&
+                        listaEncargados.length > 0 &&
+                        listaEncargados.map((p) => (
+                          <div
+                            key={p.id_persona}
+                            style={{
+                              padding: "10px",
+                              borderBottom: "1px solid #eee",
+                              cursor: "pointer",
+                            }}
+                            onClick={() => {
+                              setFormData({
+                                ...formData,
+                                id_persona: p.id_persona,
+                              });
+                              setQueryEncargado(
+                                `${p.nombre} ${p.apellido_paterno} ${p.apellido_materno}`
+                              );
+                              setListaEncargados([]);
+                              setOpenEncargadoList(false);
+                            }}
+                          >
+                            <strong>
+                              {p.nombre} {p.apellido_paterno} {p.apellido_materno}
+                            </strong>
+                            <div style={{ fontSize: "13px", color: "#666" }}>
+                              CI: {p.carnet_identidad}
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  )}
+
+                  <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
+                    search
+                  </span>
+                </div>
+
+                <p className="text-xs text-gray-500 mt-1">
+                  Seleccione el sacerdote encargado de la parroquia.
+                </p>
               </div>
             </div>
             <div className="mt-6 flex items-center gap-3">
@@ -531,6 +620,102 @@ export default function Parroquias() {
           }
           className="w-full rounded-lg border border-gray-300 dark:border-gray-700 p-3 bg-background-light dark:bg-background-dark"
         />
+      </div>
+
+      {/* Encargado (Sacerdote) */}
+      <div className="relative md:col-span-2">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Encargado de la Parroquia (Sacerdote)
+        </label>
+
+        <div className="mb-4 relative">
+          <input
+            type="search"
+            placeholder="Buscar sacerdote (nombre o CI)"
+            value={queryEncargadoEdit}
+            onChange={(e) => {
+              setQueryEncargadoEdit(e.target.value);
+              setOpenEncargadoEdit(true);
+              setListaEncargadosEdit([]);
+            }}
+            className="w-full rounded-lg bg-background-light dark:bg-background-dark 
+              border border-gray-300 dark:border-gray-700 
+              focus:outline-none focus:ring-2 focus:ring-primary 
+              p-3 pr-10"
+          />
+
+          {/* DROPDOWN ENCARGADO (EDICIÓN) */}
+          {openEncargadoEdit && (
+            <div
+              style={{
+                position: "absolute",
+                background: "white",
+                border: "1px solid #dcdcdc",
+                borderRadius: "8px",
+                marginTop: "4px",
+                width: "100%",
+                maxHeight: "220px",
+                overflowY: "auto",
+                overflowX: "hidden",
+                zIndex: 40,
+                boxShadow: "0 8px 20px rgba(0,0,0,0.08)",
+                padding: "5px",
+              }}
+            >
+              {loadingEncargadoEdit && (
+                <div className="flex justify-center items-center py-4">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                </div>
+              )}
+
+              {!loadingEncargadoEdit &&
+                listaEncargadosEdit.length === 0 &&
+                queryEncargadoEdit.length > 0 && parroquiaSeleccionada.id_persona === null && (
+                  <div className="py-3 text-center text-sm text-gray-500">
+                    No se encontraron sacerdotes.
+                  </div>
+                )}
+
+              {!loadingEncargadoEdit &&
+                listaEncargadosEdit.map((p) => (
+                  <div
+                    key={p.id_persona}
+                    style={{
+                      padding: "10px",
+                      borderBottom: "1px solid #eee",
+                      cursor: "pointer",
+                    }}
+                    onClick={() => {
+                      setParroquiaSeleccionada({
+                        ...parroquiaSeleccionada,
+                        id_persona: p.id_persona,
+                      });
+                      setQueryEncargadoEdit(
+                        `${p.nombre} ${p.apellido_paterno} ${p.apellido_materno}`
+                      );
+                      setListaEncargadosEdit([]);
+                      setOpenEncargadoEdit(false);
+                    }}
+                  >
+                    <strong>
+                      {p.nombre} {p.apellido_paterno} {p.apellido_materno}
+                    </strong>
+                    <div style={{ fontSize: "13px", color: "#666" }}>
+                      CI: {p.carnet_identidad}
+                    </div>
+                  </div>
+                ))}
+            </div>
+          )}
+
+          <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
+            search
+          </span>
+        </div>
+
+        <p className="text-xs text-gray-500 mt-1">
+          Puede cambiar el sacerdote encargado de la parroquia.
+        </p>
       </div>
 
       {/* Botones */}
