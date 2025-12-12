@@ -6,6 +6,8 @@ import {
   actualizarSacramentoCompleto, // actualizar sacramento completo
   buscarSacramentos, // buscar sacramentos
   fetchSacramentoCompleto, // obtener información completa de un sacramento
+  buscarPersonasConTodosLosSacramentos,
+  
 } from './sacramentosTrunk';
 
 const initialState = {
@@ -30,6 +32,7 @@ const initialState = {
     parroquias: [],
   //para buscar sacramentos
   sacramentosEncontrados: [],
+  personasConTodos: [],
   sacramentoSeleccionado: null,
 };
 
@@ -130,6 +133,21 @@ const sacramentosSlice = createSlice({
       state.isLoadingById = false;
       state.error = action.payload || 'Error al cargar sacramento';
     })
+
+    // 🔵 Buscar personas con bautizo + comunión + matrimonio
+    .addCase(buscarPersonasConTodosLosSacramentos.pending, (state) => {
+      state.isLoading = true;
+      state.error = null;
+      state.personasConTodos = [];
+    })
+    .addCase(buscarPersonasConTodosLosSacramentos.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.personasConTodos = action.payload.personas || [];
+    })
+    .addCase(buscarPersonasConTodosLosSacramentos.rejected, (state, action) => {
+      state.isLoading = false;
+      state.error = action.payload || 'Error al buscar personas con todos los sacramentos';
+    })
     
 
 }
@@ -157,6 +175,7 @@ export const selectIsUpdating = (state) => state.personas.isUpdating;
 export const selectIsDeleting = (state) => state.personas.isDeleting;
 export const selectSacramentosEncontrados = (state) => state.personas.sacramentosEncontrados;
 export const selectSacramentoSeleccionado = (state) => state.personas.sacramentoSeleccionado;
+export const selectPersonasConTodos = (state) => state.personas.personasConTodos;
 
 export const sacramentosReducer = sacramentosSlice.reducer;
 export default sacramentosSlice.reducer;

@@ -2,13 +2,16 @@ import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import Layout from '../../shared/components/layout/Layout';
 import DuplicatesMergeModal from './components/DuplicatesMergeModal';
+
+import { ClipLoader } from "react-spinners";
 import {
   fetchPersonas,
   fetchAllPersonas,
   fetchPersonaById,
   createPersona,
   updatePersona,
-  deletePersona
+  deletePersona,
+  fetchPersonasParaSacramento,
 } from './slices/personasThunk';
 import {
   selectIsLoading,
@@ -20,6 +23,14 @@ import {
   selectIsDeleting
 } from './slices/personasSlice';
 
+import {
+   selectPersonasConTodos
+} from '../sacramentos/slices/sacramentosSlices';
+import {
+  buscarPersonasConTodosLosSacramentos
+}from '../sacramentos/slices/sacramentosTrunk.js';
+
+
 export default function Personas() {
   const dispatch = useDispatch();
   const isLoading = useSelector(selectIsLoading);
@@ -29,13 +40,26 @@ export default function Personas() {
   const isCreating = useSelector(selectIsCreating);
   const isUpdating = useSelector(selectIsUpdating);
   const isDeleting = useSelector(selectIsDeleting);
+  const personasConTodos = useSelector(selectPersonasConTodos);
 
+  const [queryPersonas, setQueryPersonas] = useState("");
+
+  const [openPersonaList, setOpenPersonaList] = useState(false);
   const [mergeOpen, setMergeOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('agregar');
   const [selectedPerson, setSelectedPerson] = useState(null);
 
+  const [listaEncargados, setListaEncargados] = useState([]);
+  const [loadingEncargado, setLoadingEncargado] = useState(false);
+  const [openEncargadoList, setOpenEncargadoList] = useState(false);
+  const [encargadoSelected, setEncargadoSelected] = useState(null);
+
+  
+
+
   const [formAdd, setFormAdd] = useState({ /* ... */ });
   const [filters, setFilters] = useState({ /* ... */ });
+  const [queryEncargado, setQueryEncargado] = useState("");
 
   const [toast, setToast] = useState(null); // { type: 'success'|'error', message: string }
   useEffect(() => {
@@ -104,7 +128,8 @@ export default function Personas() {
 
   const handleSearch = (e) => {
     if (e) e.preventDefault();
-
+    
+    setQueryPersonas("");
     // Limpiar y enviar solo filtros con valor
     const cleaned = Object.fromEntries(
       Object.entries(filters)
@@ -114,6 +139,7 @@ export default function Personas() {
 
     if (Object.keys(cleaned).length > 0) {
       dispatch(fetchPersonas(cleaned));
+      setQueryPersonas("");
     } else {
       dispatch(fetchAllPersonas());
     }
@@ -176,8 +202,42 @@ export default function Personas() {
     console.error('updatePersona threw:', err);
     setToast({ type: 'error', message: extractError(err) });
   }
-};
 
+};
+useEffect(() => {
+  if (activeTab !== 'encargado') return;
+
+  if (queryEncargado.trim().length < 2) {
+    setListaEncargados([]);
+    setOpenEncargadoList(false);
+    return;
+  }
+
+  setLoadingEncargado(true);
+
+  const delay = setTimeout(() => {
+    dispatch(
+      buscarPersonasConTodosLosSacramentos({
+        sacerdote: false,
+        search: queryEncargado   // ✅ AHORA SE ENVÍA AL BACKEND
+      })
+    )
+      .unwrap()
+      .then((data) => {
+        setListaEncargados(data || []);
+        setOpenEncargadoList(true);
+      })
+      .catch(() => {
+        setListaEncargados([]);
+      })
+      .finally(() => setLoadingEncargado(false));
+  }, 300);
+
+  return () => clearTimeout(delay);
+}, [queryEncargado, activeTab]);
+
+  
+  
   return (
     <Layout title="Gestión de Personas">
       {/* Tabs */}
@@ -201,6 +261,19 @@ export default function Personas() {
           }`}
         >
           Buscar Persona
+        </button>
+        <button
+          onClick={() => {
+            setActiveTab('encargado');
+            dispatch(buscarPersonasConTodosLosSacramentos({ sacerdote: false }));
+          }}
+          className={`px-5 py-2 text-sm font-medium rounded-t-lg border transition-colors focus:outline-none ${
+            activeTab === 'encargado'
+              ? 'bg-white dark:bg-background-dark text-primary border-gray-200 dark:border-gray-700 border-b-transparent -mb-px'
+              : 'bg-gray-50 dark:bg-gray-800/40 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white border-transparent'
+          }`}
+        >
+          Agregar personal de la iglesia
         </button>
       </div>
 
@@ -630,6 +703,32 @@ export default function Personas() {
                         <option value="false">Inactivo</option>
                       </select>
                     </div>
+                    {/* Campo SACERDOTE — Solo mostrar si no es null */}
+                    {selectedPerson.sacerdote !== null && (
+                      <div>
+                        <label
+                          htmlFor="e-sacerdote"
+                          className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1"
+                        >
+                          Encargado / Sacerdote
+                        </label>
+
+                        <select
+                          id="e-sacerdote"
+                          value={String(!!selectedPerson.sacerdote)}
+                          onChange={e =>
+                            setSelectedPerson({
+                              ...selectedPerson,
+                              sacerdote: e.target.value === "true"
+                            })
+                          }
+                          className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-2"
+                        >
+                          <option value="true">Sí</option>
+                          <option value="false">No</option>
+                        </select>
+                      </div>
+                    )}
                     <div>
                       <label htmlFor="e-estado" className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1">Estado de verificación</label>
                       <select
@@ -664,6 +763,93 @@ export default function Personas() {
                 </form>
               </div>
             )}
+          </div>
+        </>
+      )}
+      {activeTab === 'encargado' && (
+        <>
+          <div className="bg-white dark:bg-background-dark/50 rounded-xl shadow-sm mb-6">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-800">
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-1">
+                Buscar Encargado de Iglesia
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Seleccione a una persona que cumpla los requisitos para ser encargado.
+              </p>
+            </div>
+             <div>
+    
+                    <div className="relative">
+                      <input
+                          type="search"
+                          placeholder="Buscar encargado (persona registrada)"
+                          value={queryEncargado}
+                          onChange={e => {
+                            setQueryEncargado(e.target.value);
+                            setEncargadoSelected(false);
+                            setListaEncargados([]);
+                          }}
+                          className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3 pr-10"
+                        />
+                        {/* DROPDOWN ENCARGADO */}
+{!encargadoSelected && openEncargadoList && (
+  <div
+    style={{
+      position: "absolute",
+      background: "white",
+      border: "1px solid #dcdcdc",
+      borderRadius: "8px",
+      marginTop: "4px",
+      width: "95%",
+      maxHeight: "220px",
+      overflowY: "auto",
+      zIndex: 9999,
+      padding: "5px",
+    }}
+  >
+    {(loadingEncargado || isLoading) && (
+      <div className="flex justify-center items-center py-4">
+        <ClipLoader size={28} color="#4f46e5" />
+      </div>
+    )}
+
+    {!encargadoSelected && listaEncargados.length === 0 && queryEncargado.length > 0 && (
+      <div className="py-3 text-center text-sm text-gray-500">
+        No se encontraron posibles encargados con ese valor.
+      </div>
+    )}
+
+    {!loadingEncargado && !isLoading && listaEncargados.length > 0 && (
+      listaEncargados.map((p) => (
+        <div
+          key={p.id_persona}
+          style={{
+            padding: "10px",
+            borderBottom: "1px solid #eee",
+            cursor: "pointer",
+          }}
+          onClick={() => {
+            handleChange("padrinoId", p.id_persona);
+            setQueryPadrino(`${p.nombre} ${p.apellido_paterno} ${p.apellido_materno}`);
+            setListaPadrinos([]);
+            setPadrinoSelected(true);
+            setOpenPadrinoList(false);
+          }}
+        >
+          <strong>{p.nombre} {p.apellido_paterno} {p.apellido_materno}</strong>
+          <div style={{ fontSize: "13px", color: "#666" }}>
+            CI: {p.carnet_identidad}
+          </div>
+        </div>
+      ))
+    )}
+  </div>
+)}
+                      <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">search</span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">Escriba nombre o CI para buscar en Personas.</p>
+                  </div>
+      
           </div>
         </>
       )}
