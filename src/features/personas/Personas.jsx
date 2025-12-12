@@ -46,12 +46,18 @@ export default function Personas() {
   const [mergeOpen, setMergeOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('agregar');
   const [selectedPerson, setSelectedPerson] = useState(null);
-  const [queryPersonas, setQueryPersonas] = useState("");
-  const [listaPersonas, setListaPersonas] = useState([]);
-  const [loadingPersona, setLoadingPersona] = useState(false);
+
+  const [listaEncargados, setListaEncargados] = useState([]);
+  const [loadingEncargado, setLoadingEncargado] = useState(false);
+  const [openEncargadoList, setOpenEncargadoList] = useState(false);
+  const [encargadoSelected, setEncargadoSelected] = useState(null);
+
+  
+
 
   const [formAdd, setFormAdd] = useState({ /* ... */ });
   const [filters, setFilters] = useState({ /* ... */ });
+  const [queryEncargado, setQueryEncargado] = useState("");
 
   const [toast, setToast] = useState(null); // { type: 'success'|'error', message: string }
   useEffect(() => {
@@ -194,43 +200,46 @@ export default function Personas() {
     console.error('updatePersona threw:', err);
     setToast({ type: 'error', message: extractError(err) });
   }
+
 };
+useEffect(() => {
+  if (activeTab !== 'encargado') return;
+
+  if (queryEncargado.trim().length < 2) {
+    setListaEncargados([]);
+    setOpenEncargadoList(false);
+    return;
+  }
+
+  setLoadingEncargado(true);
+
+  const delay = setTimeout(() => {
+    dispatch(
+      buscarPersonasConTodosLosSacramentos({
+        sacerdote: false
+      })
+    )
+      .unwrap()
+      .then((data) => {
+        // 🔹 aquí filtramos como siempre
+        const q = queryEncargado.toLowerCase();
+        const filtrados = (data || []).filter(p =>
+          p.nombre.toLowerCase().includes(q) ||
+          p.apellido_paterno.toLowerCase().includes(q) ||
+          p.apellido_materno.toLowerCase().includes(q) ||
+          (p.carnet_identidad && p.carnet_identidad.toLowerCase().includes(q))
+        );
+
+        setListaEncargados(filtrados);
+        setOpenEncargadoList(true);
+      })
+      .finally(() => setLoadingEncargado(false));
+  }, 300);
+
+  return () => clearTimeout(delay);
+}, [queryEncargado, activeTab]);
 
   
-  useEffect(() => {
-    
-  console.log("useEffect ejecutado. queryPersonas =", queryPersonas);
-    if (queryPersonas.trim().length < 2) {
-      setListaPersonas([]);
-      setLoadingPersona(false);
-      
-  console.log("useEffect ejecutado. queryPersonas =", queryPersonas);
-      return;
-    }
-  
-    const delay = setTimeout(() => {
-      dispatch(fetchPersonasParaSacramento({
-        search: queryPersonas,
-        rol: "encargado",
-        tipo: "rol"
-      }))
-      
-        .unwrap()
-        .then((data) => {
-          setListaPersonas(data.personas || []);
-          console.log("La lista de personas es",listaPersonas)
-          setOpenPersonaList(true);
-        })
-        .catch(() => {
-          setListaPersonas([]);
-        })
-        .finally(() => {
-          setLoadingPersona(false);   // 🔵 se apaga el loading
-        });
-    }, 300);
-    
-    return () => clearTimeout(delay);
-  }, [queryPersonas]);
   
   return (
     <Layout title="Gestión de Personas">
@@ -257,7 +266,10 @@ export default function Personas() {
           Buscar Persona
         </button>
         <button
-          onClick={() => setActiveTab('encargado')}
+          onClick={() => {
+            setActiveTab('encargado');
+            dispatch(buscarPersonasConTodosLosSacramentos({ sacerdote: false }));
+          }}
           className={`px-5 py-2 text-sm font-medium rounded-t-lg border transition-colors focus:outline-none ${
             activeTab === 'encargado'
               ? 'bg-white dark:bg-background-dark text-primary border-gray-200 dark:border-gray-700 border-b-transparent -mb-px'
@@ -768,58 +780,79 @@ export default function Personas() {
                 Seleccione a una persona que cumpla los requisitos para ser encargado.
               </p>
             </div>
-            <form action="" onSubmit={(e) => e.preventDefault()}>
-              <div className="p-6 border-b border-gray-200 dark:border-gray-800">
-                <h4 className="text-base font-semibold text-gray-800 dark:text-gray-200 mb-4">
-                  Personas que cumplen los requisitos (bautizo, comunión y matrimonio)
-                </h4>
+             <div>
+    
+                    <div className="relative">
+                      <input
+                          type="search"
+                          placeholder="Buscar encargado (persona registrada)"
+                          value={queryEncargado}
+                          onChange={e => {
+                            setQueryEncargado(e.target.value);
+                            setEncargadoSelected(false);
+                            setListaEncargados([]);
+                          }}
+                          className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3 pr-10"
+                        />
+                        {/* DROPDOWN ENCARGADO */}
+{!encargadoSelected && openEncargadoList && (
+  <div
+    style={{
+      position: "absolute",
+      background: "white",
+      border: "1px solid #dcdcdc",
+      borderRadius: "8px",
+      marginTop: "4px",
+      width: "95%",
+      maxHeight: "220px",
+      overflowY: "auto",
+      zIndex: 9999,
+      padding: "5px",
+    }}
+  >
+    {(loadingEncargado || isLoading) && (
+      <div className="flex justify-center items-center py-4">
+        <ClipLoader size={28} color="#4f46e5" />
+      </div>
+    )}
 
-                <div className="flex justify-start mb-5">
-                  <button
-                    type="button"
-                    onClick={() => dispatch(buscarPersonasConTodosLosSacramentos())}
-                    className="px-5 py-2.5 rounded-lg bg-primary text-white font-medium shadow-sm hover:bg-primary/90 transition"
-                  >
-                    Buscar candidatos
-                  </button>
-                </div>
+    {!encargadoSelected && listaEncargados.length === 0 && queryEncargado.length > 0 && (
+      <div className="py-3 text-center text-sm text-gray-500">
+        No se encontraron posibles encargados con ese valor.
+      </div>
+    )}
 
-                <div className="space-y-2">
-                  {personasConTodos?.length === 0 && (
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      No hay resultados. Presione “Buscar candidatos”.
-                    </p>
-                  )}
-
-                  {personasConTodos?.map((p) => (
-                    <div
-                      key={p.id_persona}
-                      className="p-4 border rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition shadow-sm"
-                      onClick={() => {
-                        Swal.fire({
-                          title: "¿Asignar como encargado?",
-                          html: `<strong>${p.nombre} ${p.apellido_paterno} ${p.apellido_materno}</strong> cumple con todos los sacramentos.`,
-                          icon: "question",
-                          showCancelButton: true,
-                          confirmButtonText: "Sí, asignar",
-                          cancelButtonText: "Cancelar",
-                        }).then((res) => {
-                          if (res.isConfirmed) {
-                            const payload = { es_sacerdote: true };
-                            dispatch(updatePersona({ id: p.id_persona, data: payload }));
-                          }
-                        });
-                      }}
-                    >
-                      <strong>{p.nombre} {p.apellido_paterno} {p.apellido_materno}</strong>
-                      <div className="text-sm text-gray-600 dark:text-gray-400">
-                        CI: {p.carnet_identidad}
-                      </div>
+    {!loadingEncargado && !isLoading && listaEncargados.length > 0 && (
+      listaEncargados.map((p) => (
+        <div
+          key={p.id_persona}
+          style={{
+            padding: "10px",
+            borderBottom: "1px solid #eee",
+            cursor: "pointer",
+          }}
+          onClick={() => {
+            handleChange("padrinoId", p.id_persona);
+            setQueryPadrino(`${p.nombre} ${p.apellido_paterno} ${p.apellido_materno}`);
+            setListaPadrinos([]);
+            setPadrinoSelected(true);
+            setOpenPadrinoList(false);
+          }}
+        >
+          <strong>{p.nombre} {p.apellido_paterno} {p.apellido_materno}</strong>
+          <div style={{ fontSize: "13px", color: "#666" }}>
+            CI: {p.carnet_identidad}
+          </div>
+        </div>
+      ))
+    )}
+  </div>
+)}
+                      <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">search</span>
                     </div>
-                  ))}
-                </div>
-              </div>
-            </form>
+                    <p className="text-xs text-gray-500 mt-1">Escriba nombre o CI para buscar en Personas.</p>
+                  </div>
+      
           </div>
         </>
       )}

@@ -196,6 +196,12 @@ export const sacramentosApi = {
       .get(`/sacramentos/completo/${id}`)
       .then((res) => res.data)
       .catch(handleError),
+  // para buscar personas con todos los sacramentos
+  buscarPersonasConTodosLosSacramentos: (params = {}) =>
+    api
+      .get('/sacramentos/buscar-personas-todos-sacramentos', { params })
+      .then((res) => res.data)
+      .catch(handleError),  
       
     
 
