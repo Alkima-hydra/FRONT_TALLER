@@ -87,10 +87,10 @@ const [ministroActual, setMinistroActual] = useState("");
     BAUTIZADO: 1,
     COMULGADO: 2,
     CONFIRMADO: 10,
-    ESPOSO: 11,
+    ESPOSO: 2,
     PADRINO: 5,
     MINISTRO: 9,
-    ESPOSA: 12,
+    ESPOSA: 3,
   };
   //diccionario para tipo de sacramento
   const TIPO_SACRAMENTO_IDS = {
@@ -533,6 +533,7 @@ useEffect(() => {
 
               parroquia: sac.parroquia,
               tipoSacramento: sac.tipoSacramento,
+              matrimonio_detalle: sac.matrimonioDetalle
             });
           });
         });
@@ -656,15 +657,15 @@ useEffect(() => {
         setQueryEsposa("");
       }
 
-      console.log("📄 Matrimonio detalle recibido:", row.matrimonio_detalle);
+      console.log("📄 Matrimonio detalle recibido:", row.matrimonioDetalle);
 
-      if (row.matrimonio_detalle) {
+      if (row.matrimonioDetalle) {
         setMatrimonio({
           esposoId: relEsposo?.persona_id_persona || null,
           esposaId: relEsposa?.persona_id_persona || null,
-          lugar_ceremonia: row.matrimonio_detalle.lugar_ceremonia || "",
-          reg_civil: row.matrimonio_detalle.reg_civil || "",
-          numero_acta: row.matrimonio_detalle.numero_acta || "",
+          lugar_ceremonia: row.matrimonioDetalle.lugar_ceremonia || "",
+          reg_civil: row.matrimonioDetalle.reg_civil || "",
+          numero_acta: row.matrimonioDetalle.numero_acta || "",
         });
       } else {
         setMatrimonio({
@@ -851,7 +852,7 @@ useEffect(() => {
     )}
 
     {/* Sin resultados */}
-    {!personaSelected && listaPersonas.length === 0 && queryPersona.length > 0 && personaId.id_persona == null && (
+    {!personaSelected && listaPersonas.length === 0 && queryPersona.length > 0 &&  (
       <div className="py-3 text-center text-sm text-gray-500">
         No se encontraron personas con ese valor.
       </div>
@@ -1327,7 +1328,7 @@ useEffect(() => {
                     <input
                       type="text"
                       placeholder="Lugar donde se realizó el matrimonio"
-                      value={matrimonio.matrimonio_detalle.lugar_ceremonia}
+                      value={matrimonio.lugar_ceremonia}
                       onChange={e => handleMatChange('lugar_ceremonia', e.target.value)}
                       className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3"
                     />
@@ -1338,7 +1339,7 @@ useEffect(() => {
                     <input
                       type="text"
                       placeholder="Ej. 123/2025 - Oficialía X"
-                      value={matrimonio.matrimonio.matrimonio_detalle.reg_civil}
+                      value={matrimonio.reg_civil}
                       onChange={e => handleMatChange('reg_civil', e.target.value)}
                       className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3"
                     />
@@ -1348,7 +1349,7 @@ useEffect(() => {
                     <input
                       type="text"
                       placeholder="Ej. 0456 / Libro 23"
-                      value={matrimonio.matrimonio_detalle.numero_acta}
+                      value={matrimonio.numero_acta}
                       onChange={e => handleMatChange('numero_acta', e.target.value)}
                       className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3"
                     />
