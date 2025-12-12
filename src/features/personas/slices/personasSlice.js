@@ -6,6 +6,7 @@ import {
   createPersona,
   updatePersona,
   deletePersona,
+  fetchPersonasParaSacramento,
 } from './personasThunk';
 
 const initialState = {
@@ -145,7 +146,23 @@ const personasSlice = createSlice({
       .addCase(deletePersona.rejected, (state, action) => {
         state.isDeleting = false;
         state.error = action.payload?.message || 'Error al eliminar persona';
-      });
+      })
+
+      
+          // 🔵 Buscar personas para sacramento
+          .addCase(fetchPersonasParaSacramento.pending, (state) => {
+            state.isLoading = true;
+            state.error = null;
+            state.personasBusqueda = [];
+          })
+          .addCase(fetchPersonasParaSacramento.fulfilled, (state, action) => {
+            state.isLoading = false;
+            state.personasBusqueda = action.payload.personas;
+          })
+          .addCase(fetchPersonasParaSacramento.rejected, (state, action) => {
+            state.isLoading = false;
+            state.error = action.payload || 'Error al buscar personas';
+          })
   },
 });
 
