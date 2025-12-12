@@ -216,22 +216,17 @@ useEffect(() => {
   const delay = setTimeout(() => {
     dispatch(
       buscarPersonasConTodosLosSacramentos({
-        sacerdote: false
+        sacerdote: false,
+        search: queryEncargado   // ✅ AHORA SE ENVÍA AL BACKEND
       })
     )
       .unwrap()
       .then((data) => {
-        // 🔹 aquí filtramos como siempre
-        const q = queryEncargado.toLowerCase();
-        const filtrados = (data || []).filter(p =>
-          p.nombre.toLowerCase().includes(q) ||
-          p.apellido_paterno.toLowerCase().includes(q) ||
-          p.apellido_materno.toLowerCase().includes(q) ||
-          (p.carnet_identidad && p.carnet_identidad.toLowerCase().includes(q))
-        );
-
-        setListaEncargados(filtrados);
+        setListaEncargados(data || []);
         setOpenEncargadoList(true);
+      })
+      .catch(() => {
+        setListaEncargados([]);
       })
       .finally(() => setLoadingEncargado(false));
   }, 300);
