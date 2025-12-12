@@ -156,7 +156,7 @@ export default function Certificados() {
             // Si quieres ver todos, quita este if o ajusta los IDs
             const rolId = rel.rol_sacramento_id_rol_sacra;
             // IDs de protagonistas: 1(Bautizado), 2(Comulgado), 10(Confirmado), 11(Esposo), etc.
-            if ([1, 2, 10, 11, 21].includes(rolId)) {
+            if ([1, 2, 3, 10, 11, 21].includes(rolId)) {
                 resultadosProcesados.push({
                   id_sacramento: sac.id_sacramento,
                   nombre_completo: `${rel.persona.nombre} ${rel.persona.apellido_paterno} ${rel.persona.apellido_materno}`,
@@ -376,7 +376,8 @@ export default function Certificados() {
                             </div>
                         </div>
 
-                        {/* CONFIGURACIÓN DE PLANTILLA como falta perfeccionar platilla
+                        {/* CONFIGURACIÓN DE PLANTILLA como falta perfeccionar platilla 
+                        */}
                         <div>
                              <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Seleccionar Diseño / Plantilla</label>
                              <div className="grid grid-cols-2 gap-4">
@@ -388,15 +389,14 @@ export default function Certificados() {
                                     <div className="text-sm font-medium">Oficial {tipo}</div>
                                 </div>
                                 <div 
-                                    onClick={() => setPlantilla('simple')}
+                                    onClick={() => setPlantilla('iglesia-rellenable')}
                                     className={`cursor-pointer border rounded-lg p-3 flex items-center gap-3 ${plantilla === 'simple' ? 'border-primary ring-1 ring-primary bg-primary/5' : 'border-gray-200 hover:border-gray-300'}`}
                                 >
                                     <div className="h-10 w-8 bg-gray-200 rounded flex items-center justify-center text-xs">PDF</div>
-                                    
+                                    <div className="text-sm font-medium">Oficial Primera Comunion </div>
                                 </div>
                              </div>
                         </div>
-                        */}
                         
                         <div className="rounded-lg border border-dashed border-border-light dark:border-border-dark p-6 bg-background-light dark:bg-background-dark">
                           {pdfUrl ? (
