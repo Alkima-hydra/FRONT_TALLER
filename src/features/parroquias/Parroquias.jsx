@@ -12,6 +12,13 @@ import {
 } from './slices/parroquiasThunk';
 
 import {
+   selectPersonasConTodos
+} from '../sacramentos/slices/sacramentosSlices';
+import {
+  buscarPersonasConTodosLosSacramentos
+}from '../sacramentos/slices/sacramentosTrunk.js';
+
+import {
   selectParroquias,
   selectIsLoading,
   selectError,
@@ -33,7 +40,44 @@ export default function Parroquias() {
     direccion: '',
     telefono: '',
     email: '',
+    encargado_id: null, // 👈 sacerdote encargado
   });
+  // ====== BUSCADOR ENCARGADO (SACERDOTE) ======
+  const [queryEncargado, setQueryEncargado] = useState("");
+  const [listaEncargados, setListaEncargados] = useState([]);
+  const [openEncargadoList, setOpenEncargadoList] = useState(false);
+  const [loadingEncargado, setLoadingEncargado] = useState(false);
+  useEffect(() => {
+    if (activeTab !== 'agregar') return;
+
+    if (queryEncargado.trim().length < 2) {
+      setListaEncargados([]);
+      setOpenEncargadoList(false);
+      return;
+    }
+
+    setLoadingEncargado(true);
+
+    const delay = setTimeout(() => {
+      dispatch(
+        buscarPersonasConTodosLosSacramentos({
+          sacerdote: true,       // 👈 SOLO SACERDOTES
+          search: queryEncargado
+        })
+      )
+        .unwrap()
+        .then((data) => {
+          setListaEncargados(data.personas || []);
+          setOpenEncargadoList(true);
+        })
+        .catch(() => {
+          setListaEncargados([]);
+        })
+        .finally(() => setLoadingEncargado(false));
+    }, 300);
+
+    return () => clearTimeout(delay);
+  }, [queryEncargado, activeTab, dispatch]);
   const [filters, setFilters] = useState({ nombre: '', direccion: '' });
   const [parroquiasLocal, setParroquiasLocal] = useState([]);
 
@@ -210,6 +254,78 @@ export default function Parroquias() {
                   />
                 </div>
               ))}
+
+              {/* Encargado (Sacerdote) */}
+              <div className="relative md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Encargado de la Parroquia (Sacerdote)
+                </label>
+
+                <input
+                  type="search"
+                  placeholder="Buscar sacerdote por nombre o CI"
+                  value={queryEncargado}
+                  onChange={(e) => {
+                    setQueryEncargado(e.target.value);
+                    setOpenEncargadoList(true);
+                  }}
+                  className="w-full h-11 rounded-lg bg-background-light dark:bg-background-dark 
+    border border-gray-300 dark:border-gray-700 
+    focus:outline-none focus:ring-2 focus:ring-primary 
+    px-4 pr-10 shadow-sm"
+                />
+
+                <span className="material-symbols-outlined absolute right-3 top-9 text-gray-500">
+                  search
+                </span>
+
+                {openEncargadoList && (
+                  <div className="absolute left-0 right-0 mt-2 bg-white dark:bg-background-dark 
+    border border-gray-300 dark:border-gray-700 
+    rounded-lg shadow-xl 
+    max-h-64 overflow-y-auto z-[9999]">
+
+                    {loadingEncargado && (
+                      <div className="flex justify-center py-4">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                      </div>
+                    )}
+
+                    {!loadingEncargado && listaEncargados.length === 0 && (
+                      <div className="py-3 text-center text-sm text-gray-500">
+                        No se encontraron sacerdotes
+                      </div>
+                    )}
+
+                    {!loadingEncargado &&
+                      listaEncargados.map((p) => (
+                        <div
+                          key={p.id_persona}
+                          className="px-4 py-2 cursor-pointer 
+            hover:bg-primary/5 dark:hover:bg-primary/20 
+            border-b border-gray-100 dark:border-gray-700"
+                          onClick={() => {
+                            setFormData({
+                              ...formData,
+                              encargado_id: p.id_persona,
+                            });
+                            setQueryEncargado(
+                              `${p.nombre} ${p.apellido_paterno} ${p.apellido_materno}`
+                            );
+                            setOpenEncargadoList(false);
+                          }}
+                        >
+                          <div className="font-medium">
+                            {p.nombre} {p.apellido_paterno} {p.apellido_materno}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            CI: {p.carnet_identidad}
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                )}
+              </div>
             </div>
             <div className="mt-6 flex items-center gap-3">
               <button

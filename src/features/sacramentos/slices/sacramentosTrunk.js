@@ -49,6 +49,20 @@ export const fetchParroquias = createAsyncThunk(
   }
 );
 // para el sacramento completo con todas sus relaciones
+
+//  Buscar personas que tengan bautizo + comunión + matrimonio (posibles sacerdotes)
+export const buscarPersonasConTodosLosSacramentos = createAsyncThunk(
+  'sacramentos/buscarPersonasConTodosLosSacramentos',
+  async (params = {}, { rejectWithValue }) => {
+    try {
+      const response = await sacramentosApi.buscarPersonasConTodosLosSacramentos(params);
+      return response;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || error.message);
+    }
+  }
+);
+
 export const crearSacramentoCompleto = createAsyncThunk(
   'sacramentos/crearSacramentoCompleto',
   async (sacramentoData, { rejectWithValue }) => {
@@ -82,7 +96,7 @@ export const fetchSacramentoCompleto = createAsyncThunk(
   'sacramentos/fetchSacramentoCompleto',
   async (id, { rejectWithValue }) => {
     try {
-      const response = await sacramentosApi.obtenerSacramentoCompleto(id);
+      const response = await sacramentosApi.fetchSacramentoCompleto(id);
       return response;
     }
     catch (error) {
@@ -104,3 +118,4 @@ export const actualizarSacramentoCompleto = createAsyncThunk(
     }
   }
 );
+
