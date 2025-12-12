@@ -23,6 +23,14 @@ import {
   selectIsDeleting
 } from './slices/personasSlice';
 
+import {
+   selectPersonasConTodos
+} from '../sacramentos/slices/sacramentosSlices';
+import {
+  buscarPersonasConTodosLosSacramentos
+}from '../sacramentos/slices/sacramentosTrunk.js';
+
+
 export default function Personas() {
   const dispatch = useDispatch();
   const isLoading = useSelector(selectIsLoading);
@@ -32,6 +40,7 @@ export default function Personas() {
   const isCreating = useSelector(selectIsCreating);
   const isUpdating = useSelector(selectIsUpdating);
   const isDeleting = useSelector(selectIsDeleting);
+  const personasConTodos = useSelector(selectPersonasConTodos);
 
   const [openPersonaList, setOpenPersonaList] = useState(false);
   const [mergeOpen, setMergeOpen] = useState(false);
@@ -255,7 +264,7 @@ export default function Personas() {
               : 'bg-gray-50 dark:bg-gray-800/40 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white border-transparent'
           }`}
         >
-          Agregar encargado
+          Agregar personal de la iglesia
         </button>
       </div>
 
@@ -685,6 +694,32 @@ export default function Personas() {
                         <option value="false">Inactivo</option>
                       </select>
                     </div>
+                    {/* Campo SACERDOTE — Solo mostrar si no es null */}
+                    {selectedPerson.sacerdote !== null && (
+                      <div>
+                        <label
+                          htmlFor="e-sacerdote"
+                          className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1"
+                        >
+                          Encargado / Sacerdote
+                        </label>
+
+                        <select
+                          id="e-sacerdote"
+                          value={String(!!selectedPerson.sacerdote)}
+                          onChange={e =>
+                            setSelectedPerson({
+                              ...selectedPerson,
+                              sacerdote: e.target.value === "true"
+                            })
+                          }
+                          className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-2"
+                        >
+                          <option value="true">Sí</option>
+                          <option value="false">No</option>
+                        </select>
+                      </div>
+                    )}
                     <div>
                       <label htmlFor="e-estado" className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1">Estado de verificación</label>
                       <select
@@ -726,285 +761,65 @@ export default function Personas() {
         <>
           <div className="bg-white dark:bg-background-dark/50 rounded-xl shadow-sm mb-6">
             <div className="p-6 border-b border-gray-200 dark:border-gray-800">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Buscar Encargado de iglesia</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Use uno o más campos para filtrar y luego presione Buscar.</p>
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-1">
+                Buscar Encargado de Iglesia
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Seleccione a una persona que cumpla los requisitos para ser encargado.
+              </p>
             </div>
-
-            <form action="">
-            {(
-              <div className="mt-2 mb-6">
-                <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3">
-                  Persona que recibió el con los requisitos
+            <form action="" onSubmit={(e) => e.preventDefault()}>
+              <div className="p-6 border-b border-gray-200 dark:border-gray-800">
+                <h4 className="text-base font-semibold text-gray-800 dark:text-gray-200 mb-4">
+                  Personas que cumplen los requisitos (bautizo, comunión y matrimonio)
                 </h4>
-                <div className="mb-6 relative">
-                  <input
-                    type="search"
-                    placeholder="Buscar persona (nombre o CI registrado)"
-                    value={queryPersonas}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      setQueryPersonas(value);
 
-                      if (value.trim().length >= 2) {
-                        setLoadingPersona(true);     // 🔵 activa loading instantáneo
-                        setOpenPersonaList(true);
-                      } else {
-                        setOpenPersonaList(false);
-                        setLoadingPersona(false);
-                      }
-                    }}
-                    className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-3 pr-10"
-                  />
-                  {/* DROPDOWN PERSONA */}
-{openPersonaList && (
-  <div
-    style={{
-      position: "absolute",
-      background: "white",
-      border: "1px solid #dcdcdc",
-      borderRadius: "8px",
-      marginTop: "4px",
-      width: "95%",
-      maxHeight: "220px",
-      overflowY: "auto",
-      zIndex: 9999,
-      padding: "5px",
-    }}
-  >
-    {/* Loading */}
-    {(loadingPersona || isLoading) && (
-      <div className="flex justify-center items-center py-4">
-        <ClipLoader size={28} color="#4f46e5" />
-      </div>
-    )}
-
-    {/* Sin resultados */}
-    {(!loadingPersona && !isLoading && listaPersonas.length === 0) && (
-      <div className="py-3 text-center text-sm text-gray-500">
-        No se encontraron personas con ese valor.
-      </div>
-    )}
-
-    {/* Resultados */}
-    {!isLoading && listaPersonas.length > 0 && (
-      listaPersonas.map((p) => (
-        <div
-          key={p.id_persona}
-          style={{
-            padding: "10px",
-            borderBottom: "1px solid #eee",
-            cursor: "pointer",
-          }}
-          onClick={() => {
-            handleChange("personaId", p.id_persona);
-            setQueryPersonas(`${p.nombre} ${p.apellido_paterno} ${p.apellido_materno}`);
-            setOpenPersonaList(false);
-          }}
-        >
-          <strong>{p.nombre} {p.apellido_paterno} {p.apellido_materno}</strong>
-          <div style={{ fontSize: "13px", color: "#666" }}>
-            CI: {p.carnet_identidad}
-          </div>
-        </div>
-      ))
-    )}
-  </div>
-)}
-
-                  <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
-                    search
-                  </span>
-
+                <div className="flex justify-start mb-5">
+                  <button
+                    type="button"
+                    onClick={() => dispatch(buscarPersonasConTodosLosSacramentos())}
+                    className="px-5 py-2.5 rounded-lg bg-primary text-white font-medium shadow-sm hover:bg-primary/90 transition"
+                  >
+                    Buscar candidatos
+                  </button>
                 </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  Busque la persona registrada en la base de datos que se bautizó o realizó la comunión.
-                </p>
-              </div>
-            )}
-            </form>
-            
-          </div>
 
-          <div className="bg-white dark:bg-background-dark/50 rounded-xl shadow-sm">
-            <div className="p-6 border-b border-gray-200 dark:border-gray-800">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Resultados</h3>
-               <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Para editar alguno de los resultados, seleccione la fila deseada.</p>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-                <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700/50 dark:text-gray-400">
-                  <tr>
-                    <th className="px-6 py-3" scope="col">Nombre</th>
-                    <th className="px-6 py-3" scope="col">Apellido paterno</th>
-                    <th className="px-6 py-3" scope="col">Apellido materno</th>
-                    <th className="px-6 py-3" scope="col">CI</th>
-                    <th className="px-6 py-3" scope="col">Fecha nac.</th>
-                    <th className="px-6 py-3" scope="col">Lugar nac.</th>
-                    <th className="px-6 py-3" scope="col">Estado</th>
-                    <th className="px-6 py-3" scope="col">Estado de verificación</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loading && (
-                    <tr><td className="px-6 py-4" colSpan={8}>Cargando...</td></tr>
+                <div className="space-y-2">
+                  {personasConTodos?.length === 0 && (
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      No hay resultados. Presione “Buscar candidatos”.
+                    </p>
                   )}
-                  {!loading && people.length === 0 && (
-                    <tr><td className="px-6 py-4" colSpan={8}>Sin resultados</td></tr>
-                  )}
-                  {!loading && people.map((p) => (
-                    <tr
-                      key={p.id || p.id_persona}
-                      onClick={() => handleRowClick(p.id || p.id_persona)}
-                      className="cursor-pointer bg-white dark:bg-background-dark/50 border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
+
+                  {personasConTodos?.map((p) => (
+                    <div
+                      key={p.id_persona}
+                      className="p-4 border rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition shadow-sm"
+                      onClick={() => {
+                        Swal.fire({
+                          title: "¿Asignar como encargado?",
+                          html: `<strong>${p.nombre} ${p.apellido_paterno} ${p.apellido_materno}</strong> cumple con todos los sacramentos.`,
+                          icon: "question",
+                          showCancelButton: true,
+                          confirmButtonText: "Sí, asignar",
+                          cancelButtonText: "Cancelar",
+                        }).then((res) => {
+                          if (res.isConfirmed) {
+                            const payload = { es_sacerdote: true };
+                            dispatch(updatePersona({ id: p.id_persona, data: payload }));
+                          }
+                        });
+                      }}
                     >
-                      <td className="px-6 py-4">{p.nombre}</td>
-                      <td className="px-6 py-4">{p.apellido_paterno}</td>
-                      <td className="px-6 py-4">{p.apellido_materno}</td>
-                      <td className="px-6 py-4">{p.carnet_identidad}</td>
-                      <td className="px-6 py-4">{p.fecha_nacimiento}</td>
-                      <td className="px-6 py-4">{p.lugar_nacimiento}</td>
-                      <td className="px-6 py-4">
-                        {p.activo ? (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">Activo</span>
-                        ) : (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">Inactivo</span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4">
-                        {p.estado === 'Verificado' ? (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">Verificado</span>
-                        ) : (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300">No verificado</span>
-                        )}
-                      </td>
-                    </tr>
+                      <strong>{p.nombre} {p.apellido_paterno} {p.apellido_materno}</strong>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">
+                        CI: {p.carnet_identidad}
+                      </div>
+                    </div>
                   ))}
-                </tbody>
-              </table>
-            </div>
-            {selectedPerson && (
-              <div className="mt-8 bg-white dark:bg-background-dark/50 rounded-xl shadow-sm p-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Editar Persona</h3>
-                <form onSubmit={handleUpdate} className="grid grid-cols-1 md-grid-cols-2 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nombre</label>
-                    <input
-                      type="text"
-                      value={selectedPerson.nombre || ''}
-                      onChange={e => setSelectedPerson({ ...selectedPerson, nombre: e.target.value })}
-                      className="w-full rounded-lg border border-gray-300 dark:border-gray-700 p-3 bg-background-light dark:bg-background-dark"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Apellido paterno</label>
-                    <input
-                      type="text"
-                      value={selectedPerson.apellido_paterno || ''}
-                      onChange={e => setSelectedPerson({ ...selectedPerson, apellido_paterno: e.target.value })}
-                      className="w-full rounded-lg border border-gray-300 dark:border-gray-700 p-3 bg-background-light dark:bg-background-dark"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Apellido materno</label>
-                    <input
-                      type="text"
-                      value={selectedPerson.apellido_materno || ''}
-                      onChange={e => setSelectedPerson({ ...selectedPerson, apellido_materno: e.target.value })}
-                      className="w-full rounded-lg border border-gray-300 dark:border-gray-700 p-3 bg-background-light dark:bg-background-dark"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Carnet de identidad</label>
-                    <input
-                      type="text"
-                      value={selectedPerson.carnet_identidad || ''}
-                      onChange={e => setSelectedPerson({ ...selectedPerson, carnet_identidad: e.target.value })}
-                      className="w-full rounded-lg border border-gray-300 dark:border-gray-700 p-3 bg-background-light dark:bg-background-dark"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fecha de nacimiento</label>
-                    <input
-                      type="date"
-                      value={selectedPerson.fecha_nacimiento || ''}
-                      onChange={e => setSelectedPerson({ ...selectedPerson, fecha_nacimiento: e.target.value })}
-                      className="w-full rounded-lg border border-gray-300 dark:border-gray-700 p-3 bg-background-light dark:bg-background-dark"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Lugar de nacimiento</label>
-                    <input
-                      type="text"
-                      value={selectedPerson.lugar_nacimiento || ''}
-                      onChange={e => setSelectedPerson({ ...selectedPerson, lugar_nacimiento: e.target.value })}
-                      className="w-full rounded-lg border border-gray-300 dark:border-gray-700 p-3 bg-background-light dark:bg-background-dark"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nombre del padre</label>
-                    <input
-                      type="text"
-                      value={selectedPerson.nombre_padre || ''}
-                      onChange={e => setSelectedPerson({ ...selectedPerson, nombre_padre: e.target.value })}
-                      className="w-full rounded-lg border border-gray-300 dark:border-gray-700 p-3 bg-background-light dark:bg-background-dark"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nombre de la madre</label>
-                    <input
-                      type="text"
-                      value={selectedPerson.nombre_madre || ''}
-                      onChange={e => setSelectedPerson({ ...selectedPerson, nombre_madre: e.target.value })}
-                      className="w-full rounded-lg border border-gray-300 dark:border-gray-700 p-3 bg-background-light dark:bg-background-dark"
-                    />
-                  </div>
-                  <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label htmlFor="e-activo" className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1">Estado</label>
-                      <select
-                        id="e-activo"
-                        value={String(!!selectedPerson.activo)}
-                        onChange={e => setSelectedPerson({ ...selectedPerson, activo: e.target.value === 'true' })}
-                        className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-2"
-                      >
-                        <option value="true">Activo</option>
-                        <option value="false">Inactivo</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label htmlFor="e-estado" className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1">Estado de verificación</label>
-                      <select
-                        id="e-estado"
-                        value={selectedPerson.estado || ''}
-                        onChange={e => setSelectedPerson({ ...selectedPerson, estado: e.target.value })}
-                        className="w-full rounded-lg bg-background-light dark:bg-background-dark border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-primary p-2"
-                      >
-                        <option value="">Seleccione</option>
-                        <option value="Verificado">Verificado</option>
-                        <option value="No verificado">No verificado</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div className="mt-4 col-span-2 flex justify-end gap-3">
-                    <button type="button" onClick={() => setSelectedPerson(null)} className="px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/40">Cancelar</button>
-                    <button
-                      type="submit"
-                      disabled={isUpdating}
-                      className={`inline-flex items-center px-5 py-2.5 rounded-lg text-white font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary ${isUpdating ? 'bg-primary/60 cursor-not-allowed' : 'bg-primary hover:bg-primary/90'}`}
-                    >
-                      {isUpdating ? (
-                        <>
-                          <span className="material-symbols-outlined mr-2 animate-spin">progress_activity</span>
-                          Guardando...
-                        </>
-                      ) : (
-                        'Guardar Cambios'
-                      )}
-                    </button>
-                  </div>
-                </form>
+                </div>
               </div>
-            )}
+            </form>
           </div>
         </>
       )}
