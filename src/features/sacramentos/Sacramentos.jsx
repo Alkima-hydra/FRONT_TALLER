@@ -657,16 +657,17 @@ useEffect(() => {
         setQueryEsposa("");
       }
 
-      console.log("📄 Matrimonio detalle recibido:", row.matrimonioDetalle);
+      console.log("📄 Matrimonio detalle recibido:", row.matrimonio_detalle);
 
-      if (row.matrimonioDetalle) {
+      if (row.matrimonio_detalle) {
         setMatrimonio({
           esposoId: relEsposo?.persona_id_persona || null,
           esposaId: relEsposa?.persona_id_persona || null,
-          lugar_ceremonia: row.matrimonioDetalle.lugar_ceremonia || "",
-          reg_civil: row.matrimonioDetalle.reg_civil || "",
-          numero_acta: row.matrimonioDetalle.numero_acta || "",
+          lugar_ceremonia: row.matrimonio_detalle.lugar_ceremonia || "",
+          reg_civil: row.matrimonio_detalle.reg_civil || "",
+          numero_acta: row.matrimonio_detalle.numero_acta || "",
         });
+
       } else {
         setMatrimonio({
           esposoId: relEsposo?.persona_id_persona || null,
@@ -679,6 +680,10 @@ useEffect(() => {
     }
 
     console.log("✅ Formulario cargado para edición");
+    console.log("Formulario:", {
+      form,
+      matrimonio,
+    });
   };
 
   const handleGuardarEdicion = (e) => {
@@ -1897,7 +1902,7 @@ useEffect(() => {
                   )}
 
                   {/* Padrino, Ministro, Parroquia, Foja, Numero, Fecha, Activo */}
-                  {(tipoSacramento === 'bautizo' || tipoSacramento === 'comunion') && (
+                  {(tipoSacramento === 'bautizo' || tipoSacramento === 'comunion' ||tipoSacramento === 'matrimonio' ) && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       {/* Padrino */}
                       <div>
